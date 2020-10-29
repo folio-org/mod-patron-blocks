@@ -182,7 +182,7 @@
           "permissionsRequired": ["patron-block-conditions.collection.get"]
         }, {
           "methods": ["GET"],
-          "pathPattern": "patron-block-conditions/{id}",
+          "pathPattern": "/patron-block-conditions/{id}",
           "permissionsRequired": ["patron-block-conditions.item.get"]
         }, {
           "methods": ["PUT"],
@@ -201,7 +201,7 @@
           "permissionsRequired": ["patron-block-limits.collection.get"]
         }, {
           "methods": ["GET"],
-          "pathPattern": "patron-block-limits/{id}",
+          "pathPattern": "/patron-block-limits/{id}",
           "permissionsRequired": ["patron-block-limits.item.get"]
         }, {
           "methods": ["POST"],
