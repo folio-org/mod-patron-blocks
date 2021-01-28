@@ -76,7 +76,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/fee-fine-balance-changed",
           "permissionsRequired": [
-            "patron-blocks.events.post"
+            "pubsub.events.post"
           ]
         },
         {
@@ -85,7 +85,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-checked-out",
           "permissionsRequired": [
-            "patron-blocks.events.post"
+            "pubsub.events.post"
           ]
         },
         {
@@ -94,7 +94,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-checked-in",
           "permissionsRequired": [
-            "patron-blocks.events.post"
+            "pubsub.events.post"
           ]
         },
         {
@@ -103,7 +103,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-declared-lost",
           "permissionsRequired": [
-            "patron-blocks.events.post"
+            "pubsub.events.post"
           ]
         },
         {
@@ -112,7 +112,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-claimed-returned",
           "permissionsRequired": [
-            "patron-blocks.events.post"
+            "pubsub.events.post"
           ]
         },
         {
@@ -121,7 +121,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/loan-due-date-changed",
           "permissionsRequired": [
-            "patron-blocks.events.post"
+            "pubsub.events.post"
           ]
         },
         {
@@ -242,11 +242,6 @@
     }
   ],
   "permissionSets": [
-    {
-      "permissionName": "patron-blocks.events.post",
-      "displayName": "Patron blocks - post event",
-      "description": "Post an event able to affect the state of automated patron blocks"
-    },
     {
       "permissionName": "patron-block-conditions.collection.get",
       "displayName": "Patron block conditions - get patron block condition collection",
