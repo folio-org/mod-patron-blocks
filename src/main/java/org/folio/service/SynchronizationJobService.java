@@ -8,11 +8,12 @@ import static org.folio.domain.SynchronizationStatus.IN_PROGRESS;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
 
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.domain.SynchronizationStatus;
 import org.folio.exception.EntityNotFoundException;
 import org.folio.exception.UserIdNotFoundException;
@@ -23,12 +24,10 @@ import org.folio.rest.tools.utils.TenantTool;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 public class SynchronizationJobService {
 
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(SynchronizationJobService.class);
 
   private final SynchronizationJobRepository syncRepository;
   private final LoanEventsGenerationService loanEventsGenerationService;

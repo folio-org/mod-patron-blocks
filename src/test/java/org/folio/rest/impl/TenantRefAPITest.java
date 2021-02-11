@@ -14,6 +14,8 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
+import java.util.UUID;
+
 @RunWith(VertxUnitRunner.class)
 public class TenantRefAPITest extends TestBase {
 
@@ -26,13 +28,12 @@ public class TenantRefAPITest extends TestBase {
 
     try {
       tenantClient.postTenant(getTenantAttributes(), response -> {
-        context.assertEquals(500, response.statusCode());
-        response.bodyHandler(body -> {
-          context.assertTrue(body.toString().contains(
-            "EventDescriptor was not registered for eventType"));
+        context.assertEquals(500, response.result().statusCode());
 
-          async.complete();
-        });
+        context.assertTrue(response.result().bodyAsString().contains(
+          "EventDescriptor was not registered for eventType"));
+
+        async.complete();
       });
     } catch (Exception e) {
       context.fail(e);
@@ -50,8 +51,8 @@ public class TenantRefAPITest extends TestBase {
       .willReturn(aResponse().withStatus(204)));
 
     try {
-      tenantClient.deleteTenant(response -> {
-        context.assertEquals(204, response.statusCode());
+      tenantClient.deleteTenantByOperationId(jobId, response -> {
+        context.assertEquals(204, response.result().statusCode());
         async.complete();
       });
     } catch (Exception e) {
@@ -74,10 +75,12 @@ public class TenantRefAPITest extends TestBase {
       .willReturn(aResponse().withStatus(204)));
 
     try {
-      tenantClient.deleteTenant(response -> {
-        context.assertEquals(500, response.statusCode());
-        response.bodyHandler(body -> context.assertTrue(body.toString()
-          .startsWith("deleteTenant execution failed: Failed to unregister. Event types:")));
+      tenantClient.deleteTenantByOperationId(jobId, response -> {
+        context.assertEquals(500, response.result().statusCode());
+
+        context.assertTrue(response.result().bodyAsString()
+          .startsWith("Failed to unregister. Event types:"));
+
         async.complete();
       });
     } catch (Exception e) {
@@ -102,10 +105,12 @@ public class TenantRefAPITest extends TestBase {
       .willReturn(aResponse().withStatus(204)));
 
     try {
-      tenantClient.deleteTenant(response -> {
-        context.assertEquals(500, response.statusCode());
-        response.bodyHandler(body -> context.assertTrue(body.toString()
-          .startsWith("deleteTenant execution failed: Failed to unregister. Event types:")));
+      tenantClient.deleteTenantByOperationId(jobId, response -> {
+        context.assertEquals(500, response.result().statusCode());
+
+        context.assertTrue(response.result().bodyAsString()
+          .startsWith("Failed to unregister. Event types:"));
+
         async.complete();
       });
     } catch (Exception e) {

@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.OpenLoan;
@@ -17,7 +18,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -57,8 +57,8 @@ public class UserSummaryRepositoryTest extends TestBase {
 
     context.assertTrue(saveDuplicateSummary.failed());
     context.assertTrue(saveDuplicateSummary.cause() instanceof PgException);
-    context.assertTrue(saveDuplicateSummary.cause().getMessage().equals(
-      "duplicate key value violates unique constraint \"user_summary_pkey\""));
+    context.assertTrue(saveDuplicateSummary.cause().getMessage().contains(
+      "duplicate key value violates unique constraint \\\"user_summary_pkey\\\""));
   }
 
   @Test
@@ -73,18 +73,18 @@ public class UserSummaryRepositoryTest extends TestBase {
 
     context.assertTrue(saveDuplicateSummary.failed());
     context.assertTrue(saveDuplicateSummary.cause() instanceof PgException);
-    context.assertTrue(saveDuplicateSummary.cause().getMessage().equals(
-      "duplicate key value violates unique constraint \"user_summary_userid_idx_unique\""));
+    context.assertTrue(saveDuplicateSummary.cause().getMessage().contains(
+      "duplicate key value violates unique constraint \\\"user_summary_userid_idx_unique\\\""));
   }
 
   @Test
   public void shouldGetUserSummaryById(TestContext context) {
     UserSummary expectedUserSummary = createUserSummary(randomId(), randomId());
 
-    waitFor(CompositeFuture.all(
+    waitFor(GenericCompositeFuture.all(List.of(
       repository.save(createUserSummary(randomId(), randomId())),
       repository.save(expectedUserSummary),
-      repository.save(createUserSummary(randomId(), randomId())))
+      repository.save(createUserSummary(randomId(), randomId()))))
     );
 
     Optional<UserSummary> retrievedUserSummary =
@@ -98,10 +98,10 @@ public class UserSummaryRepositoryTest extends TestBase {
   public void shouldGetUserSummaryByUserId(TestContext context) {
     UserSummary expectedUserSummary = createUserSummary(randomId(), randomId());
 
-    waitFor(CompositeFuture.all(
+    waitFor(GenericCompositeFuture.all(List.of(
       repository.save(createUserSummary(randomId(), randomId())),
       repository.save(expectedUserSummary),
-      repository.save(createUserSummary(randomId(), randomId())))
+      repository.save(createUserSummary(randomId(), randomId()))))
     );
 
     Optional<UserSummary> retrievedUserSummary =
@@ -141,12 +141,12 @@ public class UserSummaryRepositoryTest extends TestBase {
 
     UserSummary userSummary = createUserSummary(userSummaryId2, randomId());
 
-    waitFor(CompositeFuture.all(
+    waitFor(GenericCompositeFuture.all(List.of(
       repository.save(
         createUserSummary(userSummaryId1, randomId())),
       repository.save(userSummary),
       repository.save(
-        createUserSummary(userSummaryId3, randomId())))
+        createUserSummary(userSummaryId3, randomId()))))
     );
 
     List<UserSummary> retrievedSummaries =
@@ -154,9 +154,9 @@ public class UserSummaryRepositoryTest extends TestBase {
 
     context.assertEquals(3, retrievedSummaries.size());
 
-    waitFor(CompositeFuture.all(
+    waitFor(GenericCompositeFuture.all(List.of(
       repository.delete(userSummaryId1),
-      repository.delete(userSummaryId3))
+      repository.delete(userSummaryId3)))
     );
 
     List<UserSummary> remainingUserSummaries =

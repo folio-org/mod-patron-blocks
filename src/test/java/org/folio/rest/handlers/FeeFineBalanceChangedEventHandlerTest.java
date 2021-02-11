@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import org.folio.domain.FeeFineType;
 import org.folio.exception.EntityNotFoundException;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.UserSummary;
@@ -24,7 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -314,11 +314,11 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
     waitFor(itemDeclaredLostEventHandler.handle(
       buildItemDeclaredLostEvent(userId, loanId)));
 
-    waitFor(CompositeFuture.all(
+    waitFor(GenericCompositeFuture.all(List.of(
       feeFineBalanceChangedEventHandler.handle(buildFeeFineBalanceChangedEvent(
         userId, loanId, feeFineId1, feeFineTypeId1, feeFineBalance1)),
       feeFineBalanceChangedEventHandler.handle(buildFeeFineBalanceChangedEvent(
-        userId, loanId, feeFineId2, feeFineTypeId2, feeFineBalance2))));
+        userId, loanId, feeFineId2, feeFineTypeId2, feeFineBalance2)))));
 
     UserSummary userSummary = waitFor(userSummaryRepository.getByUserId(userId)
       .map(Optional::get));

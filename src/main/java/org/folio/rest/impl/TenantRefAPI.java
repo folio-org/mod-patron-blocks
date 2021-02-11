@@ -2,37 +2,34 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import javax.ws.rs.core.Response;
 
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.client.HttpResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
 import org.folio.domain.EventType;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.client.PubsubClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 public class TenantRefAPI extends TenantAPI {
-  private static final Logger log = LoggerFactory.getLogger(TenantRefAPI.class);
+  private static final Logger log = LogManager.getLogger(TenantRefAPI.class);
 
   @Override
   public void postTenant(TenantAttributes tenantAttributes, Map<String, String> headers,
@@ -45,13 +42,12 @@ public class TenantRefAPI extends TenantAPI {
         handler.handle(res);
         return;
       }
-
       PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, context.owner()))
         .whenComplete((result, throwable) -> {
           if (isTrue(result) && throwable == null) {
             log.info("postTenant executed successfully");
             handler.handle(succeededFuture(PostTenantResponse
-              .respond201WithApplicationJson(EMPTY)));
+              .respond201WithApplicationJson((TenantJob) res.result().getEntity(), PostTenantResponse.headersFor201())));
           } else {
             log.error("postTenant execution failed", throwable);
             handler.handle(succeededFuture(PostTenantResponse
@@ -61,31 +57,33 @@ public class TenantRefAPI extends TenantAPI {
     }, context);
   }
 
-  @Override public void deleteTenant(Map<String, String> headers,
-    Handler<AsyncResult<Response>> handler, Context context) {
-    super.deleteTenant(headers, ar -> unregisterModuleFromPubsub(headers, context.owner())
-      .onComplete(result -> {
-        if (result.failed()) {
-          log.error("deleteTenant execution failed", result.cause());
-          handler.handle(succeededFuture(DeleteTenantResponse
-            .respond500WithTextPlain(result.cause().getLocalizedMessage())));
-        } else {
-          Map<EventType, Integer> eventToStatus = result.result();
-          Optional<Integer> failedEvent = eventToStatus.values().stream()
-            .filter(status -> status != HttpStatus.HTTP_NO_CONTENT.toInt())
-            .findAny();
-
-          if (failedEvent.isPresent()) {
-            String message = "Failed to unregister. Event types: " + eventToStatus.toString();
-            log.error("deleteTenant execution failed: " + message);
-            handler.handle(
-              succeededFuture(DeleteTenantResponse.respond500WithTextPlain(message)));
+  @Override
+  public void deleteTenantByOperationId(String operationId, Map<String, String> headers,
+                                        Handler<AsyncResult<Response>> handler, Context ctx) {
+    super.deleteTenantByOperationId(operationId, headers, ar ->
+      unregisterModuleFromPubsub(headers, ctx.owner())
+        .onComplete(result -> {
+          if (result.failed()) {
+            log.error("deleteTenant execution failed", result.cause());
+            handler.handle(succeededFuture(DeleteTenantByOperationIdResponse
+              .respond500WithTextPlain(result.cause().getLocalizedMessage())));
           } else {
-            log.info("deleteTenant executed successfully");
-            handler.handle(succeededFuture(DeleteTenantResponse.respond204()));
+            Map<EventType, Integer> eventToStatus = result.result();
+            Optional<Integer> failedEvent = eventToStatus.values().stream()
+              .filter(status -> status != HttpStatus.HTTP_NO_CONTENT.toInt())
+              .findAny();
+
+            if (failedEvent.isPresent()) {
+              String message = "Failed to unregister. Event types: " + eventToStatus.toString();
+              log.error("deleteTenant execution failed: " + message);
+              handler.handle(
+                succeededFuture(DeleteTenantByOperationIdResponse.respond500WithTextPlain(message)));
+            } else {
+              log.info("deleteTenant executed successfully");
+              handler.handle(succeededFuture(DeleteTenantByOperationIdResponse.respond204()));
+            }
           }
-        }
-      }), context);
+        }), ctx);
   }
 
   public static Future<Map<EventType, Integer>> unregisterModuleFromPubsub(
@@ -119,16 +117,15 @@ public class TenantRefAPI extends TenantAPI {
       log.error("Failed to unregister module from PubSub", exception);
       return Future.failedFuture(exception);
     }
-
-    return CompositeFuture.all(allFutures)
+    return GenericCompositeFuture.all(allFutures)
       .map(r -> eventToResponseStatus);
   }
 
   private static void handleUnregisteringResponse(EventType eventType,
-    Map<EventType, Integer> eventToResponseStatus, HttpClientResponse response,
+    Map<EventType, Integer> eventToResponseStatus, AsyncResult<HttpResponse<Buffer>> response,
     Promise<EventType> promise, String role) {
 
-    int statusCode = response.statusCode();
+    int statusCode = response.result().statusCode();
     if (statusCode != HttpStatus.HTTP_NO_CONTENT.toInt()) {
       log.error("Failed to unregister as {} {}. Response status: {}",
         eventType.name(), role, statusCode);

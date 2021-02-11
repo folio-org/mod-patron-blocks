@@ -7,23 +7,20 @@ import static org.folio.domain.Condition.MAX_NUMBER_OF_OVERDUE_RECALLS;
 import static org.folio.domain.Condition.MAX_OUTSTANDING_FEE_FINE_BALANCE;
 import static org.folio.domain.Condition.RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS;
 
-import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.model.UserSummary;
 
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-
 public class ActionBlocks {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
+  private static final Logger log = LogManager.getLogger(ActionBlocks.class);
   private static final Double NUMBER_OF_MINUTES_IN_ONE_DAY = 1440.0;
 
   private final boolean blockBorrowing;

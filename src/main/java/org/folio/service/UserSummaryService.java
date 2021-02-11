@@ -6,7 +6,6 @@ import static java.lang.String.format;
 import static org.folio.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.domain.EventType.ITEM_CHECKED_OUT;
 
-import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.domain.Event;
 import org.folio.domain.EventType;
 import org.folio.domain.FeeFineType;
@@ -35,14 +36,12 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.util.AsyncProcessingContext;
 
 import io.vertx.core.Future;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
 
 public class UserSummaryService {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(UserSummaryService.class);
 
   private static final String FAILED_TO_REBUILD_USER_SUMMARY_ERROR_MESSAGE =
     "Failed to rebuild user summary";

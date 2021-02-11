@@ -2,9 +2,12 @@ package org.folio.rest.impl;
 
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.folio.test.util.TestUtil.readFile;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
@@ -14,9 +17,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.model.PatronBlockLimits;
-import org.folio.test.util.TestBase;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,19 +37,19 @@ public class PatronBlockLimitsAPITest extends TestBase {
 
   @After
   public void tearDown() {
-    PatronBlockLimits response = getWithOk(PATRON_BLOCK_LIMITS_URL)
+    PatronBlockLimits response = getWithStatus(PATRON_BLOCK_LIMITS_URL, SC_OK)
       .as(PatronBlockLimits.class);
     List<PatronBlockLimit> patronBlockLimits = response.getPatronBlockLimits();
     if (!patronBlockLimits.isEmpty()) {
-      patronBlockLimits.forEach(entity -> deleteWithNoContent(
-        PATRON_BLOCK_LIMITS_URL + entity.getId()));
+      patronBlockLimits.forEach(entity -> deleteWithStatus(
+        PATRON_BLOCK_LIMITS_URL + entity.getId(), SC_NO_CONTENT));
     }
   }
 
   @Test
   public void shouldReturnAllPatronBlockLimits() throws IOException, URISyntaxException {
     postAllLimits();
-    PatronBlockLimits response = getWithOk(PATRON_BLOCK_LIMITS_URL)
+    PatronBlockLimits response = getWithStatus(PATRON_BLOCK_LIMITS_URL, SC_OK)
       .as(PatronBlockLimits.class);
     assertThat(response.getTotalRecords(), is(6));
   }
@@ -54,8 +57,8 @@ public class PatronBlockLimitsAPITest extends TestBase {
   @Test
   public void shouldReturnPatronBlockLimitByPatronBlockLimitId() throws IOException, URISyntaxException {
     postAllLimits();
-    PatronBlockLimit response = getWithOk(PATRON_BLOCK_LIMITS_URL
-      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID)
+    PatronBlockLimit response = getWithStatus(PATRON_BLOCK_LIMITS_URL
+      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, SC_OK)
       .as(PatronBlockLimit.class);
 
     assertThat(response.getPatronGroupId(), equalTo("e5b45031-a202-4abb-917b-e1df9346fe2c"));
@@ -78,18 +81,16 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
-  public void cannotCreatePatronBlockLimitWithInvalidDoubleLimit()
+  public void shouldCreatePatronBlockLimitWithZeroValue()
     throws IOException, URISyntaxException {
 
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
-      + "/limit_max_outstanding_feefine_balance_invalid_limit.json");
+      + "/limit_max_outstanding_feefine_balance_zero_value_limit.json");
     PatronBlockLimit actualLimit = postWithStatus(PATRON_BLOCK_LIMITS_URL,
-      patronBlockLimit, SC_UNPROCESSABLE_ENTITY, USER_ID)
+      patronBlockLimit, SC_CREATED, USER_ID)
       .as(PatronBlockLimit.class);
 
-    String message = getErrorMessage(actualLimit);
-    assertThat(message, is("A maximum balance of 0 will result in all patrons in this group " +
-      "being blocked; to skip this limit, leave value set to blank"));
+    assertThat(actualLimit.getAdditionalProperties().get("errors"), nullValue());
   }
 
   @Test
@@ -103,7 +104,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
       .as(PatronBlockLimit.class);
 
     String message = getErrorMessage(actualLimit);
-    assertThat(message, is("Must be blank or a number from 0.01 to 9999.99"));
+    assertThat(message, is("Must be blank or a number from 0.00 to 9999.99"));
   }
 
   @Test
@@ -112,28 +113,23 @@ public class PatronBlockLimitsAPITest extends TestBase {
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
       + "/limit_max_outstanding_feefine_balance_with_updated_value.json");
 
-    putWithNoContent(PATRON_BLOCK_LIMITS_URL
-      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, patronBlockLimit, USER_ID);
-    PatronBlockLimit response = getWithOk(PATRON_BLOCK_LIMITS_URL
-      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID)
+    putWithStatus(PATRON_BLOCK_LIMITS_URL
+      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, patronBlockLimit, SC_NO_CONTENT, USER_ID);
+    PatronBlockLimit response = getWithStatus(PATRON_BLOCK_LIMITS_URL
+      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, SC_OK)
       .as(PatronBlockLimit.class);
 
     assertThat(response.getValue(), equalTo(20.4));
   }
 
   @Test
-  public void cannotUpdatePatronBlockLimitWithInvalidLimit() throws IOException, URISyntaxException {
+  public void shouldUpdatePatronBlockLimitWithZeroValue() throws IOException, URISyntaxException {
     postAllLimits();
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
-      + "/limit_max_outstanding_feefine_balance_invalid_limit.json");
+      + "/limit_max_outstanding_feefine_balance_zero_value_limit.json");
 
-    PatronBlockLimit response = putWithStatus(PATRON_BLOCK_LIMITS_URL
-      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, patronBlockLimit, SC_UNPROCESSABLE_ENTITY, USER_ID)
-      .as(PatronBlockLimit.class);
-
-    String message = getErrorMessage(response);
-    assertThat(message, is("A maximum balance of 0 will result in all patrons in this group " +
-      "being blocked; to skip this limit, leave value set to blank"));
+    putWithStatus(PATRON_BLOCK_LIMITS_URL + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID,
+      patronBlockLimit, SC_NO_CONTENT, USER_ID);
   }
 
   private void postAllLimits() throws IOException, URISyntaxException {

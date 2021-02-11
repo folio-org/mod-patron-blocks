@@ -2,13 +2,11 @@ package org.folio.util;
 
 import static java.lang.String.format;
 
-import java.lang.invoke.MethodHandles;
-
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class AsyncProcessingContext {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(AsyncProcessingContext.class);
 
   protected abstract String getName();
 

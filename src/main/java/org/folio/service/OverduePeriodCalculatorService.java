@@ -4,10 +4,11 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.joda.time.Minutes.minutesBetween;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.exception.OverduePeriodCalculatorException;
 import org.folio.rest.client.CirculationStorageClient;
 import org.folio.rest.jaxrs.model.Loan;
@@ -18,15 +19,13 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.With;
 
 public class OverduePeriodCalculatorService {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(OverduePeriodCalculatorService.class);
 
   private static final int ZERO_MINUTES = 0;
 

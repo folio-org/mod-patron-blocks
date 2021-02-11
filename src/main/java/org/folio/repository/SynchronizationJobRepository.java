@@ -3,9 +3,10 @@ package org.folio.repository;
 import static io.vertx.core.json.JsonObject.mapFrom;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.domain.SynchronizationStatus;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.folio.rest.persist.Criteria.Criteria;
@@ -15,13 +16,11 @@ import org.folio.rest.persist.PostgresClient;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 
 public class SynchronizationJobRepository extends BaseRepository<SynchronizationJob> {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(SynchronizationJobRepository.class);
 
   private static final String SYNCHRONIZATION_JOBS_TABLE = "synchronization_jobs";
   private static final int SYNC_JOBS_LIMIT = 1;

@@ -8,18 +8,35 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static java.lang.String.format;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.filter.log.LogDetail;
+import io.restassured.http.Header;
+import io.restassured.http.Headers;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.client.HttpResponse;
+import org.apache.http.entity.ContentType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import org.folio.HttpStatus;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.PomReader;
@@ -37,23 +54,24 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 
 public class TestBase {
-  protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  protected static final Logger log = LogManager.getLogger(TestBase.class);
 
   protected static final int OKAPI_PORT = NetworkUtils.nextFreePort();
   protected static final String OKAPI_URL = "http://localhost:" + OKAPI_PORT;
   protected static final String OKAPI_TENANT = "test_tenant";
   protected static final String OKAPI_TOKEN = generateOkapiToken();
+  protected static final Header JSON_CONTENT_TYPE_HEADER = new Header("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
 
   protected static Vertx vertx;
   protected static OkapiClient okapiClient;
   protected static TenantClient tenantClient;
   protected static PostgresClient postgresClient;
+
+  protected static String jobId;
 
   @ClassRule
   public static WireMockRule wireMock = new WireMockRule(
@@ -63,7 +81,11 @@ public class TestBase {
   public static void beforeAll(final TestContext context) throws Exception {
     Async async = context.async();
 
-    vertx = Vertx.vertx();
+    vertx = Vertx.vertx(
+      new VertxOptions()
+        .setMaxEventLoopExecuteTimeUnit(TimeUnit.SECONDS)
+        .setMaxEventLoopExecuteTime(60)
+    );
     okapiClient = new OkapiClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
     tenantClient = new TenantClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
 
@@ -76,13 +98,32 @@ public class TestBase {
 
     vertx.deployVerticle(RestVerticle.class.getName(), deploymentOptions, deployment -> {
       try {
-        tenantClient.postTenant(getTenantAttributes(), result -> {
-          result.exceptionHandler(context::fail);
-          if (result.statusCode() != 201) {
-            context.fail(format("postTenant returned %d, but expected 201", result.statusCode()));
+        tenantClient.postTenant(getTenantAttributes(), postResult -> {
+          if (postResult.failed()) {
+            log.error(postResult.cause());
+            return;
           }
+
+          final HttpResponse<Buffer> postResponse = postResult.result();
+          assertThat(postResponse.statusCode(), is(HttpStatus.HTTP_CREATED.toInt()));
+
+          jobId = postResponse.bodyAsJson(TenantJob.class).getId();
+
           postgresClient = PostgresClient.getInstance(vertx, OKAPI_TENANT);
-          async.complete();
+
+          tenantClient.getTenantByOperationId(jobId, 60000, getResult -> {
+            if (getResult.failed()) {
+              log.error(getResult.cause());
+              return;
+            }
+
+            final HttpResponse<Buffer> getResponse = getResult.result();
+            assertThat(getResponse.statusCode(), is(HttpStatus.HTTP_OK.toInt()));
+            assertThat(getResponse.bodyAsJson(TenantJob.class).getComplete(), is(true));
+
+            async.complete();
+          });
+
         });
       } catch (Exception e) {
         context.fail(e);
@@ -92,11 +133,23 @@ public class TestBase {
 
   @AfterClass
   public static void afterAll(final TestContext context) {
+    deleteTenant(tenantClient);
     Async async = context.async();
     vertx.close(context.asyncAssertSuccess(res -> {
       PostgresClient.stopEmbeddedPostgres();
       async.complete();
     }));
+  }
+
+  static void deleteTenant(TenantClient tenantClient) {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    tenantClient.deleteTenantByOperationId(jobId, deleted -> {
+      if (deleted.failed()) {
+        future.completeExceptionally(new RuntimeException("Failed to delete tenant"));
+        return;
+      }
+      future.complete(null);
+    });
   }
 
   @Before
@@ -108,6 +161,10 @@ public class TestBase {
     wireMock.resetAll();
 
     wireMock.stubFor(post(urlEqualTo("/pubsub/event-types"))
+      .atPriority(100)
+      .willReturn(created()));
+
+    wireMock.stubFor(post(urlEqualTo("/pubsub/event-types?"))
       .atPriority(100)
       .willReturn(created()));
 
@@ -175,4 +232,69 @@ public class TestBase {
   protected static String toJson(Object event) {
     return JsonObject.mapFrom(event).encodePrettily();
   }
+
+  protected RequestSpecification getRequestSpecification() {
+    return (new RequestSpecBuilder())
+      .addHeader("X-Okapi-Tenant", OKAPI_TENANT)
+      .addHeader("X-Okapi-Token", OKAPI_TOKEN)
+      .addHeader("X-Okapi-Url", OKAPI_URL)
+      .setBaseUri(OKAPI_URL)
+      .setPort(OKAPI_PORT)
+      .log(LogDetail.ALL)
+      .build();
+  }
+
+  protected ExtractableResponse<Response> getWithStatus(String resourcePath, int expectedStatus) {
+    return RestAssured.given()
+      .spec(getRequestSpecification())
+      .when()
+      .get(resourcePath, new Object[0])
+      .then()
+      .log()
+      .ifValidationFails()
+      .statusCode(expectedStatus)
+      .extract();
+  }
+
+  protected ExtractableResponse<Response> putWithStatus(String resourcePath, String putBody, int expectedStatus, Header... headers) {
+    return RestAssured.given()
+      .spec(getRequestSpecification())
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .headers(new Headers(headers))
+      .body(putBody)
+      .when()
+      .put(resourcePath, new Object[0])
+      .then()
+      .log()
+      .ifValidationFails()
+      .statusCode(expectedStatus)
+      .extract();
+  }
+
+  protected ExtractableResponse<Response> postWithStatus(String resourcePath, String postBody, int expectedStatus, Header... headers) {
+    return RestAssured.given()
+      .spec(getRequestSpecification())
+      .header(JSON_CONTENT_TYPE_HEADER)
+      .headers(new Headers(headers))
+      .body(postBody)
+      .when()
+      .post(resourcePath, new Object[0])
+      .then()
+      .log()
+      .ifValidationFails()
+      .statusCode(expectedStatus)
+      .extract();
+  }
+
+  protected ExtractableResponse<Response> deleteWithStatus(String resourcePath, int expectedStatus) {
+    return RestAssured.given()
+      .spec(getRequestSpecification())
+      .when()
+      .delete(resourcePath, new Object[0]).then()
+      .log()
+      .ifValidationFails()
+      .statusCode(expectedStatus)
+      .extract();
+  }
+
 }

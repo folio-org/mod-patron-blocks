@@ -4,10 +4,11 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.exception.HttpFailureException;
 import org.folio.util.StringUtil;
 
@@ -19,12 +20,10 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpResponse;
 
 public class BulkDownloadClient<T> extends OkapiClient {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(BulkDownloadClient.class);
   private static final String PATH_TEMPLATE = "%s?limit=%d&query=%s";
   private static final String SORT_BY_ID = " sortBy id";
   private static final String DEFAULT_QUERY = "cql.allRecords=1";

@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.folio.domain.Condition;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -55,7 +55,7 @@ public class PatronBlockLimitsRepositoryTest extends TestBase {
       .withPatronGroupId(groupId1)
       .withValue(3.00);
 
-    CompositeFuture.all(repository.save(limit1), repository.save(limit2), repository.save(limit3))
+    GenericCompositeFuture.all(List.of(repository.save(limit1), repository.save(limit2), repository.save(limit3)))
       .onFailure(context::fail)
       .onSuccess(result -> repository.findLimitsForPatronGroup(groupId1)
         .onFailure(context::fail)

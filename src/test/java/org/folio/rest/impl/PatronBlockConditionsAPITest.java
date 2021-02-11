@@ -2,8 +2,9 @@ package org.folio.rest.impl;
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
-import static org.apache.http.HttpStatus.SC_NOT_IMPLEMENTED;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.folio.test.util.TestUtil.readFile;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -15,12 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
 import org.folio.rest.jaxrs.model.PatronBlockConditions;
-import org.folio.test.util.TestBase;
-import org.folio.test.util.TestSetUpHelper;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,27 +35,17 @@ public class PatronBlockConditionsAPITest extends TestBase {
   private static final String PATRON_BLOCK_CONDITIONS = "patron-block-conditions";
   private static final int NUMBER_OF_PREDEFINED_CONDITIONS = 6;
 
-  @Before
-  public void setUp() {
-      TestSetUpHelper.startVertxAndPostgres(configProperties);
-  }
-
-  @After
-  public void tearDown() {
-    TestSetUpHelper.stopVertxAndPostgres();
-  }
-
   @Test
   public void shouldReturnAllConditions() {
-    PatronBlockConditions conditions = getWithOk(PATRON_BLOCK_CONDITIONS_URL)
+    PatronBlockConditions conditions = getWithStatus(PATRON_BLOCK_CONDITIONS_URL, SC_OK)
       .as(PatronBlockConditions.class);
     assertThat(conditions.getTotalRecords(), equalTo(NUMBER_OF_PREDEFINED_CONDITIONS));
   }
 
   @Test
   public void shouldReturnMaxNumberOfLostItemsCondition() {
-    PatronBlockCondition patronBlockCondition = getWithOk(PATRON_BLOCK_CONDITIONS_URL
-      + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID)
+    PatronBlockCondition patronBlockCondition = getWithStatus(PATRON_BLOCK_CONDITIONS_URL
+      + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, SC_OK)
       .as(PatronBlockCondition.class);
     assertThat(patronBlockCondition.getName(), equalTo("Maximum number of lost items"));
   }
@@ -67,12 +55,12 @@ public class PatronBlockConditionsAPITest extends TestBase {
     throws IOException, URISyntaxException {
 
     String updatedMaxNumberOfLostItemsCondition = readFile(PATRON_BLOCK_CONDITIONS
-      +"/max_number_of_lost_items_updated.json");
+      + "/max_number_of_lost_items_updated.json");
 
-    putWithNoContent(PATRON_BLOCK_CONDITIONS_URL
-      + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, updatedMaxNumberOfLostItemsCondition, USER_ID);
-    PatronBlockCondition updatedCondition = getWithOk(PATRON_BLOCK_CONDITIONS_URL
-      + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID).as(PatronBlockCondition.class);
+    putWithStatus(PATRON_BLOCK_CONDITIONS_URL
+      + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, updatedMaxNumberOfLostItemsCondition, SC_NO_CONTENT, USER_ID);
+    PatronBlockCondition updatedCondition = getWithStatus(PATRON_BLOCK_CONDITIONS_URL
+      + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, SC_OK).as(PatronBlockCondition.class);
 
     assertThat(updatedCondition.getBlockBorrowing(), equalTo(true));
     assertThat(updatedCondition.getBlockRenewals(), equalTo(true));
@@ -86,12 +74,12 @@ public class PatronBlockConditionsAPITest extends TestBase {
     throws IOException, URISyntaxException {
 
     String updatedConditionWithNonExistentId = readFile(PATRON_BLOCK_CONDITIONS
-      +"/max_number_of_lost_items_non_existent_id.json");
+      + "/max_number_of_lost_items_non_existent_id.json");
 
     putWithStatus(PATRON_BLOCK_CONDITIONS_URL
-      + MAX_NUMBER_OF_LOST_ITEMS_NON_EXISTENT_ID, updatedConditionWithNonExistentId,
+        + MAX_NUMBER_OF_LOST_ITEMS_NON_EXISTENT_ID, updatedConditionWithNonExistentId,
       SC_NOT_FOUND, USER_ID);
-    PatronBlockConditions conditions = getWithOk(PATRON_BLOCK_CONDITIONS_URL)
+    PatronBlockConditions conditions = getWithStatus(PATRON_BLOCK_CONDITIONS_URL, SC_OK)
       .as(PatronBlockConditions.class);
     assertThat(conditions.getTotalRecords(), equalTo(NUMBER_OF_PREDEFINED_CONDITIONS));
   }
@@ -101,9 +89,9 @@ public class PatronBlockConditionsAPITest extends TestBase {
     throws IOException, URISyntaxException {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
-      +"/max_number_of_lost_items_no_message.json");
+      + "/max_number_of_lost_items_no_message.json");
     PatronBlockCondition response = putWithStatus(PATRON_BLOCK_CONDITIONS_URL
-        + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, maxNumberOfLostItems, SC_UNPROCESSABLE_ENTITY, USER_ID)
+      + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, maxNumberOfLostItems, SC_UNPROCESSABLE_ENTITY, USER_ID)
       .as(PatronBlockCondition.class);
     List<Map<String, Object>> errors = (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
     String message = (String) errors.get(0).get("message");
@@ -115,9 +103,9 @@ public class PatronBlockConditionsAPITest extends TestBase {
     throws IOException, URISyntaxException {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
-      +"/max_number_of_lost_items_no_flat_set_to_true.json");
+      + "/max_number_of_lost_items_no_flat_set_to_true.json");
     PatronBlockCondition response = putWithStatus(PATRON_BLOCK_CONDITIONS_URL
-        + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, maxNumberOfLostItems, SC_UNPROCESSABLE_ENTITY, USER_ID)
+      + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, maxNumberOfLostItems, SC_UNPROCESSABLE_ENTITY, USER_ID)
       .as(PatronBlockCondition.class);
     List<Map<String, Object>> errors = (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
     String message = (String) errors.get(0).get("message");
@@ -126,7 +114,6 @@ public class PatronBlockConditionsAPITest extends TestBase {
 
   @Test
   public void cannotDeletePredefinedCondition() {
-
     deleteWithStatus(PATRON_BLOCK_CONDITIONS_URL + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID,
       SC_BAD_REQUEST);
   }
@@ -136,7 +123,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
     throws IOException, URISyntaxException {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
-      +"/max_number_of_lost_items_no_flat_set_to_true.json");
+      + "/max_number_of_lost_items_no_flat_set_to_true.json");
     postWithStatus(PATRON_BLOCK_CONDITIONS_URL, maxNumberOfLostItems,
       SC_BAD_REQUEST, USER_ID);
   }

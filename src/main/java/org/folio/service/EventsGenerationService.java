@@ -3,11 +3,12 @@ package org.folio.service;
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.repository.SynchronizationJobRepository;
 import org.folio.rest.client.BulkDownloadClient;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
@@ -16,12 +17,9 @@ import org.folio.util.UuidHelper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 public abstract class EventsGenerationService<T> {
-  protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
+  protected static final Logger log = LogManager.getLogger(EventsGenerationService.class);
   private static final int PAGE_SIZE = 100;
   private static final String FILTER_BY_ID_QUERY_TEMPLATE = " and id > %s";
 

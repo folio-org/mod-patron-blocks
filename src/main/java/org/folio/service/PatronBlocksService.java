@@ -5,13 +5,14 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.domain.ActionBlocks;
 import org.folio.repository.PatronBlockConditionsRepository;
 import org.folio.repository.PatronBlockLimitsRepository;
@@ -30,14 +31,12 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
 
 public class PatronBlocksService {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(PatronBlocksService.class);
 
   private static final String DEFAULT_ERROR_MESSAGE = "Failed to calculate automated patron blocks";
 

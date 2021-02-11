@@ -9,6 +9,7 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
+import org.folio.domain.MonetaryValue;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
@@ -27,7 +28,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
   private static final List<String> CONDITIONS_IDS_WITH_DOUBLE_VALUE_TYPE =
     ImmutableList.of("cf7a0d5f-a327-4ca1-aa9e-dc55ec006b8a");
   private static final String VALUE_FIELD = "value";
-  private static final double MIN_DOUBLE_LIMIT = 0.01;
+  private static final double MIN_DOUBLE_LIMIT = 0.0;
   private static final double MAX_DOUBLE_LIMIT = 9999.99;
   private static final int MIN_INT_LIMIT = 0;
   private static final int MAX_INT_LIMIT = 999999;
@@ -113,13 +114,9 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     if (limit >= MIN_DOUBLE_LIMIT && limit <= MAX_DOUBLE_LIMIT) {
       return null;
     }
-    if (limit == 0.00) {
-      return createValidationErrorMessage(VALUE_FIELD, limit.toString(),
-        "A maximum balance of 0 will result in all patrons in this group being blocked; " +
-          "to skip this limit, leave value set to blank");
-    }
     return createValidationErrorMessage(VALUE_FIELD, limit.toString(),
-      "Must be blank or a number from " + MIN_DOUBLE_LIMIT + " to " + MAX_DOUBLE_LIMIT);
+      "Must be blank or a number from " + new MonetaryValue(MIN_DOUBLE_LIMIT) + " to "
+        + new MonetaryValue(MAX_DOUBLE_LIMIT));
   }
 
   private Errors validateRangeForIntegerValueType(Double limit) {

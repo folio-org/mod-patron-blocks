@@ -2,9 +2,10 @@ package org.folio.rest.handlers;
 
 import static org.folio.util.PostgresUtils.getPostgresClient;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.domain.Event;
 import org.folio.domain.EventType;
 import org.folio.repository.UserSummaryRepository;
@@ -16,11 +17,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 public abstract class EventHandler<E extends Event> {
-  protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  protected static final Logger log = LogManager.getLogger(EventHandler.class);
   protected final UserSummaryRepository userSummaryRepository;
   protected final EventService eventService;
   protected final UserSummaryService userSummaryService;
@@ -54,7 +53,7 @@ public abstract class EventHandler<E extends Event> {
     String eventType = EventType.getNameByEvent(event);
     if (result.failed()) {
       log.error("Failed to process event {} with payload:\n{}",
-        result.cause(), eventType, Json.encodePrettily(event));
+        eventType, Json.encodePrettily(event), result.cause());
     } else {
       log.info("Event {} processed successfully. Affected user summary: {}",
         eventType, result.result());

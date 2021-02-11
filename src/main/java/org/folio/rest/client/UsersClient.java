@@ -2,18 +2,17 @@ package org.folio.rest.client;
 
 import static io.vertx.core.Future.succeededFuture;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.User;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 public class UsersClient extends OkapiClient {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(UsersClient.class);
 
   public UsersClient(Vertx vertx, Map<String, String> okapiHeaders) {
     super(vertx, okapiHeaders);

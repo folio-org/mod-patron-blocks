@@ -9,10 +9,12 @@ import static org.folio.okapi.common.XOkapiHeaders.TOKEN;
 import static org.folio.okapi.common.XOkapiHeaders.URL;
 import static org.folio.rest.client.WebClientProvider.getWebClient;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
+import io.vertx.core.http.HttpMethod;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.exception.EntityNotFoundException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,14 +25,12 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class OkapiClient {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(OkapiClient.class);
 
   static final ObjectMapper objectMapper = new ObjectMapper();
   private final WebClient webClient;
@@ -47,7 +47,7 @@ public class OkapiClient {
   }
 
   HttpRequest<Buffer> getAbs(String path) {
-    return webClient.getAbs(okapiUrl + path)
+    return webClient.requestAbs(HttpMethod.GET, okapiUrl + path)
       .putHeader(ACCEPT, APPLICATION_JSON)
       .putHeader(URL, okapiUrl)
       .putHeader(TENANT, tenant)
@@ -55,7 +55,7 @@ public class OkapiClient {
   }
 
   HttpRequest<Buffer> postAbs(String path) {
-    return webClient.postAbs(okapiUrl + path)
+    return webClient.requestAbs(HttpMethod.POST, okapiUrl + path)
       .putHeader(ACCEPT, APPLICATION_JSON)
       .putHeader(URL, okapiUrl)
       .putHeader(TENANT, tenant)
@@ -81,8 +81,8 @@ public class OkapiClient {
           log.info("Fetched by ID: {}/{}. Response body: \n{}", path, id, response.bodyAsString());
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
-          log.error("Failed to parse response from {}/{}. Response body: \n{}", e, path, id,
-            response.bodyAsString());
+          log.error("Failed to parse response from {}/{}. Response body: \n{}", path, id,
+            response.bodyAsString(), e);
           return failedFuture(e);
         }
       }

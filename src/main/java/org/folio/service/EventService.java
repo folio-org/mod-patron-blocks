@@ -2,6 +2,7 @@ package org.folio.service;
 
 import java.util.List;
 
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.repository.EventRepository;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
@@ -12,7 +13,6 @@ import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.util.UuidHelper;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 
 public class EventService {
@@ -100,22 +100,22 @@ public class EventService {
   }
 
   public Future<Void> removeAllEvents(String tenantId) {
-    return CompositeFuture.all(itemCheckedOutEventRepository.removeAll(tenantId),
-        itemCheckedInEventRepository.removeAll(tenantId),
-        itemClaimedReturnedEventRepository.removeAll(tenantId),
-        itemDeclaredLostEventRepository.removeAll(tenantId),
-        loanDueDateChangedEventRepository.removeAll(tenantId),
-        feeFineBalanceChangedEventRepository.removeAll(tenantId))
-      .mapEmpty();
+    return GenericCompositeFuture.all(List.of(itemCheckedOutEventRepository.removeAll(tenantId),
+      itemCheckedInEventRepository.removeAll(tenantId),
+      itemClaimedReturnedEventRepository.removeAll(tenantId),
+      itemDeclaredLostEventRepository.removeAll(tenantId),
+      loanDueDateChangedEventRepository.removeAll(tenantId),
+      feeFineBalanceChangedEventRepository.removeAll(tenantId))
+    ).mapEmpty();
   }
 
   public Future<Void> removeAllEventsForUser(String tenantId, String userId) {
-    return CompositeFuture.all(itemCheckedOutEventRepository.removeByUserId(tenantId, userId),
+    return GenericCompositeFuture.all(List.of(itemCheckedOutEventRepository.removeByUserId(tenantId, userId),
       itemCheckedInEventRepository.removeByUserId(tenantId, userId),
       itemClaimedReturnedEventRepository.removeByUserId(tenantId, userId),
       itemDeclaredLostEventRepository.removeByUserId(tenantId, userId),
       loanDueDateChangedEventRepository.removeByUserId(tenantId, userId),
       feeFineBalanceChangedEventRepository.removeByUserId(tenantId, userId))
-      .mapEmpty();
+    ).mapEmpty();
   }
 }
