@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.folio.repository.EventRepository;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
+import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
@@ -20,6 +21,7 @@ public class EventService {
   private static final String ITEM_CHECKED_OUT_EVENT_TABLE_NAME = "item_checked_out_event";
   private static final String ITEM_CHECKED_IN_EVENT_TABLE_NAME = "item_checked_in_event";
   private static final String ITEM_DECLARED_LOST_EVENT_TABLE_NAME = "item_declared_lost_event";
+  private static final String ITEM_AGED_TO_LOST_EVENT_TABLE_NAME = "item_aged_to_lost_event";
   private static final String ITEM_CLAIMED_RETURNED_EVENT_TABLE_NAME = "item_claimed_returned_event";
   private static final String LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME = "loan_due_date_changed_event";
   private static final String FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME = "fee_fine_balance_changed_event";
@@ -28,6 +30,7 @@ public class EventService {
   private final EventRepository<ItemCheckedInEvent> itemCheckedInEventRepository;
   private final EventRepository<ItemClaimedReturnedEvent> itemClaimedReturnedEventRepository;
   private final EventRepository<ItemDeclaredLostEvent> itemDeclaredLostEventRepository;
+  private final EventRepository<ItemAgedToLostEvent> itemAgedToLostEventEventRepository;
   private final EventRepository<LoanDueDateChangedEvent> loanDueDateChangedEventRepository;
   private final EventRepository<FeeFineBalanceChangedEvent> feeFineBalanceChangedEventRepository;
 
@@ -43,6 +46,9 @@ public class EventService {
 
     itemDeclaredLostEventRepository = new EventRepository<>(postgresClient,
       ITEM_DECLARED_LOST_EVENT_TABLE_NAME, ItemDeclaredLostEvent.class);
+
+    itemAgedToLostEventEventRepository = new EventRepository<>(postgresClient,
+      ITEM_AGED_TO_LOST_EVENT_TABLE_NAME, ItemAgedToLostEvent.class);
 
     loanDueDateChangedEventRepository = new EventRepository<>(postgresClient,
       LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME, LoanDueDateChangedEvent.class);
@@ -67,6 +73,10 @@ public class EventService {
     return itemDeclaredLostEventRepository.save(event, UuidHelper.randomId());
   }
 
+  public Future<String> save(ItemAgedToLostEvent event) {
+    return itemAgedToLostEventEventRepository.save(event, UuidHelper.randomId());
+  }
+
   public Future<String> save(LoanDueDateChangedEvent event) {
     return loanDueDateChangedEventRepository.save(event, UuidHelper.randomId());
   }
@@ -89,6 +99,9 @@ public class EventService {
 
   public Future<List<ItemDeclaredLostEvent>> getItemDeclaredLostEvents(String userId) {
     return itemDeclaredLostEventRepository.getByUserId(userId);
+  }
+  public Future<List<ItemAgedToLostEvent>> getItemAgedToLostEvents(String userId) {
+    return itemAgedToLostEventEventRepository.getByUserId(userId);
   }
 
   public Future<List<LoanDueDateChangedEvent>> getLoanDueDateChangedEvents(String userId) {

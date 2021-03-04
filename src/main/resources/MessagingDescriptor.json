@@ -47,7 +47,12 @@
     {
       "eventType": "ITEM_DECLARED_LOST",
       "callbackAddress": "/automated-patron-blocks/handlers/item-declared-lost"
-    },    {
+    },
+    {
+      "eventType": "ITEM_AGED_TO_LOST",
+      "callbackAddress": "/automated-patron-blocks/handlers/item-aged-to-lost"
+    },
+    {
       "eventType": "ITEM_CLAIMED_RETURNED",
       "callbackAddress": "/automated-patron-blocks/handlers/item-claimed-returned"
     },

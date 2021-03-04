@@ -110,6 +110,15 @@
           "methods":[
             "POST"
           ],
+          "pathPattern":"/automated-patron-blocks/handlers/item-aged-to-lost",
+          "permissionsRequired": [
+            "pubsub.events.post"
+          ]
+        },
+        {
+          "methods":[
+            "POST"
+          ],
           "pathPattern":"/automated-patron-blocks/handlers/item-claimed-returned",
           "permissionsRequired": [
             "pubsub.events.post"

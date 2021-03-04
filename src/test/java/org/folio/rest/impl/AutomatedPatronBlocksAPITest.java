@@ -40,6 +40,7 @@ import org.folio.repository.PatronBlockLimitsRepository;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
 import org.folio.rest.handlers.FeeFineBalanceChangedEventHandler;
+import org.folio.rest.handlers.ItemAgedToLostEventHandler;
 import org.folio.rest.handlers.ItemCheckedOutEventHandler;
 import org.folio.rest.handlers.ItemClaimedReturnedEventHandler;
 import org.folio.rest.handlers.ItemDeclaredLostEventHandler;
@@ -82,6 +83,8 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
     new ItemCheckedOutEventHandler(postgresClient);
   private final ItemDeclaredLostEventHandler itemDeclaredLostEventHandler =
     new ItemDeclaredLostEventHandler(postgresClient);
+  private final ItemAgedToLostEventHandler itemAgedToLostEventHandler =
+    new ItemAgedToLostEventHandler(postgresClient);
   private final LoanDueDateChangedEventHandler loanDueDateChangedEventHandler =
     new LoanDueDateChangedEventHandler(postgresClient);
   private final FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler =
