@@ -95,7 +95,7 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
     Context vertxContext) {
 
     asyncResultHandler.handle(Future.succeededFuture(
-      PostAutomatedPatronBlocksHandlersItemDeclaredLostResponse.respond204()));
+      PostAutomatedPatronBlocksHandlersItemAgedToLostResponse.respond204()));
 
     logEventReceived(event);
 
