@@ -40,8 +40,21 @@ public class TenantRefAPITest extends TestBase {
   }
 
   @Test
-  public void deleteTenantShouldSucceedWithoutUnregisteringFromPubSub(TestContext context) {
+  public void deleteTenantShouldSucceededWhenFailedToUnregisterPublishersFromPubSub(
+    TestContext context) {
+
     Async async = context.async();
+
+    wireMock.stubFor(delete(urlPathEqualTo("/pubsub/event-types/ITEM_CHECKED_IN/publishers"))
+            .atPriority(1)
+            .willReturn(aResponse().withStatus(500)));
+    wireMock.stubFor(delete(urlPathEqualTo("/pubsub/event-types/ITEM_CHECKED_OUT/publishers"))
+            .atPriority(1)
+            .willReturn(aResponse().withStatus(400)));
+    wireMock.stubFor(delete(urlPathMatching("/pubsub/event-types/\\w+/publishers"))
+            .atPriority(10)
+            .willReturn(aResponse().withStatus(204)));
+
     try {
       tenantClient.deleteTenant(response -> {
         context.assertEquals(204, response.statusCode());
