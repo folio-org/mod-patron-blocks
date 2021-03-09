@@ -40,14 +40,13 @@ public class TenantRefAPITest extends TestBase {
   }
 
   @Test
-  public void deleteTenantShouldSucceedWhenSuccessfullyUnsubscribedFromPubSub(TestContext context) {
+  public void deleteTenantShouldNotTryToUnregisterFromPubSub(
+    TestContext context) {
+
     Async async = context.async();
 
-    wireMock.stubFor(delete(urlPathMatching("/pubsub/event-types/.+/subscribers"))
-      .willReturn(aResponse().withStatus(204)));
-
-    wireMock.stubFor(delete(urlPathMatching("/pubsub/event-types/.+/publishers"))
-      .willReturn(aResponse().withStatus(204)));
+    wireMock.stubFor(delete(urlPathMatching("/pubsub/event-types/\\w+/publishers"))
+      .willReturn(aResponse().withStatus(500)));
 
     try {
       tenantClient.deleteTenant(response -> {
@@ -58,59 +57,4 @@ public class TenantRefAPITest extends TestBase {
       context.fail(e);
     }
   }
-
-  @Test
-  public void deleteTenantShouldFailWhenFailedToUnsubscribeFromPubSub(TestContext context) {
-    Async async = context.async();
-
-    wireMock.stubFor(delete(urlPathEqualTo("/pubsub/event-types/ITEM_CHECKED_IN/subscribers"))
-      .atPriority(1)
-      .willReturn(aResponse().withStatus(500)));
-    wireMock.stubFor(delete(urlPathEqualTo("/pubsub/event-types/ITEM_CHECKED_OUT/subscribers"))
-      .atPriority(1)
-      .willReturn(aResponse().withStatus(400)));
-    wireMock.stubFor(delete(urlPathMatching("/pubsub/event-types/\\w+/subscribers"))
-      .atPriority(10)
-      .willReturn(aResponse().withStatus(204)));
-
-    try {
-      tenantClient.deleteTenant(response -> {
-        context.assertEquals(500, response.statusCode());
-        response.bodyHandler(body -> context.assertTrue(body.toString()
-          .startsWith("deleteTenant execution failed: Failed to unregister. Event types:")));
-        async.complete();
-      });
-    } catch (Exception e) {
-      context.fail(e);
-    }
-  }
-
-  @Test
-  public void deleteTenantShouldFailWhenFailedToUnregisterPublishersFromPubSub(
-    TestContext context) {
-
-    Async async = context.async();
-
-    wireMock.stubFor(delete(urlPathEqualTo("/pubsub/event-types/ITEM_CHECKED_IN/publishers"))
-      .atPriority(1)
-      .willReturn(aResponse().withStatus(500)));
-    wireMock.stubFor(delete(urlPathEqualTo("/pubsub/event-types/ITEM_CHECKED_OUT/publishers"))
-      .atPriority(1)
-      .willReturn(aResponse().withStatus(400)));
-    wireMock.stubFor(delete(urlPathMatching("/pubsub/event-types/\\w+/publishers"))
-      .atPriority(10)
-      .willReturn(aResponse().withStatus(204)));
-
-    try {
-      tenantClient.deleteTenant(response -> {
-        context.assertEquals(500, response.statusCode());
-        response.bodyHandler(body -> context.assertTrue(body.toString()
-          .startsWith("deleteTenant execution failed: Failed to unregister. Event types:")));
-        async.complete();
-      });
-    } catch (Exception e) {
-      context.fail(e);
-    }
-  }
-
 }
