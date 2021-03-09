@@ -855,6 +855,9 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
         .put("gracePeriod", new JsonObject()
           .put("duration", 0)
           .put("intervalId", "Minutes")))
+      .put("requestManagement", new JsonObject()
+        .put("recalls", new JsonObject()
+          .put("allowRecallsToExtendOverdueLoans", true)))
       .encodePrettily();
   }
 
@@ -865,6 +868,9 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
         .put("gracePeriod", new JsonObject()
           .put("duration", 5)
           .put("intervalId", "Hours")))
+      .put("requestManagement", new JsonObject()
+        .put("recalls", new JsonObject()
+          .put("allowRecallsToExtendOverdueLoans", true)))
       .encodePrettily();
   }
 

@@ -16,7 +16,6 @@
     },
     "loansPolicy": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "profileId": {
           "type": "string",
@@ -89,11 +88,9 @@
     },
     "requestManagement": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "recalls": {
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "alternateGracePeriod": {
               "type": "object",
@@ -109,12 +106,21 @@
               "type": "object",
               "$ref": "period.json",
               "description": "Recall return interval"
+            },
+            "allowRecallsToExtendOverdueLoans": {
+              "type": "boolean",
+              "description": "Whether recalls are allowed to extend overdue loans",
+              "default": false
+            },
+            "alternateRecallReturnInterval": {
+              "type": "object",
+              "$ref": "period.json",
+              "description": "Alternate recall return interval for overdue loans"
             }
           }
         },
         "holds": {
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "alternateCheckoutLoanPeriod": {
               "type": "object",
@@ -134,7 +140,6 @@
         },
         "pages": {
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "alternateCheckoutLoanPeriod": {
               "type": "object",
@@ -159,7 +164,6 @@
       "readonly": true
     }
   },
-  "additionalProperties": false,
   "required": [
     "name",
     "loanable",
