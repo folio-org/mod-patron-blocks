@@ -56,6 +56,18 @@
       ]
     },
     {
+      "tableName": "item_aged_to_lost_event",
+      "withMetadata": true,
+      "index": [
+        {
+          "fieldName": "userId",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        }
+      ]
+    },
+    {
       "tableName": "item_claimed_returned_event",
       "withMetadata": true,
       "index": [

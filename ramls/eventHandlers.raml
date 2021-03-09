@@ -19,6 +19,7 @@ types:
   item-checked-out-event: !include events/item-checked-out.json
   item-checked-in-event: !include events/item-checked-in.json
   item-declared-lost-event: !include events/item-declared-lost.json
+  item-aged-to-lost-event: !include events/item-aged-to-lost.json
   item-claimed-returned-event: !include events/item-claimed-returned.json
   loan-due-date-changed-event: !include events/loan-due-date-changed.json
 
@@ -53,6 +54,8 @@ resourceTypes:
   /item-checked-in:
     type: event-handler
   /item-declared-lost:
+    type: event-handler
+  /item-aged-to-lost:
     type: event-handler
   /item-claimed-returned:
     type: event-handler

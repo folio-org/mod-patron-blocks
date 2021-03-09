@@ -64,7 +64,9 @@ public class TestBase {
   protected static final String OKAPI_URL = "http://localhost:" + OKAPI_PORT;
   protected static final String OKAPI_TENANT = "test_tenant";
   protected static final String OKAPI_TOKEN = generateOkapiToken();
-  protected static final Header JSON_CONTENT_TYPE_HEADER = new Header("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
+  private static final Header JSON_CONTENT_TYPE_HEADER =
+    new Header("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
+  private static final int GET_TENANT_TIMEOUT_MS = 10000;
 
   protected static Vertx vertx;
   protected static OkapiClient okapiClient;
@@ -81,11 +83,7 @@ public class TestBase {
   public static void beforeAll(final TestContext context) throws Exception {
     Async async = context.async();
 
-    vertx = Vertx.vertx(
-      new VertxOptions()
-        .setMaxEventLoopExecuteTimeUnit(TimeUnit.SECONDS)
-        .setMaxEventLoopExecuteTime(60)
-    );
+    vertx = Vertx.vertx();
     okapiClient = new OkapiClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
     tenantClient = new TenantClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
 
@@ -111,7 +109,7 @@ public class TestBase {
 
           postgresClient = PostgresClient.getInstance(vertx, OKAPI_TENANT);
 
-          tenantClient.getTenantByOperationId(jobId, 60000, getResult -> {
+          tenantClient.getTenantByOperationId(jobId, GET_TENANT_TIMEOUT_MS, getResult -> {
             if (getResult.failed()) {
               log.error(getResult.cause());
               return;

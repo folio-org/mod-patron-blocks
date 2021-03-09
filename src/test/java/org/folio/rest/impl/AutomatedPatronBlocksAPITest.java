@@ -15,6 +15,7 @@ import static org.folio.domain.Condition.RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS;
 import static org.folio.repository.PatronBlockLimitsRepository.PATRON_BLOCK_LIMITS_TABLE_NAME;
 import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
+import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemClaimedReturnedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
@@ -40,6 +41,7 @@ import org.folio.repository.PatronBlockLimitsRepository;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
 import org.folio.rest.handlers.FeeFineBalanceChangedEventHandler;
+import org.folio.rest.handlers.ItemAgedToLostEventHandler;
 import org.folio.rest.handlers.ItemCheckedOutEventHandler;
 import org.folio.rest.handlers.ItemClaimedReturnedEventHandler;
 import org.folio.rest.handlers.ItemDeclaredLostEventHandler;
@@ -82,6 +84,8 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
     new ItemCheckedOutEventHandler(postgresClient);
   private final ItemDeclaredLostEventHandler itemDeclaredLostEventHandler =
     new ItemDeclaredLostEventHandler(postgresClient);
+  private final ItemAgedToLostEventHandler itemAgedToLostEventHandler =
+    new ItemAgedToLostEventHandler(postgresClient);
   private final LoanDueDateChangedEventHandler loanDueDateChangedEventHandler =
     new LoanDueDateChangedEventHandler(postgresClient);
   private final FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler =
@@ -92,12 +96,12 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   private static final EnumMap<Condition, Integer> LIMIT_VALUES;
   static {
     LIMIT_VALUES = new EnumMap<>(Condition.class);
-    LIMIT_VALUES.put(MAX_NUMBER_OF_ITEMS_CHARGED_OUT, 50);
-    LIMIT_VALUES.put(MAX_NUMBER_OF_LOST_ITEMS, 20);
-    LIMIT_VALUES.put(MAX_NUMBER_OF_OVERDUE_ITEMS, 40);
-    LIMIT_VALUES.put(MAX_NUMBER_OF_OVERDUE_RECALLS, 30);
-    LIMIT_VALUES.put(RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS, 60);
-    LIMIT_VALUES.put(MAX_OUTSTANDING_FEE_FINE_BALANCE, 70);
+    LIMIT_VALUES.put(MAX_NUMBER_OF_ITEMS_CHARGED_OUT, 20);
+    LIMIT_VALUES.put(MAX_NUMBER_OF_LOST_ITEMS, 8);
+    LIMIT_VALUES.put(MAX_NUMBER_OF_OVERDUE_ITEMS, 16);
+    LIMIT_VALUES.put(MAX_NUMBER_OF_OVERDUE_RECALLS, 12);
+    LIMIT_VALUES.put(RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS, 24);
+    LIMIT_VALUES.put(MAX_OUTSTANDING_FEE_FINE_BALANCE, 28);
   }
 
   private String userId;
@@ -211,7 +215,9 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
     validateMaxNumberOfItemsChargedOutBlockResponse(1, ALL_LIMITS);
   }
 
-  private void validateMaxNumberOfLostItemsBlockResponse(int lostItemsDelta, boolean singleLimit) {
+  private void validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(
+    int lostItemsDelta, boolean singleLimit) {
+
     final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
     int limitValue = LIMIT_VALUES.get(condition);
 
@@ -234,39 +240,99 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReached() {
+  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLost() {
     expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponse(-1, SINGLE_LIMIT);
+    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(-1, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedAndAllLimitsExist() {
+  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLostAndAllLimitsExist() {
     expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponse(-1, ALL_LIMITS);
+    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(-1, ALL_LIMITS);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsReached() {
+  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLost() {
     expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponse(0, SINGLE_LIMIT);
+    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(0, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedAndAllLimitsExist() {
+  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLostAndAllLimitsExist() {
     expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponse(0, ALL_LIMITS);
+    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(0, ALL_LIMITS);
   }
 
   @Test
-  public void blockWhenMaxNumberOfLostItemsLimitIsExceeded() {
+  public void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLost() {
     expectAllBlocks();
-    validateMaxNumberOfLostItemsBlockResponse(1, SINGLE_LIMIT);
+    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(1, SINGLE_LIMIT);
   }
 
   @Test
-  public void blockWhenMaxNumberOfLostItemsLimitIsExceededAndAllLimitsExist() {
+  public void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLostAndAllLimitsExist() {
     expectAllBlocks();
-    validateMaxNumberOfLostItemsBlockResponse(1, ALL_LIMITS);
+    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(1, ALL_LIMITS);
+  }
+
+  private void validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(
+    int lostItemsDelta, boolean singleLimit) {
+
+    final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
+    int limitValue = LIMIT_VALUES.get(condition);
+
+    IntStream.range(0, limitValue + lostItemsDelta)
+      .forEach(num -> {
+        String loanId = randomId();
+        Date dueDate = now().plusHours(1).toDate();
+
+        stubLoan(loanId, dueDate, false);
+
+        waitFor(itemCheckedOutEventHandler.handle(
+          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+
+        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
+      });
+
+    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
+
+    sendRequestAndCheckResult(expectedResponse);
+  }
+
+  @Test
+  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLost() {
+    expectNoBlocks();
+    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(-1, SINGLE_LIMIT);
+  }
+
+  @Test
+  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLostAndAllLimitsExist() {
+    expectNoBlocks();
+    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(-1, ALL_LIMITS);
+  }
+
+  @Test
+  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLost() {
+    expectNoBlocks();
+    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(0, SINGLE_LIMIT);
+  }
+
+  @Test
+  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLostAndAllLimitsExist() {
+    expectNoBlocks();
+    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(0, ALL_LIMITS);
+  }
+
+  @Test
+  public void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLost() {
+    expectAllBlocks();
+    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(1, SINGLE_LIMIT);
+  }
+
+  @Test
+  public void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLostAndAllLimitsExist() {
+    expectAllBlocks();
+    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(1, ALL_LIMITS);
   }
 
   private void validateMaxOverdueItemsBlockResponse(int openLoansSizeDelta, boolean singleLimit) {
@@ -718,6 +784,48 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
       .statusCode(200)
       .contentType(ContentType.JSON)
       .body(equalTo(expectedResponse));
+  }
+
+  @Test
+  public void itemsDeclaredLostAndAgedToLostAreCombinedForMaxNumberOfLostItemsBlock() {
+    expectAllBlocks();
+
+    final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
+    int limitValue = LIMIT_VALUES.get(condition);
+
+    int totalNumberOfEvents = limitValue + 1;
+    int numberOfItemDeclaredLostEvents = totalNumberOfEvents / 2;
+    int numberOfItemAgedToLostEvents = totalNumberOfEvents - numberOfItemDeclaredLostEvents;
+
+    IntStream.range(0, numberOfItemDeclaredLostEvents)
+      .forEach(num -> {
+        String loanId = randomId();
+        Date dueDate = now().plusHours(1).toDate();
+
+        stubLoan(loanId, dueDate, false);
+
+        waitFor(itemCheckedOutEventHandler.handle(
+          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+
+        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
+      });
+
+    IntStream.range(0, numberOfItemAgedToLostEvents)
+      .forEach(num -> {
+        String loanId = randomId();
+        Date dueDate = now().plusHours(1).toDate();
+
+        stubLoan(loanId, dueDate, false);
+
+        waitFor(itemCheckedOutEventHandler.handle(
+          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+
+        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
+      });
+
+    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
+
+    sendRequestAndCheckResult(expectedResponse);
   }
 
   private Response sendRequest(String userId) {

@@ -23,6 +23,7 @@ import org.folio.domain.FeeFineType;
 import org.folio.exception.EntityNotFoundInDbException;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
+import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
@@ -96,6 +97,9 @@ public class UserSummaryService {
       .compose(eventService::getItemDeclaredLostEvents)
       .map(ctx.events::addAll)
       .map(userId)
+      .compose(eventService::getItemAgedToLostEvents)
+      .map(ctx.events::addAll)
+      .map(userId)
       .compose(eventService::getLoanDueDateChangedEvents)
       .map(ctx.events::addAll)
       .map(userId)
@@ -166,6 +170,9 @@ public class UserSummaryService {
       case ITEM_DECLARED_LOST:
         updateUserSummary(ctx.userSummary, (ItemDeclaredLostEvent) event);
         break;
+      case ITEM_AGED_TO_LOST:
+        updateUserSummary(ctx.userSummary, (ItemAgedToLostEvent) event);
+        break;
       case LOAN_DUE_DATE_CHANGED:
         updateUserSummary(ctx.userSummary, (LoanDueDateChangedEvent) event);
         break;
@@ -218,13 +225,21 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemDeclaredLostEvent event) {
+    updateUserSummaryForLostItem(userSummary, event.getLoanId());
+  }
+
+  private void updateUserSummary(UserSummary userSummary, ItemAgedToLostEvent event) {
+    updateUserSummaryForLostItem(userSummary, event.getLoanId());
+  }
+
+  private void updateUserSummaryForLostItem(UserSummary userSummary, String loanId) {
     List<OpenLoan> openLoans = userSummary.getOpenLoans();
 
     final OpenLoan openLoan = openLoans.stream()
-      .filter(loan -> StringUtils.equals(loan.getLoanId(), event.getLoanId()))
+      .filter(loan -> StringUtils.equals(loan.getLoanId(), loanId))
       .findAny()
       .orElseGet(() -> {
-        OpenLoan newOpenLoan = new OpenLoan().withLoanId(event.getLoanId());
+        OpenLoan newOpenLoan = new OpenLoan().withLoanId(loanId);
         openLoans.add(newOpenLoan);
         return newOpenLoan;
       });

@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.folio.domain.SynchronizationStatus;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
+import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
@@ -86,6 +87,15 @@ public class EntityBuilder {
     String loanId) {
 
     return new ItemDeclaredLostEvent()
+      .withUserId(userId)
+      .withLoanId(loanId)
+      .withMetadata(buildDefaultMetadata());
+  }
+
+  public static ItemAgedToLostEvent buildItemAgedToLostEvent(String userId,
+    String loanId) {
+
+    return new ItemAgedToLostEvent()
       .withUserId(userId)
       .withLoanId(loanId)
       .withMetadata(buildDefaultMetadata());
