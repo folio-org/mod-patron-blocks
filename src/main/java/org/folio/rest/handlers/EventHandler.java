@@ -52,11 +52,12 @@ public abstract class EventHandler<E extends Event> {
   protected void logResult(AsyncResult<String> result, E event) {
     String eventType = EventType.getNameByEvent(event);
     if (result.failed()) {
-      log.error("Failed to process event {} with payload:\n{}",
-        eventType, Json.encodePrettily(event), result.cause());
+      String eventJson = Json.encodePrettily(event);
+      log.error("Failed to process event {} with payload:\n{}", eventType, eventJson);
     } else {
+      String userSummaryId = result.result();
       log.info("Event {} processed successfully. Affected user summary: {}",
-        eventType, result.result());
+        eventType, userSummaryId);
     }
   }
 }
