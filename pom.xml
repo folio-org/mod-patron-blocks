@@ -16,7 +16,7 @@
   <properties>
     <raml-module-builder.version>32.2.0</raml-module-builder.version>
     <vertx.version>4.0.0</vertx.version>
-    <junit.version>4.12</junit.version>
+    <junit.version>4.13.1</junit.version>
     <rest-assured.version>4.3.0</rest-assured.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
