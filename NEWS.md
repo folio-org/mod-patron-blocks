@@ -1,3 +1,19 @@
+## 1.2.0 2021-03-10
+* Add pubsub permissions to tenant API (MODPATBLK-85)
+* Remove pubsub unregistering logic (MODPATBLK-84)
+* Update RMB to v32.1.0, update Vert.x to v4.0.0 (MODPATBLK-75)
+* Fix patron with 4 items checked out not being blocked on SNAPSHOT when limit set to 1 for patron group (MODPATBLK-83)
+* Add support for ITEM_AGED_TO_LOST events (MODPATBLK-77)
+* Allow 0 as valid entry for patron blocks limit value (MODPATBLK-79)
+* Rename patron-blocks.events.post to pubsub.events.post
+* Fix patron with 235.00 in outstanding fees/fines not blocked when patron group limit is 234.00 (MODPATBLK-69)
+* Update pubsub client version (MODPATBLK-67)
+* Synchronize job updates (MODPATBLK-66)
+* Update RMB to v31.1.5, update Vert.x to v3.9.4 (MODPATBLK-63)
+* Fix FEE_FINE_BALANCE_CHANGED event generation (MODPATBLK-65)
+* Add mapping for FeeFineTypeId (MODPATBLK-62)
+* Add a missing slash for pathPattern in ModuleDescriptor-template.json
+
 ## 1.1.0 2020-10-14
 * Automated patron blocks data synchronization (MODPATBLK-41)
 * Fix memory leak (MODPATBLK-43)
