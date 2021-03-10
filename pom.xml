@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-patron-blocks</artifactId>
-  <version>1.2.0-SNAPSHOT</version>
+  <version>1.2.0</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -417,7 +417,7 @@
     <url>https://github.com/folio-org/mod-patron-blocks</url>
     <connection>scm:git:git://github.com/folio-org/mod-patron-blocks</connection>
     <developerConnection>scm:git:git@github.com:folio-org/mod-patron-blocks.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v1.2.0</tag>
   </scm>
 
   <repositories>
