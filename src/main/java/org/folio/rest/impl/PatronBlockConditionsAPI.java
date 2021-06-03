@@ -1,7 +1,7 @@
 package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
-import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
 
 import java.util.Map;

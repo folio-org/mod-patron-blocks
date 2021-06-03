@@ -163,7 +163,7 @@ public class EventHandlersAPITest extends TestBase {
 
   @Test
   public void eventHandlingFailsWhenEventJsonIsInvalid() {
-    sendEvent(FEE_FINE_BALANCE_CHANGED_HANDLER_URL, "not json", SC_BAD_REQUEST);
+    sendEvent("not json", FEE_FINE_BALANCE_CHANGED_HANDLER_URL, SC_BAD_REQUEST);
   }
 
   @Test

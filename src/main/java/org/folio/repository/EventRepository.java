@@ -6,7 +6,6 @@ import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.PomReader;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -32,7 +31,7 @@ public class EventRepository<T> extends BaseRepository<T> {
 
     String deleteByUserIdQuery = String.format(
       "DELETE FROM %s_%s.%s WHERE jsonb ->> 'userId' = '%s'", tenantId,
-      PomReader.INSTANCE.getModuleName(), tableName, userId);
+      MODULE_NAME, tableName, userId);
     pgClient.execute(deleteByUserIdQuery, reply -> {
       if (reply.failed()) {
         promise.future().failed();

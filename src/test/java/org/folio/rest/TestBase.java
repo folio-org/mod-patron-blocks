@@ -11,35 +11,30 @@ import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.filter.log.LogDetail;
-import io.restassured.http.Header;
-import io.restassured.http.Headers;
-import io.restassured.response.ExtractableResponse;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.ext.web.client.HttpResponse;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.awaitility.Awaitility;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.folio.HttpStatus;
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.PomReader;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.OkapiClient;
 import org.junit.AfterClass;
@@ -50,12 +45,22 @@ import org.junit.ClassRule;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.filter.log.LogDetail;
+import io.restassured.http.Header;
+import io.restassured.http.Headers;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.web.client.HttpResponse;
 
 public class TestBase {
   protected static final Logger log = LogManager.getLogger(TestBase.class);
@@ -87,7 +92,7 @@ public class TestBase {
     okapiClient = new OkapiClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
     tenantClient = new TenantClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
 
-    PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     mockEndpoints();
 
@@ -134,7 +139,7 @@ public class TestBase {
     deleteTenant(tenantClient);
     Async async = context.async();
     vertx.close(context.asyncAssertSuccess(res -> {
-      PostgresClient.stopEmbeddedPostgres();
+      PostgresClient.stopPostgresTester();
       async.complete();
     }));
   }
@@ -180,10 +185,18 @@ public class TestBase {
     final Parameter loadReferenceParameter = new Parameter()
       .withKey("loadReference").withValue("true");
 
-    return new TenantAttributes()
-      .withModuleFrom("mod-patron-blocks-0.0.1")
-      .withModuleTo("mod-patron-blocks-" + PomReader.INSTANCE.getVersion())
-      .withParameters(Collections.singletonList(loadReferenceParameter));
+    try {
+      Pair<String, String> moduleNameAndVersion = getModuleNameAndVersion();
+      String moduleName = moduleNameAndVersion.getLeft();
+      String moduleVersion = moduleNameAndVersion.getRight();
+
+      return new TenantAttributes()
+        .withModuleFrom(format("%s-0.0.1", moduleName))
+        .withModuleTo(format("%s-%s", moduleName, moduleVersion))
+        .withParameters(Collections.singletonList(loadReferenceParameter));
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   protected void deleteAllFromTable(String tableName) {
@@ -295,4 +308,9 @@ public class TestBase {
       .extract();
   }
 
+  private static Pair<String, String> getModuleNameAndVersion() throws IOException, XmlPullParserException {
+    Model model = new MavenXpp3Reader().read(new FileReader("pom.xml"));
+
+    return Pair.of(model.getArtifactId(), model.getVersion());
+  }
 }

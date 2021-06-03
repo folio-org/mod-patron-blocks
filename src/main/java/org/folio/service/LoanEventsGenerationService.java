@@ -1,7 +1,7 @@
 package org.folio.service;
 
 import static io.vertx.core.Future.succeededFuture;
-import static org.apache.commons.lang.BooleanUtils.isTrue;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
 
 import java.util.List;
 import java.util.Map;

@@ -1,10 +1,10 @@
 package org.folio.rest.impl;
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_METHOD_NOT_ALLOWED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
-import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.folio.test.util.TestUtil.readFile;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -115,7 +115,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
   @Test
   public void cannotDeletePredefinedCondition() {
     deleteWithStatus(PATRON_BLOCK_CONDITIONS_URL + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID,
-      SC_BAD_REQUEST);
+      SC_METHOD_NOT_ALLOWED);
   }
 
   @Test
@@ -125,6 +125,6 @@ public class PatronBlockConditionsAPITest extends TestBase {
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
       + "/max_number_of_lost_items_no_flat_set_to_true.json");
     postWithStatus(PATRON_BLOCK_CONDITIONS_URL, maxNumberOfLostItems,
-      SC_BAD_REQUEST, USER_ID);
+      SC_METHOD_NOT_ALLOWED, USER_ID);
   }
 }

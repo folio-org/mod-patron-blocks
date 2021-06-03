@@ -11,7 +11,6 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.persist.interfaces.Results;
-import org.folio.rest.tools.PomReader;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -20,6 +19,7 @@ import io.vertx.sqlclient.RowSet;
 
 public class BaseRepository<T> {
   private static final int DEFAULT_LIMIT = 100;
+  static final String MODULE_NAME = "mod_patron_blocks";
 
   protected final PostgresClient pgClient;
   protected final String tableName;
@@ -90,8 +90,7 @@ public class BaseRepository<T> {
 
   public Future<Void> removeAll(String tenantId) {
     Promise<Void> promise = Promise.promise();
-    String deleteAllQuery = String.format("DELETE FROM %s_%s.%s", tenantId,
-      PomReader.INSTANCE.getModuleName(), tableName);
+    String deleteAllQuery = String.format("DELETE FROM %s_%s.%s", tenantId, MODULE_NAME, tableName);
     pgClient.execute(deleteAllQuery, reply -> {
       if (reply.failed()) {
         promise.future().failed();
