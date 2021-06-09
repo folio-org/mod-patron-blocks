@@ -37,6 +37,7 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.OkapiClient;
+import org.folio.rest.utils.PomUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -189,7 +190,7 @@ public class TestBase {
     try {
       return new TenantAttributes()
         .withModuleFrom(format("%s-0.0.1", MODULE_NAME))
-        .withModuleTo(format("%s-%s", MODULE_NAME, getModuleVersion()))
+        .withModuleTo(format("%s-%s", MODULE_NAME, PomUtils.getModuleVersion()))
         .withParameters(Collections.singletonList(loadReferenceParameter));
     } catch (Exception ex) {
       throw new RuntimeException(ex);
@@ -303,15 +304,5 @@ public class TestBase {
       .ifValidationFails()
       .statusCode(expectedStatus)
       .extract();
-  }
-
-  public static String getModuleVersion() {
-    try {
-      Model model = new MavenXpp3Reader().read(new FileReader("pom.xml"));
-      return model.getVersion();
-    }
-    catch (IOException | XmlPullParserException e) {
-      throw new RuntimeException("Failed to parse pom.xml");
-    }
   }
 }
