@@ -187,14 +187,10 @@ public class TestBase {
     final Parameter loadReferenceParameter = new Parameter()
       .withKey("loadReference").withValue("true");
 
-    try {
-      return new TenantAttributes()
-        .withModuleFrom(format("%s-0.0.1", MODULE_NAME))
-        .withModuleTo(format("%s-%s", MODULE_NAME, PomUtils.getModuleVersion()))
-        .withParameters(Collections.singletonList(loadReferenceParameter));
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
+    return new TenantAttributes()
+      .withModuleFrom(format("%s-0.0.1", MODULE_NAME))
+      .withModuleTo(format("%s-%s", MODULE_NAME, PomUtils.getModuleVersion()))
+      .withParameters(Collections.singletonList(loadReferenceParameter));
   }
 
   protected void deleteAllFromTable(String tableName) {
