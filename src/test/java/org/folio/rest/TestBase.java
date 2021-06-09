@@ -65,6 +65,7 @@ import io.vertx.ext.web.client.HttpResponse;
 public class TestBase {
   protected static final Logger log = LogManager.getLogger(TestBase.class);
 
+  protected static final String MODULE_NAME = "mod_patron_blocks";
   protected static final int OKAPI_PORT = NetworkUtils.nextFreePort();
   protected static final String OKAPI_URL = "http://localhost:" + OKAPI_PORT;
   protected static final String OKAPI_TENANT = "test_tenant";
@@ -186,13 +187,9 @@ public class TestBase {
       .withKey("loadReference").withValue("true");
 
     try {
-      Pair<String, String> moduleNameAndVersion = getModuleNameAndVersion();
-      String moduleName = moduleNameAndVersion.getLeft();
-      String moduleVersion = moduleNameAndVersion.getRight();
-
       return new TenantAttributes()
-        .withModuleFrom(format("%s-0.0.1", moduleName))
-        .withModuleTo(format("%s-%s", moduleName, moduleVersion))
+        .withModuleFrom(format("%s-0.0.1", MODULE_NAME))
+        .withModuleTo(format("%s-%s", MODULE_NAME, getModuleVersion()))
         .withParameters(Collections.singletonList(loadReferenceParameter));
     } catch (Exception ex) {
       throw new RuntimeException(ex);
@@ -308,9 +305,13 @@ public class TestBase {
       .extract();
   }
 
-  private static Pair<String, String> getModuleNameAndVersion() throws IOException, XmlPullParserException {
-    Model model = new MavenXpp3Reader().read(new FileReader("pom.xml"));
-
-    return Pair.of(model.getArtifactId(), model.getVersion());
+  public static String getModuleVersion() {
+    try {
+      Model model = new MavenXpp3Reader().read(new FileReader("pom.xml"));
+      return model.getVersion();
+    }
+    catch (IOException | XmlPullParserException e) {
+      throw new RuntimeException("Failed to parse pom.xml");
+    }
   }
 }
