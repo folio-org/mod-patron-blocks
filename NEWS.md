@@ -1,3 +1,7 @@
+## 1.3.0 2021-06-14
+* Upgrade mod-pubsub-client to v2.3.0 (MODPATBLK-89)
+* Upgrade RMB to v33.0.0, update Vert.x to v4.1.0 (MODPATBLK-86)
+
 ## 1.2.0 2021-03-10
 * Add pubsub permissions to tenant API (MODPATBLK-85)
 * Remove pubsub unregistering logic (MODPATBLK-84)
