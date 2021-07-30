@@ -83,31 +83,31 @@ public class EventService {
   }
 
   public Future<String> save(ItemCheckedOutEvent event) {
-    return itemCheckedOutEventRepository.save(event, UuidHelper.randomId());
+    return itemCheckedOutEventRepository.save(event);
   }
 
   public Future<String> save(ItemCheckedInEvent event) {
-    return itemCheckedInEventRepository.save(event, UuidHelper.randomId());
+    return itemCheckedInEventRepository.save(event);
   }
 
   public Future<String> save(ItemClaimedReturnedEvent event) {
-    return itemClaimedReturnedEventRepository.save(event, UuidHelper.randomId());
+    return itemClaimedReturnedEventRepository.save(event);
   }
 
   public Future<String> save(ItemDeclaredLostEvent event) {
-    return itemDeclaredLostEventRepository.save(event, UuidHelper.randomId());
+    return itemDeclaredLostEventRepository.save(event);
   }
 
   public Future<String> save(ItemAgedToLostEvent event) {
-    return itemAgedToLostEventEventRepository.save(event, UuidHelper.randomId());
+    return itemAgedToLostEventEventRepository.save(event);
   }
 
   public Future<String> save(LoanDueDateChangedEvent event) {
-    return loanDueDateChangedEventRepository.save(event, UuidHelper.randomId());
+    return loanDueDateChangedEventRepository.save(event);
   }
 
   public Future<String> save(FeeFineBalanceChangedEvent event) {
-    return feeFineBalanceChangedEventRepository.save(event, UuidHelper.randomId());
+    return feeFineBalanceChangedEventRepository.save(event);
   }
 
   public Future<List<ItemCheckedOutEvent>> getItemCheckedOutEvents(String userId) {
