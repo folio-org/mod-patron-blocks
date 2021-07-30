@@ -33,24 +33,19 @@ public class UserSummaryServiceTest extends TestBase {
   @Test
   public void shouldAddEvent(TestContext context) {
     final String userId = randomId();
+    waitFor(userSummaryRepository.save(createUserSummary(randomId(), userId)));
 
-    String summaryId = randomId();
-    UserSummary userSummaryToSave = createUserSummary(summaryId, randomId());
-    waitFor(userSummaryRepository.save(userSummaryToSave));
+    UserSummary userSummary = waitFor(userSummaryService.getByUserId(userId));
 
-    waitFor(userSummaryRepository.get(summaryId)).ifPresent(userSummary -> {
-      final String feeFineId = randomId();
-      final String loanId2 = randomId();
-      final String feeFineTypeId = randomId();
-      BigDecimal balance = new BigDecimal("3.33");
-      FeeFineBalanceChangedEvent feeFineBalanceChangedEvent = buildFeeFineBalanceChangedEvent(
-        userId, loanId2, feeFineId, feeFineTypeId, balance);
-      userSummaryService.updateUserSummaryWithEvent(userSummary, feeFineBalanceChangedEvent);
-      waitFor(userSummaryRepository.get(summaryId)).ifPresent(
-        updatedUserSummary -> context.assertTrue(
-          updatedUserSummary.getOpenFeesFines().stream()
-            .anyMatch(openFeeFine -> openFeeFine.getFeeFineId().equals(feeFineId))));
-    });
+    final String feeFineId = randomId();
+    FeeFineBalanceChangedEvent feeFineBalanceChangedEvent = buildFeeFineBalanceChangedEvent(
+      userId, randomId(), feeFineId, randomId(), new BigDecimal("3.33"));
+
+    userSummaryService.updateUserSummaryWithEvent(userSummary, feeFineBalanceChangedEvent);
+
+    UserSummary updatedUserSummary = waitFor(userSummaryService.getByUserId(userId));
+    context.assertTrue(updatedUserSummary.getOpenFeesFines().stream()
+      .anyMatch(openFeeFine -> openFeeFine.getFeeFineId().equals(feeFineId)));
   }
 
   @Test
@@ -87,18 +82,10 @@ public class UserSummaryServiceTest extends TestBase {
   public void shouldUpdateNewUserSummaryIfUserSummaryDidNotExist(TestContext context) {
     final String userId = randomId();
     final String summaryId = randomId();
-    final String feeFineId1 = randomId();
-    final String feeFineId2 = randomId();
-    final String loanId1 = randomId();
-    final String loanId2 = randomId();
-    final String feeFineTypeId1 = randomId();
-    final String feeFineTypeId2 = randomId();
-    BigDecimal balance1 = new BigDecimal("3.33");
-    BigDecimal balance2 = new BigDecimal("7.77");
     FeeFineBalanceChangedEvent feeFineBalanceChangedEvent1 = buildFeeFineBalanceChangedEvent(
-      userId, loanId1, feeFineId1, feeFineTypeId1, balance1);
+      userId, randomId(), randomId(), randomId(), new BigDecimal("3.33"));
     FeeFineBalanceChangedEvent feeFineBalanceChangedEvent2 = buildFeeFineBalanceChangedEvent(
-      userId, loanId2, feeFineId2, feeFineTypeId2, balance2);
+      userId, randomId(), randomId(), randomId(), new BigDecimal("7.77"));
 
     UserSummary userSummary = createUserSummary(summaryId, userId);
     waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, feeFineBalanceChangedEvent1));

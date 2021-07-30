@@ -1,5 +1,7 @@
 package org.folio.service;
 
+import static io.vertx.core.Future.failedFuture;
+import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
@@ -20,7 +22,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import io.vertx.core.Future;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.pgclient.PgException;
 
@@ -45,20 +46,16 @@ public class UserSummaryServiceUnitTest extends TestBase {
     PgException pgException = new PgException("", "", "23F09", "");
     String userId = randomId();
     String summaryId = randomId();
-    final String feeFineId1 = randomId();
-    final String loanId1 = randomId();
-    final String feeFineTypeId1 = randomId();
     UserSummary userSummary = buildUserSummary(summaryId, userId);
     BigDecimal balance1 = new BigDecimal("3.33");
     setInternalState(userSummaryService, "userSummaryRepository", userSummaryRepository);
-    when(userSummaryRepository.save(userSummary)).thenReturn(Future.succeededFuture(summaryId));
+    when(userSummaryRepository.save(userSummary)).thenReturn(succeededFuture(summaryId));
     when(userSummaryRepository.findByUserIdOrBuildNew(userId)).thenReturn(
-      Future.succeededFuture(userSummary));
-    doReturn(Future.failedFuture(pgException))
-      .when(userSummaryRepository).upsert(userSummary);
+      succeededFuture(userSummary));
+    doReturn(failedFuture(pgException)).when(userSummaryRepository).upsert(userSummary);
     userSummaryRepository.save(userSummary);
     FeeFineBalanceChangedEvent feeFineBalanceChangedEvent1 = buildFeeFineBalanceChangedEvent(
-      userId, loanId1, feeFineId1, feeFineTypeId1, balance1);
+      userId, randomId(), randomId(), randomId(), balance1);
     waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, feeFineBalanceChangedEvent1));
 
     verify(userSummaryRepository, times(11)).upsert(userSummary);
