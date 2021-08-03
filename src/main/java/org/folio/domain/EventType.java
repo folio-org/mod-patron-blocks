@@ -9,6 +9,7 @@ import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
+import org.folio.rest.jaxrs.model.LoanClosedEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 
 public enum EventType {
@@ -19,6 +20,7 @@ public enum EventType {
   ITEM_AGED_TO_LOST(ItemAgedToLostEvent.class),
   ITEM_CLAIMED_RETURNED(ItemClaimedReturnedEvent.class),
   LOAN_DUE_DATE_CHANGED(LoanDueDateChangedEvent.class),
+  LOAN_CLOSED(LoanClosedEvent.class),
   UNKNOWN(null);
 
   private static final Map<Class<? extends Event>, EventType> eventToType;

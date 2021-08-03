@@ -9,21 +9,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.domain.Event;
 import org.folio.domain.EventType;
-import org.folio.rest.handlers.ItemAgedToLostEventHandler;
-import org.folio.rest.handlers.ItemCheckedInEventHandler;
-import org.folio.rest.handlers.ItemCheckedOutEventHandler;
-import org.folio.rest.handlers.ItemClaimedReturnedEventHandler;
-import org.folio.rest.handlers.LoanDueDateChangedEventHandler;
-import org.folio.rest.handlers.ItemDeclaredLostEventHandler;
+import org.folio.rest.handlers.EventHandler;
+import org.folio.rest.handlers.FeeFineBalanceChangedEventHandler;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
+import org.folio.rest.jaxrs.model.LoanClosedEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.resource.AutomatedPatronBlocksHandlers;
-import org.folio.rest.handlers.FeeFineBalanceChangedEventHandler;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -58,7 +54,7 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
 
     logEventReceived(event);
 
-    new ItemCheckedOutEventHandler(okapiHeaders, vertxContext.owner()).handle(event);
+    new EventHandler<ItemCheckedOutEvent>(okapiHeaders, vertxContext.owner()).handle(event);
   }
 
   @Override
@@ -71,7 +67,7 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
 
     logEventReceived(event);
 
-    new ItemCheckedInEventHandler(okapiHeaders, vertxContext.owner())
+    new EventHandler<ItemCheckedInEvent>(okapiHeaders, vertxContext.owner())
       .handle(event);
   }
 
@@ -85,7 +81,8 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
 
     logEventReceived(event);
 
-    new ItemDeclaredLostEventHandler(okapiHeaders, vertxContext.owner()).handle(event);
+    new EventHandler<ItemDeclaredLostEvent>(okapiHeaders, vertxContext.owner())
+      .handle(event);
   }
 
   @Override
@@ -98,7 +95,7 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
 
     logEventReceived(event);
 
-    new ItemAgedToLostEventHandler(okapiHeaders, vertxContext.owner()).handle(event);
+    new EventHandler<ItemAgedToLostEvent>(okapiHeaders, vertxContext.owner()).handle(event);
   }
 
   @Override
@@ -111,7 +108,7 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
 
     logEventReceived(event);
 
-    new ItemClaimedReturnedEventHandler(okapiHeaders, vertxContext.owner())
+    new EventHandler<ItemClaimedReturnedEvent>(okapiHeaders, vertxContext.owner())
       .handle(event);
   }
 
@@ -125,7 +122,19 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
 
     logEventReceived(event);
 
-    new LoanDueDateChangedEventHandler(okapiHeaders, vertxContext.owner())
+    new EventHandler<LoanDueDateChangedEvent>(okapiHeaders, vertxContext.owner())
+      .handle(event);
+  }
+
+  @Override
+  public void postAutomatedPatronBlocksHandlersLoanClosed(LoanClosedEvent event,
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
+
+    asyncResultHandler.handle(Future.succeededFuture(
+      PostAutomatedPatronBlocksHandlersLoanClosedResponse.respond204()));
+
+    new EventHandler<LoanClosedEvent>(okapiHeaders, vertxContext.owner())
       .handle(event);
   }
 

@@ -12,6 +12,7 @@ import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
+import org.folio.rest.jaxrs.model.LoanClosedEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.util.UuidHelper;
@@ -27,6 +28,7 @@ public class EventService {
   private static final String ITEM_CLAIMED_RETURNED_EVENT_TABLE_NAME = "item_claimed_returned_event";
   private static final String LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME = "loan_due_date_changed_event";
   private static final String FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME = "fee_fine_balance_changed_event";
+  private static final String LOAN_CLOSED_EVENT_TABLE_NAME = "loan_closed_event";
 
   private final EventRepository<ItemCheckedOutEvent> itemCheckedOutEventRepository;
   private final EventRepository<ItemCheckedInEvent> itemCheckedInEventRepository;
@@ -35,6 +37,7 @@ public class EventService {
   private final EventRepository<ItemAgedToLostEvent> itemAgedToLostEventEventRepository;
   private final EventRepository<LoanDueDateChangedEvent> loanDueDateChangedEventRepository;
   private final EventRepository<FeeFineBalanceChangedEvent> feeFineBalanceChangedEventRepository;
+  private final EventRepository<LoanClosedEvent> loanClosedEventRepository;
 
   public EventService(PostgresClient postgresClient) {
     itemCheckedOutEventRepository = new EventRepository<>(postgresClient,
@@ -57,6 +60,9 @@ public class EventService {
 
     feeFineBalanceChangedEventRepository = new EventRepository<>(postgresClient,
       FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME, FeeFineBalanceChangedEvent.class);
+
+    loanClosedEventRepository = new EventRepository<>(postgresClient,
+      LOAN_CLOSED_EVENT_TABLE_NAME, LoanClosedEvent.class);
   }
 
   public Future<String> save(Event event) {
@@ -77,6 +83,8 @@ public class EventService {
       return save((LoanDueDateChangedEvent) event);
     case FEE_FINE_BALANCE_CHANGED:
       return save((FeeFineBalanceChangedEvent) event);
+      case LOAN_CLOSED:
+      return save((LoanClosedEvent) event);
     default:
       throw new IllegalStateException("Unexpected value: " + eventType);
     }
@@ -108,6 +116,10 @@ public class EventService {
 
   public Future<String> save(FeeFineBalanceChangedEvent event) {
     return feeFineBalanceChangedEventRepository.save(event);
+  }
+
+  public Future<String> save(LoanClosedEvent event) {
+    return loanClosedEventRepository.save(event);
   }
 
   public Future<List<ItemCheckedOutEvent>> getItemCheckedOutEvents(String userId) {

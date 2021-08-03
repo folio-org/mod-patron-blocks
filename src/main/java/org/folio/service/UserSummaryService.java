@@ -5,6 +5,7 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
 import static org.folio.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.domain.EventType.ITEM_CHECKED_OUT;
+import static org.folio.domain.EventType.LOAN_CLOSED;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
+import org.folio.rest.jaxrs.model.LoanClosedEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
@@ -218,6 +220,9 @@ public class UserSummaryService {
       case FEE_FINE_BALANCE_CHANGED:
         updateUserSummary(ctx.userSummary, (FeeFineBalanceChangedEvent) event);
         break;
+      case LOAN_CLOSED:
+        updateUserSummary(ctx.userSummary, (LoanClosedEvent) event);
+        break;
     }
   }
 
@@ -237,12 +242,19 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemCheckedInEvent event) {
+    removeLoanFromUserSummary(userSummary, ITEM_CHECKED_IN.name(), event.getId(),
+      event.getUserId(), event.getLoanId());
+  }
+
+  private void removeLoanFromUserSummary(UserSummary userSummary, String eventName, String eventId,
+    String userId, String loanId) {
+
     boolean loanRemoved = userSummary.getOpenLoans()
-      .removeIf(loan -> StringUtils.equals(loan.getLoanId(), event.getLoanId()));
+      .removeIf(loan -> StringUtils.equals(loan.getLoanId(), loanId));
 
     if (!loanRemoved) {
-      log.error("Event {}:{} is ignored. Open loan {} was not found for user {}",
-        ITEM_CHECKED_IN.name(), event.getId(), event.getLoanId(), event.getUserId());
+      log.error("Event {}:{} is ignored. Open loan {} was not found for user {}", eventName,
+        eventId, loanId, userId);
     }
   }
 
@@ -327,6 +339,11 @@ public class UserSummaryService {
       openFeeFine.setBalance(event.getBalance());
       openFeeFine.setLoanId(event.getLoanId());
     }
+  }
+
+  private void updateUserSummary(UserSummary userSummary, LoanClosedEvent event) {
+    removeLoanFromUserSummary(userSummary, LOAN_CLOSED.name(), event.getId(),
+      event.getUserId(), event.getLoanId());
   }
 
   private boolean feeFineIsClosed(FeeFineBalanceChangedEvent event) {

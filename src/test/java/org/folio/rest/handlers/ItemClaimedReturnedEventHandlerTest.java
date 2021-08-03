@@ -8,6 +8,7 @@ import static org.folio.rest.utils.EntityBuilder.buildItemClaimedReturnedEvent;
 
 import java.util.Date;
 
+import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
@@ -20,10 +21,10 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class ItemClaimedReturnedEventHandlerTest extends EventHandlerTestBase {
-  private static final ItemClaimedReturnedEventHandler itemClaimedReturnedEventHandler =
-    new ItemClaimedReturnedEventHandler(postgresClient);
-  private static final ItemCheckedOutEventHandler itemCheckedOutEventHandler =
-    new ItemCheckedOutEventHandler(postgresClient);
+  private static final EventHandler<ItemClaimedReturnedEvent> itemClaimedReturnedEventHandler =
+    new EventHandler<>(postgresClient);
+  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
+    new EventHandler<>(postgresClient);
 
   @Before
   public void beforeEach() {

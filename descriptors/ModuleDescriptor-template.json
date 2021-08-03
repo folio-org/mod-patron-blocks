@@ -68,7 +68,7 @@
     },
     {
       "id":"patron-blocks-event-handlers",
-      "version":"1.0",
+      "version":"1.1",
       "handlers":[
         {
           "methods":[
@@ -129,6 +129,15 @@
             "POST"
           ],
           "pathPattern":"/automated-patron-blocks/handlers/loan-due-date-changed",
+          "permissionsRequired": [
+            "pubsub.events.post"
+          ]
+        },
+        {
+          "methods":[
+            "POST"
+          ],
+          "pathPattern":"/automated-patron-blocks/handlers/loan-closed",
           "permissionsRequired": [
             "pubsub.events.post"
           ]

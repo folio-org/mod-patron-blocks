@@ -92,6 +92,18 @@
       ]
     },
     {
+      "tableName": "loan_closed_event",
+      "withMetadata": true,
+      "index": [
+        {
+          "fieldName": "userId",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        }
+      ]
+    },
+    {
       "tableName": "user_summary",
       "withOptimisticLocking": "failOnConflict",
       "withMetadata": true,

@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.Optional;
 
 import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
+import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -19,10 +20,10 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class ItemCheckedInHandlerTest extends EventHandlerTestBase {
-  private static final ItemCheckedOutEventHandler itemCheckedOutEventHandler =
-    new ItemCheckedOutEventHandler(postgresClient);
-  private static final ItemCheckedInEventHandler itemCheckedInEventHandler =
-    new ItemCheckedInEventHandler(postgresClient);
+  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
+    new EventHandler<>(postgresClient);
+  private static final EventHandler<ItemCheckedInEvent> itemCheckedInEventHandler =
+    new EventHandler<>(postgresClient);
 
   @Before
   public void beforeEach(TestContext context) {

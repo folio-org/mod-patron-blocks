@@ -9,10 +9,6 @@ import java.util.Map;
 import org.folio.repository.SynchronizationJobRepository;
 import org.folio.rest.client.BulkDownloadClient;
 import org.folio.rest.handlers.EventHandler;
-import org.folio.rest.handlers.ItemCheckedOutEventHandler;
-import org.folio.rest.handlers.ItemClaimedReturnedEventHandler;
-import org.folio.rest.handlers.ItemDeclaredLostEventHandler;
-import org.folio.rest.handlers.LoanDueDateChangedEventHandler;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
@@ -39,10 +35,10 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
     super(new BulkDownloadClient<>("/loan-storage/loans", "loans", Loan.class, vertx, okapiHeaders),
       syncRepository);
 
-    this.checkedOutEventHandler = new ItemCheckedOutEventHandler(okapiHeaders, vertx);
-    this.declaredLostEventHandler = new ItemDeclaredLostEventHandler(okapiHeaders, vertx);
-    this.claimedReturnedEventHandler = new ItemClaimedReturnedEventHandler(okapiHeaders, vertx);
-    this.dueDateChangedEventHandler = new LoanDueDateChangedEventHandler(okapiHeaders, vertx);
+    this.checkedOutEventHandler = new EventHandler<>(okapiHeaders, vertx);
+    this.declaredLostEventHandler = new EventHandler<>(okapiHeaders, vertx);
+    this.claimedReturnedEventHandler = new EventHandler<>(okapiHeaders, vertx);
+    this.dueDateChangedEventHandler = new EventHandler<>(okapiHeaders, vertx);
   }
 
   @Override

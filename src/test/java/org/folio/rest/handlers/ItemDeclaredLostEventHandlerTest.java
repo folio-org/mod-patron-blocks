@@ -8,6 +8,7 @@ import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
 
 import java.util.Date;
 
+import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
@@ -20,11 +21,11 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class ItemDeclaredLostEventHandlerTest extends EventHandlerTestBase {
-  private static final ItemDeclaredLostEventHandler itemDeclaredLostEventHandler =
-    new ItemDeclaredLostEventHandler(postgresClient);
+  private static final EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler =
+    new EventHandler<>(postgresClient);
 
-  private static final ItemCheckedOutEventHandler itemCheckedOutEventHandler =
-    new ItemCheckedOutEventHandler(postgresClient);
+  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
+    new EventHandler<>(postgresClient);
 
   @Before
   public void beforeEach(TestContext context) {

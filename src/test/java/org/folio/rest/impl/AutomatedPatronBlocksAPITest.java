@@ -2,7 +2,6 @@ package org.folio.rest.impl;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.traceRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static java.util.stream.Collectors.toList;
@@ -41,14 +40,15 @@ import org.folio.repository.PatronBlockConditionsRepository;
 import org.folio.repository.PatronBlockLimitsRepository;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
+import org.folio.rest.handlers.EventHandler;
 import org.folio.rest.handlers.FeeFineBalanceChangedEventHandler;
-import org.folio.rest.handlers.ItemAgedToLostEventHandler;
-import org.folio.rest.handlers.ItemCheckedOutEventHandler;
-import org.folio.rest.handlers.ItemClaimedReturnedEventHandler;
-import org.folio.rest.handlers.ItemDeclaredLostEventHandler;
-import org.folio.rest.handlers.LoanDueDateChangedEventHandler;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlock;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlocks;
+import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
+import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
+import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
+import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
+import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
@@ -81,18 +81,18 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   private final PatronBlockConditionsRepository conditionsRepository =
     new PatronBlockConditionsRepository(postgresClient);
 
-  private final ItemCheckedOutEventHandler itemCheckedOutEventHandler =
-    new ItemCheckedOutEventHandler(postgresClient);
-  private final ItemDeclaredLostEventHandler itemDeclaredLostEventHandler =
-    new ItemDeclaredLostEventHandler(postgresClient);
-  private final ItemAgedToLostEventHandler itemAgedToLostEventHandler =
-    new ItemAgedToLostEventHandler(postgresClient);
-  private final LoanDueDateChangedEventHandler loanDueDateChangedEventHandler =
-    new LoanDueDateChangedEventHandler(postgresClient);
+  private final EventHandler<ItemCheckedOutEvent>  itemCheckedOutEventHandler =
+    new EventHandler<>(postgresClient);
+  private final EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler =
+    new EventHandler<>(postgresClient);
+  private final EventHandler<ItemAgedToLostEvent> itemAgedToLostEventHandler =
+    new EventHandler<>(postgresClient);
+  private final EventHandler<LoanDueDateChangedEvent> loanDueDateChangedEventHandler =
+    new EventHandler<>(postgresClient);
   private final FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler =
     new FeeFineBalanceChangedEventHandler(postgresClient);
-  private final ItemClaimedReturnedEventHandler itemClaimedReturnedEventHandler =
-    new ItemClaimedReturnedEventHandler(postgresClient);
+  private final EventHandler<ItemClaimedReturnedEvent> itemClaimedReturnedEventHandler =
+    new EventHandler<>(postgresClient);
 
   private static final EnumMap<Condition, Integer> LIMIT_VALUES;
 

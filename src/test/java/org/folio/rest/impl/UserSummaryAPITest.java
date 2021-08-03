@@ -7,7 +7,8 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
-import org.folio.rest.handlers.ItemCheckedOutEventHandler;
+import org.folio.rest.handlers.EventHandler;
+import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,8 +23,8 @@ public class UserSummaryAPITest extends TestBase {
   private final UserSummaryRepository userSummaryRepository =
     new UserSummaryRepository(postgresClient);
 
-  private final ItemCheckedOutEventHandler itemCheckedOutEventHandler =
-    new ItemCheckedOutEventHandler(postgresClient);
+  private final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
+    new EventHandler<>(postgresClient);
 
   @Before
   public void beforeEach() {

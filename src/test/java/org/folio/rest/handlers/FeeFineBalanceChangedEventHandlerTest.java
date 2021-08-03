@@ -19,6 +19,8 @@ import org.folio.domain.FeeFineType;
 import org.folio.exception.EntityNotFoundException;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
+import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
+import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.junit.Before;
@@ -34,11 +36,11 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   private static final FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler =
     new FeeFineBalanceChangedEventHandler(postgresClient);
 
-  private static final ItemDeclaredLostEventHandler itemDeclaredLostEventHandler =
-    new ItemDeclaredLostEventHandler(postgresClient);
+  private static final EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler =
+    new EventHandler<>(postgresClient);
 
-  private static final ItemCheckedOutEventHandler itemCheckedOutEventHandler =
-    new ItemCheckedOutEventHandler(postgresClient);
+  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
+    new EventHandler<>(postgresClient);
 
   @Before
   public void beforeEach() {

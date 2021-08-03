@@ -1,7 +1,7 @@
 #%RAML 1.0
 
 title: Event handlers API
-version: v0.1
+version: v1.1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -22,6 +22,7 @@ types:
   item-aged-to-lost-event: !include events/item-aged-to-lost.json
   item-claimed-returned-event: !include events/item-claimed-returned.json
   loan-due-date-changed-event: !include events/loan-due-date-changed.json
+  loan-closed-event: !include events/loan-closed.json
 
 resourceTypes:
   event-handler:
@@ -60,4 +61,6 @@ resourceTypes:
   /item-claimed-returned:
     type: event-handler
   /loan-due-date-changed:
+    type: event-handler
+  /loan-closed:
     type: event-handler

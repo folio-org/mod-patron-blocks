@@ -9,6 +9,7 @@ import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
 import java.util.Date;
 import java.util.Optional;
 
+import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
@@ -23,11 +24,11 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @RunWith(VertxUnitRunner.class)
 public class LoanDueDateChangedEventHandlerTest extends EventHandlerTestBase {
 
-  private static final LoanDueDateChangedEventHandler loanDueDateChangedEventHandler =
-    new LoanDueDateChangedEventHandler(postgresClient);
+  private static final EventHandler<LoanDueDateChangedEvent> loanDueDateChangedEventHandler =
+    new EventHandler<>(postgresClient);
 
-  private static final ItemCheckedOutEventHandler itemCheckedOutEventHandler =
-    new ItemCheckedOutEventHandler(postgresClient);
+  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
+    new EventHandler<>(postgresClient);
 
   @Before
   public void beforeEach(TestContext context) {

@@ -13,6 +13,7 @@ import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
+import org.folio.rest.jaxrs.model.LoanClosedEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
@@ -121,6 +122,13 @@ public class EntityBuilder {
       .withLoanId(loanId)
       .withDueDate(dueDate)
       .withDueDateChangedByRecall(dueDateChangedByRecall)
+      .withMetadata(buildDefaultMetadata());
+  }
+
+  public static LoanClosedEvent buildLoanClosedEvent(String userId, String loanId) {
+    return new LoanClosedEvent()
+      .withUserId(userId)
+      .withLoanId(loanId)
       .withMetadata(buildDefaultMetadata());
   }
 

@@ -19,20 +19,20 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 
-public abstract class EventHandler<E extends Event> {
+public class EventHandler<E extends Event> {
   protected static final Logger log = LogManager.getLogger(EventHandler.class);
   protected final UserSummaryRepository userSummaryRepository;
   protected final EventService eventService;
   protected final UserSummaryService userSummaryService;
 
-  protected EventHandler(Map<String, String> okapiHeaders, Vertx vertx) {
+  public EventHandler(Map<String, String> okapiHeaders, Vertx vertx) {
     PostgresClient postgresClient = getPostgresClient(okapiHeaders, vertx);
     userSummaryRepository = new UserSummaryRepository(postgresClient);
     eventService = new EventService(postgresClient);
     userSummaryService = new UserSummaryService(postgresClient);
   }
 
-  protected EventHandler(PostgresClient postgresClient) {
+  public EventHandler(PostgresClient postgresClient) {
     userSummaryRepository = new UserSummaryRepository(postgresClient);
     eventService = new EventService(postgresClient);
     userSummaryService = new UserSummaryService(postgresClient);
