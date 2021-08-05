@@ -134,6 +134,8 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
     asyncResultHandler.handle(Future.succeededFuture(
       PostAutomatedPatronBlocksHandlersLoanClosedResponse.respond204()));
 
+    logEventReceived(event);
+
     new EventHandler<LoanClosedEvent>(okapiHeaders, vertxContext.owner())
       .handle(event);
   }

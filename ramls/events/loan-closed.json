@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "javaInterfaces" : ["org.folio.domain.Event"],
-  "description": "Loan due date changed event",
+  "description": "Loan closed event",
   "properties": {
     "id": {
       "description" : "A globally unique identifier (UUID) for the event",

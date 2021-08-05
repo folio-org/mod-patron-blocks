@@ -59,6 +59,10 @@
     {
       "eventType": "LOAN_DUE_DATE_CHANGED",
       "callbackAddress": "/automated-patron-blocks/handlers/loan-due-date-changed"
+    },
+    {
+      "eventType": "LOAN_CLOSED",
+      "callbackAddress": "/automated-patron-blocks/handlers/loan-closed"
     }
   ]
 }
