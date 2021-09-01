@@ -1,3 +1,6 @@
+## 1.3.2 2021-09-01
+* Do not rebuild user summary when blocks are requested (MODPATBLK-91)
+
 ## 1.3.1 2021-08-04
 * Change limit for double values (MODPATBLK-92)
 
