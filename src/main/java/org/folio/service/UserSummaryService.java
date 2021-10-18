@@ -77,23 +77,29 @@ public class UserSummaryService {
   }
 
   private Future<String> recursivelyUpdateUserSummaryWithEvent(UpdateRetryContext ctx,
-    Event event) {
+      Event event) {
 
     return updateAndStoreUserSummary(ctx.userSummary, event)
       .recover(throwable -> {
         log.error(throwable.getMessage());
-        if (PgExceptionUtil.isVersionConflict(throwable) && ctx.shouldRetryUpdate()) {
+        if (! PgExceptionUtil.isVersionConflict(throwable)) {
+          return Future.failedFuture(throwable);
+        }
+        if (! ctx.shouldRetryUpdate()) {
           log.error("Failed to update user summary due to version conflict. User ID: {}. " +
-            "Attempt # {}", ctx.userSummary.getUserId(), ctx.attemptCounter.get());
-
-          return userSummaryRepository.findByUserIdOrBuildNew(ctx.userSummary.getUserId())
+              "Failed attempts: {}", ctx.userSummary.getUserId(),
+              MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT);
+          return Future.failedFuture(throwable);
+        }
+        log.error("Version conflict when trying to update user summary. User ID: {}. " +
+            "Attempt # {} of {}", ctx.userSummary.getUserId(),
+            ctx.attemptCounter.get(), MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT);
+        return userSummaryRepository.findByUserIdOrBuildNew(ctx.userSummary.getUserId())
             .compose(latestVersionUserSummary -> {
               ctx.attemptCounter.incrementAndGet();
               ctx.setUserSummary(latestVersionUserSummary);
               return recursivelyUpdateUserSummaryWithEvent(ctx, event);
             });
-        }
-        return Future.failedFuture(throwable);
       });
   }
 
