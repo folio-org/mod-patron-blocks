@@ -50,6 +50,7 @@
             "default": false
           },
           "gracePeriod": {
+            "description": "The time after the due date during which penalties are deferred.",
             "$ref": "period.json"
           }
         },

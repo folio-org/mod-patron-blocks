@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
+  "description": "Period of time, a number of minutes, hours, days, weeks or months",
   "properties": {
     "duration": {
       "type": "integer",
