@@ -55,7 +55,7 @@ public class BulkDownloadClient<T> extends OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         String errorMessage = String.format("Failed to fetch %s. Response: %d %s",
-          arrayName, responseStatus, response.bodyAsString());
+          arrayName, responseStatus, response.bodyAsString().replaceAll("\\r|\\n", ""));
         log.error(errorMessage);
         return failedFuture(new HttpFailureException(errorMessage));
       } else {
