@@ -30,6 +30,8 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class OkapiClient {
+  public static final String EMPTY_STRING = "";
+  public static final String NEW_LINES_STRING = "\\r|\\n";
   private static final Logger log = LogManager.getLogger(OkapiClient.class);
 
   static final ObjectMapper objectMapper = new ObjectMapper();
@@ -72,17 +74,17 @@ public class OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         String errorMessage = String.format("Failed to fetch %s by ID: %s. Response: %d %s",
-          responseType.getName(), id, responseStatus, response.bodyAsString().replaceAll("\\r|\\n", ""));
+          responseType.getName(), id, responseStatus, response.bodyAsString().replaceAll(NEW_LINES_STRING, EMPTY_STRING));
         log.error(errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.info("Fetched by ID: {}/{}. Response body: {}", path, id, response.bodyAsString().replaceAll("\\r|\\n", ""));
+          log.info("Fetched by ID: {}/{}. Response body: {}", path, id, response.bodyAsString().replaceAll(NEW_LINES_STRING, EMPTY_STRING));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
           log.error("Failed to parse response from {}/{}. Response body: {}", path, id,
-            response.bodyAsString().replaceAll("\\r|\\n", ""), e);
+            response.bodyAsString().replaceAll(NEW_LINES_STRING, EMPTY_STRING), e);
           return failedFuture(e);
         }
       }
@@ -100,7 +102,7 @@ public class OkapiClient {
         int responseStatus = response.statusCode();
         if (responseStatus != 200) {
           var errorMessage = String.format("Failed to fetch entities by path: %s. Response: %d %s",
-          path, responseStatus, response.bodyAsString().replaceAll("\\r|\\n", ""));
+          path, responseStatus, response.bodyAsString().replaceAll(NEW_LINES_STRING, EMPTY_STRING));
           log.error(errorMessage);
         }
         return succeededFuture(response.bodyAsJsonObject());
@@ -115,17 +117,17 @@ public class OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         String errorMessage = String.format("Failed to fetch %s. Response: %d %s",
-          responseType.getName(), responseStatus, response.bodyAsString().replaceAll("\\r|\\n", ""));
+          responseType.getName(), responseStatus, response.bodyAsString().replaceAll(NEW_LINES_STRING, EMPTY_STRING));
         log.error(errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.info("Fetched from {}. Response body: {}", path, response.bodyAsString().replaceAll("\\r|\\n", ""));
+          log.info("Fetched from {}. Response body: {}", path, response.bodyAsString().replaceAll(NEW_LINES_STRING, EMPTY_STRING));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
           log.error("Failed to parse response from {}. Response body: {}", path,
-            response.bodyAsString().replaceAll("\\r|\\n", ""));
+            response.bodyAsString().replaceAll(NEW_LINES_STRING, EMPTY_STRING));
           return failedFuture(e);
         }
       }
