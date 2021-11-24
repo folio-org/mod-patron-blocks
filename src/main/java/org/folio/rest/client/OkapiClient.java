@@ -4,7 +4,6 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.okapi.common.XOkapiHeaders.TOKEN;
 import static org.folio.okapi.common.XOkapiHeaders.URL;
@@ -31,7 +30,8 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class OkapiClient {
-  public static final String LINE_SEPARATOR = "\\r|\\n";
+  public static final String R_N_LINE_SEPARATOR = "\\r|\\n";
+  public static final String R_LINE_SEPARATOR = "\\r";
   private static final Logger log = LogManager.getLogger(OkapiClient.class);
 
   static final ObjectMapper objectMapper = new ObjectMapper();
@@ -74,17 +74,17 @@ public class OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         String errorMessage = String.format("Failed to fetch %s by ID: %s. Response: %d %s",
-          responseType.getName(), id, responseStatus, response.bodyAsString().replaceAll(LINE_SEPARATOR, EMPTY));
+          responseType.getName(), id, responseStatus, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
         log.error(errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.info("Fetched by ID: {}/{}. Response body: {}", path, id, response.bodyAsString().replaceAll(LINE_SEPARATOR, EMPTY));
+          log.debug("Fetched by ID: {}/{}. Response body: {}", path, id, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
           log.error("Failed to parse response from {}/{}. Response body: {}", path, id,
-            response.bodyAsString().replaceAll(LINE_SEPARATOR, EMPTY), e);
+            response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR), e);
           return failedFuture(e);
         }
       }
@@ -102,7 +102,7 @@ public class OkapiClient {
         int responseStatus = response.statusCode();
         if (responseStatus != 200) {
           var errorMessage = String.format("Failed to fetch entities by path: %s. Response: %d %s",
-          path, responseStatus, response.bodyAsString().replaceAll(LINE_SEPARATOR, EMPTY));
+          path, responseStatus, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
           log.error(errorMessage);
         }
         return succeededFuture(response.bodyAsJsonObject());
@@ -117,17 +117,17 @@ public class OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         String errorMessage = String.format("Failed to fetch %s. Response: %d %s",
-          responseType.getName(), responseStatus, response.bodyAsString().replaceAll(LINE_SEPARATOR, EMPTY));
+          responseType.getName(), responseStatus, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
         log.error(errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.info("Fetched from {}. Response body: {}", path, response.bodyAsString().replaceAll(LINE_SEPARATOR, EMPTY));
+          log.debug("Fetched from {}. Response body: {}", path, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
           log.error("Failed to parse response from {}. Response body: {}", path,
-            response.bodyAsString().replaceAll(LINE_SEPARATOR, EMPTY));
+            response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
           return failedFuture(e);
         }
       }
