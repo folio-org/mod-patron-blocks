@@ -80,10 +80,10 @@ public class OkapiClient {
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.debug("Fetched by ID: {}/{}. Response body: {}", path, id, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
+          log.debug("Fetched by ID: {}/{}. Response body: \r{}", path, id, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
-          log.error("Failed to parse response from {}/{}. Response body: {}", path, id,
+          log.error("Failed to parse response from {}/{}. Response body: \r{}", path, id,
             response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR), e);
           return failedFuture(e);
         }
@@ -123,10 +123,10 @@ public class OkapiClient {
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.debug("Fetched from {}. Response body: {}", path, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
+          log.debug("Fetched from {}. Response body: \r{}", path, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
-          log.error("Failed to parse response from {}. Response body: {}", path,
+          log.error("Failed to parse response from {}. Response body: \r{}", path,
             response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
           return failedFuture(e);
         }
