@@ -1,3 +1,6 @@
+## 1.4.1 2021-12-16
+* Upgrade to RMB to v33.0.4 and Log4j 2.16.0 (MODPATBLK-106)
+
 ## 1.4.0 2021-09-30
 * Increase `Maximum outstanding fee/fine balance` limit maximum value from 9999 to 999999 (MODPATBLK-92)
 * Use optimistic locking for UserSummary records to avoid race condition and improve performance (MODPATBLK-91)
