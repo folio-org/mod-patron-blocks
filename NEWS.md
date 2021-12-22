@@ -1,3 +1,6 @@
+## 1.3.3 2021-12-22
+* Upgrade to RMB 33.0.4 and Log4j 2.16.0 (MODPATBLK-107)
+
 ## 1.3.2 2021-09-01
 * Do not rebuild user summary when blocks requested (MODPATBLK-91)
 
