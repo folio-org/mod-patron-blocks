@@ -124,6 +124,10 @@ public class PatronBlocksService {
   private Future<BlocksCalculationContext> addOverdueMinutesToContext(
     BlocksCalculationContext ctx) {
 
+    if (ctx.patronBlockLimits.isEmpty()) {
+      return Future.succeededFuture(ctx);
+    }
+
     List<Future<LoanOverdueMinutes>> overdueMinutesFutures = new ArrayList<>();
 
     ctx.userSummary.getOpenLoans().forEach(openLoan ->
