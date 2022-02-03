@@ -1,3 +1,6 @@
+## 1.3.4 2022-02-03
+* Do not fetch loans and loan policies when there are no patron block limits (MODPATBLK-114)
+
 ## 1.3.3 2021-12-22
 * Upgrade to RMB 33.0.4 and Log4j 2.16.0 (MODPATBLK-107)
 
