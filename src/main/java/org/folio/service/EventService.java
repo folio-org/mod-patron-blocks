@@ -154,6 +154,7 @@ public class EventService {
       itemCheckedInEventRepository.removeAll(tenantId),
       itemClaimedReturnedEventRepository.removeAll(tenantId),
       itemDeclaredLostEventRepository.removeAll(tenantId),
+      itemAgedToLostEventEventRepository.removeAll(tenantId),
       loanDueDateChangedEventRepository.removeAll(tenantId),
       feeFineBalanceChangedEventRepository.removeAll(tenantId))
     ).mapEmpty();
@@ -165,6 +166,7 @@ public class EventService {
         itemCheckedInEventRepository.removeByUserId(tenantId, userId),
         itemClaimedReturnedEventRepository.removeByUserId(tenantId, userId),
         itemDeclaredLostEventRepository.removeByUserId(tenantId, userId),
+        itemAgedToLostEventEventRepository.removeByUserId(tenantId, userId),
         loanDueDateChangedEventRepository.removeByUserId(tenantId, userId),
         feeFineBalanceChangedEventRepository.removeByUserId(tenantId, userId))
     ).mapEmpty();
