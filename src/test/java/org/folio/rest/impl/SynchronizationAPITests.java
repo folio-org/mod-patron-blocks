@@ -14,11 +14,9 @@ import static org.folio.rest.utils.EntityBuilder.buildSynchronizationJob;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.newSynchronizationJobByUser;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.newSynchronizationJobFull;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.synchronizationJobMatcher;
-import static org.folio.util.UuidHelper.randomId;
 import static org.hamcrest.Matchers.is;
 import static org.joda.time.LocalDateTime.now;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 import java.util.Date;
 import java.util.List;
