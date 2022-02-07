@@ -73,7 +73,7 @@ public class SynchronizationAPITests extends TestBase {
   private EventRepository<ItemDeclaredLostEvent> itemDeclaredLostEventRepository =
     new EventRepository<>(postgresClient, ITEM_DECLARED_LOST_EVENT_TABLE_NAME,
       ItemDeclaredLostEvent.class);
-  private EventRepository<ItemAgedToLostEvent> itemAgedToLostEventEventRepository =
+  private EventRepository<ItemAgedToLostEvent> itemAgedToLostEventRepository =
     new EventRepository<>(postgresClient, ITEM_AGED_TO_LOST_EVENT_TABLE_NAME,
       ItemAgedToLostEvent.class);
   private EventRepository<LoanDueDateChangedEvent> loanDueDateChangedEventRepository = new EventRepository<>(
@@ -90,6 +90,7 @@ public class SynchronizationAPITests extends TestBase {
     deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
     deleteAllFromTable(ITEM_DECLARED_LOST_EVENT_TABLE_NAME);
     deleteAllFromTable(ITEM_CLAIMED_RETURNED_EVENT_TABLE_NAME);
+    deleteAllFromTable(ITEM_AGED_TO_LOST_EVENT_TABLE_NAME);
     deleteAllFromTable(LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME);
     deleteAllFromTable(FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME);
     deleteAllFromTable(SYNCHRONIZATION_JOBS_TABLE_NAME);
@@ -181,7 +182,7 @@ public class SynchronizationAPITests extends TestBase {
 
     Awaitility.await()
       .atMost(5, SECONDS)
-      .until(() -> waitFor(itemAgedToLostEventEventRepository.getByUserId(USER_ID)).size(), is(0));
+      .until(() -> waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(0));
 
     checkSyncJobUpdatedByLoanEvent(syncJobId);
   }
@@ -199,7 +200,7 @@ public class SynchronizationAPITests extends TestBase {
 
     Awaitility.await()
       .atMost(5, SECONDS)
-      .until(() -> waitFor(itemAgedToLostEventEventRepository.getAllWithDefaultLimit()).size(), is(0));
+      .until(() -> waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(0));
 
     checkSyncJobUpdatedByLoanEvent(syncJobId);
   }
