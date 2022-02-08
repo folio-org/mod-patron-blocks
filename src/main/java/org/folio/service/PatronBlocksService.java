@@ -71,7 +71,12 @@ public class PatronBlocksService {
     return succeededFuture(ctx)
       .compose(this::addUserGroupIdToContext)
       .compose(this::addPatronBlockLimitsToContext)
-      .compose(this::addAllPatronBlockConditionsToContext)
+      .compose(context -> {
+        if(context.patronBlockLimits.isEmpty()) {
+          return failedFuture(DEFAULT_ERROR_MESSAGE);
+        }
+        return addAllPatronBlockConditionsToContext(context);
+      })
       .map(this::addOverdueMinutesToContext)
       .map(this::calculateBlocks);
   }
