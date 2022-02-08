@@ -171,7 +171,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void agedToLostEventShouldBeDeletedAfterSynchronizationJobByUser() {
+  public void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
     sendAgedToLostEvent(createItemAgedToLostEvent(USER_ID), SC_NO_CONTENT);
 
     stubLoans(now().plusHours(1).toDate(), true, "Checked out");
@@ -188,7 +188,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void agedToLostEventsShouldBeDeletedAfterSynchronizationJobFull() {
+  public void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
     sendAgedToLostEvent(createItemAgedToLostEvent(randomId()), SC_NO_CONTENT);
     sendAgedToLostEvent(createItemAgedToLostEvent(randomId()), SC_NO_CONTENT);
 
