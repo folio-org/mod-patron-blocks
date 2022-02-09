@@ -73,6 +73,7 @@ public class PatronBlocksService {
       .compose(this::addPatronBlockLimitsToContext)
       .compose(context -> {
         if(context.patronBlockLimits.isEmpty()) {
+          context.logFailedValidationError("addPatronBlockLimitsToContext");
           return failedFuture(DEFAULT_ERROR_MESSAGE);
         }
         return addAllPatronBlockConditionsToContext(context);
