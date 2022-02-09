@@ -71,23 +71,13 @@ public class PatronBlocksService {
     return succeededFuture(ctx)
       .compose(this::addUserGroupIdToContext)
       .compose(this::addPatronBlockLimitsToContext)
-      .compose(context -> {
-        if(context.patronBlockLimits.isEmpty()) {
-          context.logFailedValidationError("addPatronBlockLimitsToContext");
-          return failedFuture(DEFAULT_ERROR_MESSAGE);
-        }
-        return addAllPatronBlockConditionsToContext(context);
-      })
+      .compose(this::addAllPatronBlockConditionsToContext)
       .map(this::addOverdueMinutesToContext)
       .map(this::calculateBlocks);
   }
 
   private AutomatedPatronBlocks calculateBlocks(BlocksCalculationContext ctx) {
     final AutomatedPatronBlocks blocks = new AutomatedPatronBlocks();
-
-    if (ctx.patronBlockLimits.isEmpty()) {
-      return blocks;
-    }
 
     blocks.getAutomatedPatronBlocks().addAll(ctx.patronBlockLimits.stream()
       .map(ctx::withCurrentPatronBlockLimit)
@@ -125,6 +115,11 @@ public class PatronBlocksService {
 
   private Future<BlocksCalculationContext> addAllPatronBlockConditionsToContext(
     BlocksCalculationContext ctx) {
+
+    if(ctx.patronBlockLimits.isEmpty()) {
+      ctx.logFailedValidationError("addAllPatronBlockConditionsToContext");
+      return failedFuture(DEFAULT_ERROR_MESSAGE);
+    }
 
     return conditionsRepository.getAllWithDefaultLimit().map(ctx::withPatronBlockConditions);
   }
