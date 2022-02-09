@@ -71,23 +71,17 @@ public class PatronBlocksService {
     return succeededFuture(ctx)
       .compose(this::addUserGroupIdToContext)
       .compose(this::addPatronBlockLimitsToContext)
-      .compose(this::completePatronBlocksIfLimitsExist);
-  }
-
-  private Future<AutomatedPatronBlocks> completePatronBlocksIfLimitsExist(
-    BlocksCalculationContext ctx) {
-
-    if(ctx.patronBlockLimits.isEmpty()) {
-      return succeededFuture(new AutomatedPatronBlocks());
-    }
-
-    return addAllPatronBlockConditionsToContext(ctx)
+      .compose(this::addAllPatronBlockConditionsToContext)
       .map(this::addOverdueMinutesToContext)
       .map(this::calculateBlocks);
   }
 
   private AutomatedPatronBlocks calculateBlocks(BlocksCalculationContext ctx) {
     final AutomatedPatronBlocks blocks = new AutomatedPatronBlocks();
+
+    if(ctx.shouldCalculationSkipped()) {
+      return blocks;
+    }
 
     blocks.getAutomatedPatronBlocks().addAll(ctx.patronBlockLimits.stream()
       .map(ctx::withCurrentPatronBlockLimit)
@@ -126,10 +120,18 @@ public class PatronBlocksService {
   private Future<BlocksCalculationContext> addAllPatronBlockConditionsToContext(
     BlocksCalculationContext ctx) {
 
+    if(ctx.shouldCalculationSkipped()) {
+      return succeededFuture(ctx);
+    }
+
     return conditionsRepository.getAllWithDefaultLimit().map(ctx::withPatronBlockConditions);
   }
 
   private BlocksCalculationContext addOverdueMinutesToContext(BlocksCalculationContext ctx) {
+    if(ctx.shouldCalculationSkipped()) {
+      return ctx;
+    }
+
     return ctx.withOverdueMinutes(
       ctx.userSummary.getOpenLoans()
         .stream()
@@ -232,6 +234,10 @@ public class PatronBlocksService {
     @Override
     protected String getName() {
       return "blocks-calculation-context";
+    }
+
+    protected boolean shouldCalculationSkipped() {
+      return this.patronBlockLimits == null || patronBlockLimits.isEmpty();
     }
   }
 
