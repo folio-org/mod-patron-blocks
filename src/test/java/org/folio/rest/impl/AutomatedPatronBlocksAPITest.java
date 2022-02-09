@@ -143,8 +143,14 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
 
   @Test
   public void shouldReturnNoBlocksWhenNoLimitsExistForPatronGroup() {
+    final String userId = randomId();
+    UserSummary userSummary = new UserSummary()
+      .withId(randomId())
+      .withUserId(userId);
+    waitFor(summaryRepository.save(userSummary));
+
     String emptyBlocksResponse = toJson(new AutomatedPatronBlocks());
-    sendRequestAndCheckResult(randomId(), emptyBlocksResponse);
+    sendRequestAndCheckResult(userId, emptyBlocksResponse);
   }
 
   private void validateMaxNumberOfItemsChargedOutBlockResponse(int openLoansSizeDelta,
