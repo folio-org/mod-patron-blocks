@@ -237,7 +237,7 @@ public class PatronBlocksService {
     }
 
     protected boolean shouldCalculationSkipped() {
-      return this.patronBlockLimits == null || patronBlockLimits.isEmpty();
+      return this.patronBlockLimits == null || this.patronBlockLimits.isEmpty();
     }
   }
 
