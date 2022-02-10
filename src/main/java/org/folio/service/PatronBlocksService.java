@@ -79,7 +79,7 @@ public class PatronBlocksService {
   private AutomatedPatronBlocks calculateBlocks(BlocksCalculationContext ctx) {
     final AutomatedPatronBlocks blocks = new AutomatedPatronBlocks();
 
-    if(ctx.shouldCalculationSkipped()) {
+    if (ctx.shouldCalculationBeSkipped()) {
       return blocks;
     }
 
@@ -120,7 +120,7 @@ public class PatronBlocksService {
   private Future<BlocksCalculationContext> addAllPatronBlockConditionsToContext(
     BlocksCalculationContext ctx) {
 
-    if(ctx.shouldCalculationSkipped()) {
+    if (ctx.shouldCalculationBeSkipped()) {
       return succeededFuture(ctx);
     }
 
@@ -128,7 +128,7 @@ public class PatronBlocksService {
   }
 
   private BlocksCalculationContext addOverdueMinutesToContext(BlocksCalculationContext ctx) {
-    if(ctx.shouldCalculationSkipped()) {
+    if (ctx.shouldCalculationBeSkipped()) {
       return ctx;
     }
 
@@ -236,7 +236,7 @@ public class PatronBlocksService {
       return "blocks-calculation-context";
     }
 
-    protected boolean shouldCalculationSkipped() {
+    protected boolean shouldCalculationBeSkipped() {
       return this.patronBlockLimits == null || this.patronBlockLimits.isEmpty();
     }
   }
