@@ -174,8 +174,8 @@ public class SynchronizationAPITests extends TestBase {
   public void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
     sendAgedToLostEvent(createItemAgedToLostEvent(USER_ID), SC_NO_CONTENT);
 
-    stubLoans(now().plusHours(1).toDate(), true, "Checked out");
-    stubAccountsWithEmptyResponse();
+    assertThat(waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(1));
+
     String syncJobId = createOpenSynchronizationJobByUser();
 
     runSynchronization();
@@ -184,7 +184,7 @@ public class SynchronizationAPITests extends TestBase {
       .atMost(5, SECONDS)
       .until(() -> waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(0));
 
-    checkSyncJobUpdatedByLoanEvent(syncJobId);
+    checkSyncJob(syncJobId);
   }
 
   @Test
@@ -192,8 +192,8 @@ public class SynchronizationAPITests extends TestBase {
     sendAgedToLostEvent(createItemAgedToLostEvent(randomId()), SC_NO_CONTENT);
     sendAgedToLostEvent(createItemAgedToLostEvent(randomId()), SC_NO_CONTENT);
 
-    stubLoans(now().plusHours(1).toDate(), true, "Checked out");
-    stubAccountsWithEmptyResponse();
+    assertThat(waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(2));
+
     String syncJobId = createOpenSynchronizationJobFull();
 
     runSynchronization();
@@ -202,7 +202,7 @@ public class SynchronizationAPITests extends TestBase {
       .atMost(5, SECONDS)
       .until(() -> waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(0));
 
-    checkSyncJobUpdatedByLoanEvent(syncJobId);
+    checkSyncJob(syncJobId);
   }
 
   @Test
@@ -330,6 +330,13 @@ public class SynchronizationAPITests extends TestBase {
     okapiClient.post("/automated-patron-blocks/synchronization/start", EMPTY)
       .then()
       .statusCode(202);
+  }
+
+  protected void checkSyncJob(String syncJobId) {
+    Awaitility.await()
+      .atMost(30, SECONDS)
+      .until(() -> waitFor(synchronizationJobRepository.get(syncJobId))
+        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0)));
   }
 
   protected void checkSyncJobUpdatedByLoanEvent(String syncJobId) {
