@@ -11,6 +11,7 @@ import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import io.vertx.core.CompositeFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.domain.SynchronizationStatus;
@@ -22,7 +23,6 @@ import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
@@ -118,10 +118,12 @@ public class SynchronizationJobService {
     if (job.getScope() == FULL) {
       return userSummaryRepository.removeAll(tenantId)
         .map(job);
-    } else if (job.getScope() == USER) {
+    }
+    else if (job.getScope() == USER) {
       return userSummaryRepository.delete(job.getUserId())
         .map(job);
-    } else {
+    }
+    else {
       return succeededFuture(job);
     }
   }
