@@ -1,6 +1,7 @@
 package org.folio.rest.utils;
 
 import static java.util.Map.entry;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.junit.Assert.fail;
 
@@ -53,6 +54,10 @@ public class EventClient {
       entry(LoanDueDateChangedEvent.class, LOAN_DUE_DATE_CHANGED_HANDLER_URL)
     );
 
+  public ValidatableResponse sendEvent(Event event) {
+    return sendEvent(event, SC_NO_CONTENT);
+  }
+
   public ValidatableResponse sendEvent(Event event, int expectedStatus) {
     String eventPayload = JsonObject.mapFrom(event).encodePrettily();
     return sendEvent(eventPayload, getHandlerUrlForEventType(event.getClass()), expectedStatus);
@@ -60,10 +65,6 @@ public class EventClient {
 
   private ValidatableResponse sendEvent(String eventPayload, String handlerUrl,
     int expectedStatus) {
-
-    if(okapiClient == null) {
-      fail("Failed to send event, okapi client is null");
-    }
 
     return okapiClient.post(handlerUrl, eventPayload)
       .then()

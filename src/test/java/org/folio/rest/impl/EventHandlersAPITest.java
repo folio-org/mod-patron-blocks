@@ -2,7 +2,6 @@ package org.folio.rest.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
@@ -57,11 +56,11 @@ public class EventHandlersAPITest extends TestBase {
   @Test
   public void shouldNotCreateUserSummary() {
     assertFalse(getUserSummary().isPresent());
-    eventClient.sendEvent(createItemCheckedInEvent(), SC_NO_CONTENT);
-    eventClient.sendEvent(createItemClaimedReturnedEvent(), SC_NO_CONTENT);
-    eventClient.sendEvent(createItemDeclaredLostEvent(), SC_NO_CONTENT);
-    eventClient.sendEvent(createItemAgedToLostEvent(), SC_NO_CONTENT);
-    eventClient.sendEvent(createLoanDueDateChangedEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemCheckedInEvent());
+    eventClient.sendEvent(createItemClaimedReturnedEvent());
+    eventClient.sendEvent(createItemDeclaredLostEvent());
+    eventClient.sendEvent(createItemAgedToLostEvent());
+    eventClient.sendEvent(createLoanDueDateChangedEvent());
     assertFalse(getUserSummary().isPresent());
   }
 
@@ -73,7 +72,7 @@ public class EventHandlersAPITest extends TestBase {
 
   @Test
   public void itemCheckedInEventProcessedSuccessfully() {
-    eventClient.sendEvent(createItemCheckedInEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemCheckedInEvent());
   }
 
   @Test
@@ -95,7 +94,7 @@ public class EventHandlersAPITest extends TestBase {
 
   @Test
   public void loanDueDateChangedEventProcessedSuccessfully() {
-    eventClient.sendEvent(createLoanDueDateChangedEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createLoanDueDateChangedEvent());
   }
 
   @Test
@@ -106,7 +105,7 @@ public class EventHandlersAPITest extends TestBase {
 
   @Test
   public void itemDeclaredLostEventProcessedSuccessfully() {
-    eventClient.sendEvent(createItemDeclaredLostEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemDeclaredLostEvent());
   }
 
   @Test
@@ -117,7 +116,7 @@ public class EventHandlersAPITest extends TestBase {
 
   @Test
   public void itemAgedToLostEventProcessedSuccessfully() {
-    eventClient.sendEvent(createItemAgedToLostEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemAgedToLostEvent());
   }
 
   @Test
@@ -128,7 +127,7 @@ public class EventHandlersAPITest extends TestBase {
 
   @Test
   public void itemClaimedReturnedEventProcessedSuccessfully() {
-    eventClient.sendEvent(createItemClaimedReturnedEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemClaimedReturnedEvent());
   }
 
   @Test
@@ -180,7 +179,7 @@ public class EventHandlersAPITest extends TestBase {
   private void sendEventAndVerifyThatUserSummaryWasCreated(Event event) {
     assertFalse(getUserSummary().isPresent());
 
-    eventClient.sendEvent(event, SC_NO_CONTENT);
+    eventClient.sendEvent(event);
 
     Awaitility.await()
       .atMost(5, SECONDS)

@@ -7,7 +7,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
@@ -170,7 +169,7 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   public void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
-    eventClient.sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()), SC_NO_CONTENT);
+    eventClient.sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()));
     assertThat(waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(1));
     String syncJobId = createOpenSynchronizationJobByUser();
 
@@ -185,8 +184,8 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   public void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
-    eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
-    eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
+    eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()));
+    eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()));
     assertThat(waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(2));
     String syncJobId = createOpenSynchronizationJobFull();
 
@@ -330,7 +329,7 @@ public class SynchronizationAPITests extends TestBase {
     Awaitility.await()
       .atMost(30, SECONDS)
       .until(() -> waitFor(synchronizationJobRepository.get(syncJobId))
-        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0)));
+        .orElse(null), synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0));
   }
 
   protected void checkSyncJobUpdatedByLoanEvent(String syncJobId) {
