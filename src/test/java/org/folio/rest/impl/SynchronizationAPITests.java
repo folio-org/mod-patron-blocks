@@ -170,7 +170,7 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   public void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
-    eventUtils.sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()), SC_NO_CONTENT);
+    eventClient.sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()), SC_NO_CONTENT);
     assertThat(waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(1));
     String syncJobId = createOpenSynchronizationJobByUser();
 
@@ -185,8 +185,8 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   public void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
-    eventUtils.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
-    eventUtils.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
+    eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
+    eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
     assertThat(waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(2));
     String syncJobId = createOpenSynchronizationJobFull();
 

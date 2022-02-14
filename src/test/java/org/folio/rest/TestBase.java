@@ -30,7 +30,7 @@ import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.utils.EventUtils;
+import org.folio.rest.utils.EventClient;
 import org.folio.rest.utils.OkapiClient;
 import org.folio.rest.utils.PomUtils;
 import org.junit.AfterClass;
@@ -74,7 +74,7 @@ public class TestBase {
   protected static OkapiClient okapiClient;
   protected static TenantClient tenantClient;
   protected static PostgresClient postgresClient;
-  protected static EventUtils eventUtils;
+  protected static EventClient eventClient;
 
   protected static String jobId;
 
@@ -90,7 +90,7 @@ public class TestBase {
     okapiClient = new OkapiClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
     tenantClient = new TenantClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
-    eventUtils = new EventUtils(okapiClient);
+    eventClient = new EventClient(okapiClient);
 
     mockEndpoints();
 

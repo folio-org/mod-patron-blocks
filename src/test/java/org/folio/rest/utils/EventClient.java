@@ -18,7 +18,7 @@ import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import io.restassured.response.ValidatableResponse;
 import io.vertx.core.json.JsonObject;
 
-public class EventUtils {
+public class EventClient {
   private static final String EVENT_HANDLERS_ROOT_URL = "/automated-patron-blocks/handlers/";
 
   private static final String FEE_FINE_BALANCE_CHANGED_HANDLER_URL =
@@ -38,7 +38,7 @@ public class EventUtils {
 
   private final OkapiClient okapiClient;
 
-  public EventUtils(OkapiClient okapiClient) {
+  public EventClient(OkapiClient okapiClient) {
     this.okapiClient = okapiClient;
   }
 
@@ -70,7 +70,7 @@ public class EventUtils {
       .statusCode(expectedStatus);
   }
 
-  public ValidatableResponse sendEvent(String eventPayload, Class eventType,
+  public ValidatableResponse sendEvent(String eventPayload, Class<? extends Event> eventType,
     int expectedStatus) {
 
     return sendEvent(eventPayload, getHandlerUrlForEventType(eventType), expectedStatus);
@@ -80,7 +80,7 @@ public class EventUtils {
     return sendEvent(event, SC_UNPROCESSABLE_ENTITY);
   }
 
-  private String getHandlerUrlForEventType(Class eventType) {
+  private String getHandlerUrlForEventType(Class<? extends Event> eventType) {
     final String eventHandlerUrl = eventTypeToHandlerUrl.get(eventType);
 
     if (eventHandlerUrl == null) {

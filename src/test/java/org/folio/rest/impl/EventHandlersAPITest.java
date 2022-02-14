@@ -57,28 +57,28 @@ public class EventHandlersAPITest extends TestBase {
   @Test
   public void shouldNotCreateUserSummary() {
     assertFalse(getUserSummary().isPresent());
-    eventUtils.sendEvent(createItemCheckedInEvent(), SC_NO_CONTENT);
-    eventUtils.sendEvent(createItemClaimedReturnedEvent(), SC_NO_CONTENT);
-    eventUtils.sendEvent(createItemDeclaredLostEvent(), SC_NO_CONTENT);
-    eventUtils.sendEvent(createItemAgedToLostEvent(), SC_NO_CONTENT);
-    eventUtils.sendEvent(createLoanDueDateChangedEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemCheckedInEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemClaimedReturnedEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemDeclaredLostEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemAgedToLostEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createLoanDueDateChangedEvent(), SC_NO_CONTENT);
     assertFalse(getUserSummary().isPresent());
   }
 
   @Test
   public void feeFineBalanceChangedEventValidationFails() {
-    eventUtils.sendEventAndVerifyValidationFailure(
+    eventClient.sendEventAndVerifyValidationFailure(
       createFeeFineBalanceChangedEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
   public void itemCheckedInEventProcessedSuccessfully() {
-    eventUtils.sendEvent(createItemCheckedInEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemCheckedInEvent(), SC_NO_CONTENT);
   }
 
   @Test
   public void itemCheckedInEventValidationFails() {
-    eventUtils.sendEventAndVerifyValidationFailure(
+    eventClient.sendEventAndVerifyValidationFailure(
       createItemCheckedInEvent().withUserId(INVALID_USER_ID));
   }
 
@@ -89,62 +89,62 @@ public class EventHandlersAPITest extends TestBase {
 
   @Test
   public void itemCheckedOutEventValidationFails() {
-    eventUtils.sendEventAndVerifyValidationFailure(
+    eventClient.sendEventAndVerifyValidationFailure(
       createItemCheckedOutEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
   public void loanDueDateChangedEventProcessedSuccessfully() {
-    eventUtils.sendEvent(createLoanDueDateChangedEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createLoanDueDateChangedEvent(), SC_NO_CONTENT);
   }
 
   @Test
   public void loanDueDateChangedEventValidationFails() {
-    eventUtils.sendEventAndVerifyValidationFailure(
+    eventClient.sendEventAndVerifyValidationFailure(
       createLoanDueDateChangedEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
   public void itemDeclaredLostEventProcessedSuccessfully() {
-    eventUtils.sendEvent(createItemDeclaredLostEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemDeclaredLostEvent(), SC_NO_CONTENT);
   }
 
   @Test
   public void itemDeclaredLostEventValidationFails() {
-    eventUtils.sendEventAndVerifyValidationFailure(
+    eventClient.sendEventAndVerifyValidationFailure(
       createItemDeclaredLostEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
   public void itemAgedToLostEventProcessedSuccessfully() {
-    eventUtils.sendEvent(createItemAgedToLostEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemAgedToLostEvent(), SC_NO_CONTENT);
   }
 
   @Test
   public void itemAgedToLostEventValidationFails() {
-    eventUtils.sendEventAndVerifyValidationFailure(
+    eventClient.sendEventAndVerifyValidationFailure(
       createItemAgedToLostEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
   public void itemClaimedReturnedEventProcessedSuccessfully() {
-    eventUtils.sendEvent(createItemClaimedReturnedEvent(), SC_NO_CONTENT);
+    eventClient.sendEvent(createItemClaimedReturnedEvent(), SC_NO_CONTENT);
   }
 
   @Test
   public void itemClaimedReturnedEventValidationFails() {
-    eventUtils.sendEventAndVerifyValidationFailure(
+    eventClient.sendEventAndVerifyValidationFailure(
       createItemClaimedReturnedEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
   public void eventHandlingFailsWhenEventJsonIsInvalid() {
-    eventUtils.sendEvent("not json", FeeFineBalanceChangedEvent.class, SC_BAD_REQUEST);
+    eventClient.sendEvent("not json", FeeFineBalanceChangedEvent.class, SC_BAD_REQUEST);
   }
 
   @Test
   public void loanDueDateChangedEventWithMissingRequiredDueDateProperty() {
-    eventUtils.sendEventAndVerifyValidationFailure(
+    eventClient.sendEventAndVerifyValidationFailure(
       createLoanDueDateChangedEvent().withDueDate(null));
   }
 
@@ -180,7 +180,7 @@ public class EventHandlersAPITest extends TestBase {
   private void sendEventAndVerifyThatUserSummaryWasCreated(Event event) {
     assertFalse(getUserSummary().isPresent());
 
-    eventUtils.sendEvent(event, SC_NO_CONTENT);
+    eventClient.sendEvent(event, SC_NO_CONTENT);
 
     Awaitility.await()
       .atMost(5, SECONDS)
