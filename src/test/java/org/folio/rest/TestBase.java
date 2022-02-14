@@ -8,6 +8,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static java.lang.String.format;
+import static org.folio.rest.utils.EventUtils.setOkapiClient;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -36,6 +37,7 @@ import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.rest.utils.EventUtils;
 import org.folio.rest.utils.OkapiClient;
 import org.folio.rest.utils.PomUtils;
 import org.junit.AfterClass;
@@ -92,8 +94,8 @@ public class TestBase {
 
     vertx = Vertx.vertx();
     okapiClient = new OkapiClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
+    setOkapiClient(okapiClient);
     tenantClient = new TenantClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
-
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     mockEndpoints();

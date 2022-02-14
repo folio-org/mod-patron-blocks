@@ -10,19 +10,20 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
+import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildSynchronizationJob;
+import static org.folio.rest.utils.EventUtils.sendEvent;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.newSynchronizationJobByUser;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.newSynchronizationJobFull;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.synchronizationJobMatcher;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.joda.time.LocalDateTime.now;
-import static org.junit.Assert.assertThat;
 
 import java.util.Date;
 import java.util.List;
 
 import org.awaitility.Awaitility;
-import org.folio.domain.Event;
 import org.folio.domain.SynchronizationStatus;
 import org.folio.repository.EventRepository;
 import org.folio.repository.SynchronizationJobRepository;
@@ -33,7 +34,6 @@ import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
-import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
@@ -43,7 +43,6 @@ import org.junit.runner.RunWith;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import io.restassured.response.ValidatableResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -172,10 +171,8 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   public void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
-    sendAgedToLostEvent(createItemAgedToLostEvent(USER_ID), SC_NO_CONTENT);
-
+    sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()), SC_NO_CONTENT);
     assertThat(waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(1));
-
     String syncJobId = createOpenSynchronizationJobByUser();
 
     runSynchronization();
@@ -189,11 +186,9 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   public void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
-    sendAgedToLostEvent(createItemAgedToLostEvent(randomId()), SC_NO_CONTENT);
-    sendAgedToLostEvent(createItemAgedToLostEvent(randomId()), SC_NO_CONTENT);
-
+    sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
+    sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
     assertThat(waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(2));
-
     String syncJobId = createOpenSynchronizationJobFull();
 
     runSynchronization();
@@ -451,20 +446,5 @@ public class SynchronizationAPITests extends TestBase {
       .put(entityName, new JsonArray())
       .put("totalRecords", 0)
       .encodePrettily();
-  }
-
-  private ValidatableResponse sendAgedToLostEvent(Event event, int expectedStatus) {
-    return okapiClient.post("/automated-patron-blocks/handlers/item-aged-to-lost", toJson(event))
-      .then()
-      .statusCode(expectedStatus);
-  }
-
-  private static ItemAgedToLostEvent createItemAgedToLostEvent(String userId) {
-    return new ItemAgedToLostEvent()
-      .withUserId(userId)
-      .withLoanId(randomId())
-      .withMetadata(
-        new Metadata()
-          .withCreatedDate(new Date()));
   }
 }
