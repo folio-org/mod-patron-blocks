@@ -12,7 +12,6 @@ import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildSynchronizationJob;
-import static org.folio.rest.utils.EventUtils.sendEvent;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.newSynchronizationJobByUser;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.newSynchronizationJobFull;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.synchronizationJobMatcher;
@@ -171,7 +170,7 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   public void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
-    sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()), SC_NO_CONTENT);
+    eventUtils.sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()), SC_NO_CONTENT);
     assertThat(waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(1));
     String syncJobId = createOpenSynchronizationJobByUser();
 
@@ -186,8 +185,8 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   public void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
-    sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
-    sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
+    eventUtils.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
+    eventUtils.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()), SC_NO_CONTENT);
     assertThat(waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(2));
     String syncJobId = createOpenSynchronizationJobFull();
 

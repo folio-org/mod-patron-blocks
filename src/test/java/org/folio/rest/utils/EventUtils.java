@@ -36,7 +36,11 @@ public class EventUtils {
   private static final String LOAN_DUE_DATE_CHANGED_HANDLER_URL =
     EVENT_HANDLERS_ROOT_URL + "loan-due-date-changed";
 
-  private static OkapiClient okapiClient;
+  private final OkapiClient okapiClient;
+
+  public EventUtils(OkapiClient okapiClient) {
+    this.okapiClient = okapiClient;
+  }
 
   private static final Map<Class<? extends Event>, String> eventTypeToHandlerUrl =
     Map.ofEntries(
@@ -49,12 +53,12 @@ public class EventUtils {
       entry(LoanDueDateChangedEvent.class, LOAN_DUE_DATE_CHANGED_HANDLER_URL)
     );
 
-  public static ValidatableResponse sendEvent(Event event, int expectedStatus) {
+  public ValidatableResponse sendEvent(Event event, int expectedStatus) {
     String eventPayload = JsonObject.mapFrom(event).encodePrettily();
     return sendEvent(eventPayload, getHandlerUrlForEventType(event.getClass()), expectedStatus);
   }
 
-  private static ValidatableResponse sendEvent(String eventPayload, String handlerUrl,
+  private ValidatableResponse sendEvent(String eventPayload, String handlerUrl,
     int expectedStatus) {
 
     if(okapiClient == null) {
@@ -66,17 +70,17 @@ public class EventUtils {
       .statusCode(expectedStatus);
   }
 
-  public static ValidatableResponse sendEvent(String eventPayload, Class eventType,
+  public ValidatableResponse sendEvent(String eventPayload, Class eventType,
     int expectedStatus) {
 
     return sendEvent(eventPayload, getHandlerUrlForEventType(eventType), expectedStatus);
   }
 
-  public static ValidatableResponse sendEventAndVerifyValidationFailure(Event event) {
+  public ValidatableResponse sendEventAndVerifyValidationFailure(Event event) {
     return sendEvent(event, SC_UNPROCESSABLE_ENTITY);
   }
 
-  private static String getHandlerUrlForEventType(Class eventType) {
+  private String getHandlerUrlForEventType(Class eventType) {
     final String eventHandlerUrl = eventTypeToHandlerUrl.get(eventType);
 
     if (eventHandlerUrl == null) {
@@ -84,9 +88,5 @@ public class EventUtils {
     }
 
     return eventHandlerUrl;
-  }
-
-  public static void setOkapiClient(OkapiClient okapiClient) {
-    EventUtils.okapiClient = okapiClient;
   }
 }
