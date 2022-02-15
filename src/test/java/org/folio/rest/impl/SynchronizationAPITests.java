@@ -238,7 +238,7 @@ public class SynchronizationAPITests extends TestBase {
     Awaitility.await()
       .atMost(5, SECONDS)
       .until(() -> waitFor(synchronizationJobRepository.get(syncJobId))
-        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 1)));
+        .orElse(null), synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 1));
   }
 
   @Test
@@ -289,7 +289,7 @@ public class SynchronizationAPITests extends TestBase {
     Awaitility.await()
       .atMost(5, SECONDS)
       .until(() -> waitFor(synchronizationJobRepository.get(syncJobId))
-        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0)));
+        .orElse(null), synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0));
   }
 
   @Test
@@ -302,7 +302,7 @@ public class SynchronizationAPITests extends TestBase {
     Awaitility.await()
       .atMost(5, SECONDS)
       .until(() -> waitFor(synchronizationJobRepository.get(syncJobId))
-        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0)));
+        .orElse(null), synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0));
   }
 
   @Test
@@ -316,7 +316,7 @@ public class SynchronizationAPITests extends TestBase {
     Awaitility.await()
       .atMost(30, SECONDS)
       .until(() -> waitFor(synchronizationJobRepository.get(syncJobId))
-        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_FAILED, 0, 0, 0, 0)));
+        .orElse(null), synchronizationJobMatcher(JOB_STATUS_FAILED, 0, 0, 0, 0));
   }
 
   protected void runSynchronization() {
@@ -336,7 +336,7 @@ public class SynchronizationAPITests extends TestBase {
     Awaitility.await()
       .atMost(30, SECONDS)
       .until(() -> waitFor(synchronizationJobRepository.get(syncJobId))
-        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 1, 0)));
+        .orElse(null), synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 1, 0));
   }
 
   private String createOpenSynchronizationJobFull() {
