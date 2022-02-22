@@ -1,3 +1,15 @@
+## 1.5.0 2022-02-22
+* Add raml description for period.json (MODPATBLK-103)
+* Update upsert with optimistic locking (MODPATBLK-102)
+* New lines removal from logs (MODPATBLK-104)
+* Update Log4j to 2.16.0 (MODPATBLK-106)
+* Update copyright year (FOLIO-1021)
+* Use new api-lint and api-doc (FOLIO-3231)
+* Update RMB to v33.2.4 (MODPATBLK-113)
+* ITEM_AGED_TO_LOST events cleared before synchronization (MODPATBLK-116)
+* Stop automated patron blocks calculation when there are no blocks (MODPATBLK-117)
+* Add maven-failsafe-plugin for ApiIT (MODPATBLK-121)
+
 ## 1.4.0 2021-09-30
 * Increase `Maximum outstanding fee/fine balance` limit maximum value from 9999 to 999999 (MODPATBLK-92)
 * Use optimistic locking for UserSummary records to avoid race condition and improve performance (MODPATBLK-91)
