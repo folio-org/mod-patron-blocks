@@ -1,4 +1,4 @@
-##1.5.0 2022-02-23
+## 1.5.0 2022-02-23
 * Update to RMB 33.1.1, upsert with optimistic locking (MODPATBLK-102)
 * Add raml description for period.json (MODPATBLK-103)
 * New lines removal from logs (MODPATBLK-104)
