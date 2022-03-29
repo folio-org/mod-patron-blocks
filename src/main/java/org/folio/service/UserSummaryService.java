@@ -322,7 +322,6 @@ public class UserSummaryService {
 
     if (feeFineIsClosed(event)) {
       openFeesFines.remove(openFeeFine);
-      removeLoanIfLastLostItemFeeWasClosed(userSummary, event);
     } else {
       openFeeFine.setBalance(event.getBalance());
       openFeeFine.setLoanId(event.getLoanId());
@@ -335,29 +334,6 @@ public class UserSummaryService {
 
   private boolean feeFineIsClosed(FeeFineBalanceChangedEvent event) {
     return BigDecimal.ZERO.compareTo(event.getBalance()) == 0;
-  }
-
-  private void removeLoanIfLastLostItemFeeWasClosed(UserSummary userSummary,
-    FeeFineBalanceChangedEvent event) {
-
-    if (!isLostItemFeeId(event.getFeeFineTypeId())) {
-      return;
-    }
-
-    userSummary.getOpenLoans().stream()
-      .filter(OpenLoan::getItemLost)
-      .filter(loan -> StringUtils.equals(loan.getLoanId(), event.getLoanId()))
-      .findAny()
-      .ifPresent(loan -> {
-        boolean noLostItemFeesForLoanExist = userSummary.getOpenFeesFines().stream()
-          .filter(fee -> StringUtils.equals(fee.getLoanId(), event.getLoanId()))
-          .map(OpenFeeFine::getFeeFineTypeId)
-          .noneMatch(this::isLostItemFeeId);
-
-        if (noLostItemFeesForLoanExist) {
-          userSummary.getOpenLoans().remove(loan);
-        }
-      });
   }
 
   private boolean isLostItemFeeId(String feeFineTypeId) {
