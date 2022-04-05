@@ -1,3 +1,6 @@
+## 1.5.1 2022-04-05
+* Don't remove loan from user summary when FEE_FINE_BALANCE_CHANGED event is received (MODPATBLK-124)
+
 ## 1.5.0 2022-02-22
 * Update to RMB 33.1.1, upsert with optimistic locking (MODPATBLK-102)
 * Add raml description for period.json (MODPATBLK-103)
