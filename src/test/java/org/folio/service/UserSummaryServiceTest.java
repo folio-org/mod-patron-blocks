@@ -57,7 +57,7 @@ public class UserSummaryServiceTest extends TestBase {
   }
 
   @Test
-  public void shouldAddLoanDueDateChangedEventAndTurnItemLostToFalse(TestContext context) {
+  public void loanDueDateChangedEventShouldSetItemLostToFalse(TestContext context) {
     String userId = randomId();
     String loanId = randomId();
     Date dueDate = now().plusHours(1).toDate();
