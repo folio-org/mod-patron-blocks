@@ -1,26 +1,21 @@
 package org.folio.service;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
-import static org.hamcrest.CoreMatchers.is;
 import static org.joda.time.DateTime.now;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
-import org.awaitility.Awaitility;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
-import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.junit.Before;
 import org.junit.Test;
