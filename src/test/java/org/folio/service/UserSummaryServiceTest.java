@@ -2,12 +2,20 @@ package org.folio.service;
 
 import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
+import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
+import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
+import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
+import static org.joda.time.DateTime.now;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
+import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
+import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
+import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +54,33 @@ public class UserSummaryServiceTest extends TestBase {
     UserSummary updatedUserSummary = waitFor(userSummaryService.getByUserId(userId));
     context.assertTrue(updatedUserSummary.getOpenFeesFines().stream()
       .anyMatch(openFeeFine -> openFeeFine.getFeeFineId().equals(feeFineId)));
+  }
+
+  @Test
+  public void loanDueDateChangedEventShouldSetItemLostToFalse(TestContext context) {
+    String userId = randomId();
+    String loanId = randomId();
+    Date dueDate = now().plusHours(1).toDate();
+
+    waitFor(userSummaryRepository.save(createUserSummary(randomId(), userId)));
+    UserSummary userSummary = waitFor(userSummaryService.getByUserId(userId));
+
+    ItemCheckedOutEvent itemCheckedOutEvent = buildItemCheckedOutEvent(userId, loanId, dueDate);
+    userSummaryService.updateUserSummaryWithEvent(userSummary, itemCheckedOutEvent);
+
+    ItemAgedToLostEvent itemAgedToLostEvent = buildItemAgedToLostEvent(userId, loanId);
+    waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, itemAgedToLostEvent));
+
+    UserSummary updatedUserSummary = waitFor(userSummaryService.getByUserId(userId));
+    context.assertTrue(updatedUserSummary.getOpenLoans().stream()
+      .anyMatch(openLoan -> openLoan.getItemLost().equals(true)));
+
+    LoanDueDateChangedEvent loanDueDateChangedEvent = buildLoanDueDateChangedEvent(userId, loanId, now().plusHours(2).toDate(), false);
+    waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, loanDueDateChangedEvent));
+    updatedUserSummary = waitFor(userSummaryService.getByUserId(userId));
+
+    context.assertTrue(updatedUserSummary.getOpenLoans().stream()
+      .anyMatch(loan -> loan.getLoanId().equals(loanId) && loan.getItemLost().equals(false)));
   }
 
   @Test
