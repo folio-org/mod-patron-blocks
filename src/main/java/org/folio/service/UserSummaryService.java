@@ -297,6 +297,9 @@ public class UserSummaryService {
       .ifPresentOrElse(openLoan -> {
         openLoan.setDueDate(event.getDueDate());
         openLoan.setRecall(event.getDueDateChangedByRecall());
+        if (Boolean.FALSE.equals(event.getDueDateChangedByRecall())){
+          openLoan.setItemLost(false);
+        }
       }, () -> logOpenLoanNotFound(event, event.getLoanId()));
   }
 

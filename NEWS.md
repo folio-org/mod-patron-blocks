@@ -1,3 +1,6 @@
+## 1.5.2 2022-04-12
+* Make renewal LOAN_DUE_DATE_CHANGED event remove item lost flag (MODPATBLK-126)
+
 ## 1.5.1 2022-04-05
 * Don't remove loan from user summary when FEE_FINE_BALANCE_CHANGED event is received (MODPATBLK-124)
 
