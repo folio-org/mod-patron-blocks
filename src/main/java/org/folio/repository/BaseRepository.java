@@ -3,6 +3,8 @@ package org.folio.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -19,6 +21,9 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 
 public class BaseRepository<T> {
+
+  private static final Logger log = LogManager.getLogger(BaseRepository.class);
+
   private static final int DEFAULT_LIMIT = 100;
 
   protected final PostgresClient pgClient;
@@ -86,6 +91,14 @@ public class BaseRepository<T> {
     Promise<RowSet<Row>> promise = Promise.promise();
     pgClient.delete(tableName, id, promise);
     return promise.future().map(updateResult -> updateResult.rowCount() == 1);
+  }
+
+  public Future<Boolean> delete(Criterion criterion) {
+    return pgClient.delete(tableName, criterion)
+      .map(RowSet::rowCount)
+      .onSuccess(rowCount -> log.info("Deleted {} record(s) from table {} by query: {}",
+        rowCount, tableName, criterion))
+      .map(rowCount -> rowCount > 0);
   }
 
   public Future<Void> removeAll(String tenantId) {

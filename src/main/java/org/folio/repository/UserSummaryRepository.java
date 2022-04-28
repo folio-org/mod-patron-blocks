@@ -5,6 +5,8 @@ import static org.folio.util.UuidHelper.randomId;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -13,6 +15,9 @@ import org.folio.rest.persist.PostgresClient;
 import io.vertx.core.Future;
 
 public class UserSummaryRepository extends BaseRepository<UserSummary> {
+
+  private static final Logger log = LogManager.getLogger(UserSummaryRepository.class);
+
   public static final String USER_SUMMARY_TABLE_NAME = "user_summary";
   private static final String USER_ID_FIELD = "'userId'";
   private static final String OPERATION_EQUALS = "=";
@@ -48,13 +53,7 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
   }
 
   public Future<Optional<UserSummary>> getByUserId(String userId) {
-    Criterion criterion = new Criterion(new Criteria()
-      .addField(USER_ID_FIELD)
-      .setOperation(OPERATION_EQUALS)
-      .setVal(userId)
-      .setJSONB(true));
-
-    return this.get(criterion)
+    return this.get(buildCriterion(userId))
       .compose(results -> {
         if (results.isEmpty()) {
           return succeededFuture(Optional.empty());
@@ -64,9 +63,24 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
       });
   }
 
+  public Future<Boolean> deleteByUserId(String userId) {
+    log.info("Deleting summary for user {}", userId);
+
+    return delete(buildCriterion(userId));
+  }
+
   private UserSummary buildEmptyUserSummary(String userId) {
     return new UserSummary()
       .withId(randomId())
       .withUserId(userId);
   }
+
+  private static Criterion buildCriterion(String userId) {
+    return new Criterion(new Criteria()
+      .addField(USER_ID_FIELD)
+      .setOperation(OPERATION_EQUALS)
+      .setVal(userId)
+      .setJSONB(true));
+  }
+
 }
