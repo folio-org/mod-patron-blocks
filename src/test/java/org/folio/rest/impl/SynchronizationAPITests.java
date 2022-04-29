@@ -333,7 +333,7 @@ public class SynchronizationAPITests extends TestBase {
       .until(() -> waitFor(synchronizationJobRepository.get(firstJobId))
         .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 1)));
 
-    assertTrue(waitFor(userSummaryRepository.getByUserId(USER_ID)).isPresent());
+    getUserSummary().then().statusCode(200);
 
     stubAccountsWithEmptyResponse();
     String secondJobId = createOpenSynchronizationJobByUser();
@@ -344,7 +344,7 @@ public class SynchronizationAPITests extends TestBase {
       .until(() -> waitFor(synchronizationJobRepository.get(secondJobId))
         .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0)));
 
-    assertFalse(waitFor(userSummaryRepository.getByUserId(USER_ID)).isPresent());
+    getUserSummary().then().statusCode(404);
   }
 
   protected void checkThatStatusIsFailed(String syncJobId) {
@@ -480,5 +480,9 @@ public class SynchronizationAPITests extends TestBase {
       .put(entityName, new JsonArray())
       .put("totalRecords", 0)
       .encodePrettily();
+  }
+
+  private Response getUserSummary() {
+    return okapiClient.get("user-summary/" + USER_ID);
   }
 }
