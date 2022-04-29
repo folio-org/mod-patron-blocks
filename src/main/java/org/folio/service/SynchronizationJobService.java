@@ -162,7 +162,7 @@ public class SynchronizationJobService {
 
     return syncRepository.update(job.withStatus(syncStatus.getValue()))
       .onSuccess(r -> log.info("Synchronization job status updated: {}", syncStatus.getValue()))
-      .onFailure(t -> log.error("Failed to update synchronization job status: {}", t.getMessage()))
+      .onFailure(t -> log.error("Failed to update synchronization job status", t))
       .map(job);
   }
 }
