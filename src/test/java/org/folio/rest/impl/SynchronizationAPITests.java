@@ -17,6 +17,8 @@ import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.synchroniz
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.joda.time.LocalDateTime.now;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 import java.util.List;
@@ -25,6 +27,7 @@ import org.awaitility.Awaitility;
 import org.folio.domain.SynchronizationStatus;
 import org.folio.repository.EventRepository;
 import org.folio.repository.SynchronizationJobRepository;
+import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
@@ -80,6 +83,8 @@ public class SynchronizationAPITests extends TestBase {
 
   private final SynchronizationJobRepository synchronizationJobRepository =
     new SynchronizationJobRepository(postgresClient);
+
+  private final UserSummaryRepository userSummaryRepository = new UserSummaryRepository(postgresClient);
 
   @Before
   public void beforeEach() {
@@ -186,7 +191,11 @@ public class SynchronizationAPITests extends TestBase {
   public void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
     eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()));
     eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()));
-    assertThat(waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(2));
+
+    Awaitility.await()
+      .atMost(5, SECONDS)
+      .until(() -> waitFor(itemAgedToLostEventRepository.getAllWithDefaultLimit()).size(), is(2));
+
     String syncJobId = createOpenSynchronizationJobFull();
 
     runSynchronization();
@@ -312,6 +321,32 @@ public class SynchronizationAPITests extends TestBase {
       .statusCode(422);
   }
 
+  @Test
+  public void summaryShouldBeDeletedWhenNoEventsWereGeneratedDuringUserSynchronization() {
+    stubLoansWithEmptyResponse();
+    stubAccounts();
+    String firstJobId = createOpenSynchronizationJobByUser();
+    runSynchronization();
+
+    Awaitility.await()
+      .atMost(5, SECONDS)
+      .until(() -> waitFor(synchronizationJobRepository.get(firstJobId))
+        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 1)));
+
+    getUserSummary().then().statusCode(200);
+
+    stubAccountsWithEmptyResponse();
+    String secondJobId = createOpenSynchronizationJobByUser();
+    runSynchronization();
+
+    Awaitility.await()
+      .atMost(5, SECONDS)
+      .until(() -> waitFor(synchronizationJobRepository.get(secondJobId))
+        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0)));
+
+    getUserSummary().then().statusCode(404);
+  }
+
   protected void checkThatStatusIsFailed(String syncJobId) {
     Awaitility.await()
       .atMost(30, SECONDS)
@@ -383,7 +418,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   private static void stubAccounts() {
-    wireMock.stubFor(get(urlPathMatching("/accounts"))
+    wireMock.stubFor(get(urlPathMatching("/accounts.*"))
       .atPriority(5)
       .willReturn(aResponse()
         .withStatus(200)
@@ -397,7 +432,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   private static void stubAccountsWithEmptyResponse() {
-    wireMock.stubFor(get(urlPathMatching("/accounts"))
+    wireMock.stubFor(get(urlPathMatching("/accounts.*"))
       .atPriority(5)
       .willReturn(aResponse()
         .withStatus(200)
@@ -430,7 +465,8 @@ public class SynchronizationAPITests extends TestBase {
       .put("loanId", randomId())
       .put("feeFineId", FEE_FINE_TYPE_ID)
       .put("feeFineType", FEE_FINE_TYPE)
-      .put("remaining", 1.0);
+      .put("remaining", 1.0)
+      .put("metadata", new JsonObject().put("createdDate", now().toDate()));
 
     return new JsonObject()
       .put("accounts", new JsonArray()
@@ -444,5 +480,9 @@ public class SynchronizationAPITests extends TestBase {
       .put(entityName, new JsonArray())
       .put("totalRecords", 0)
       .encodePrettily();
+  }
+
+  private Response getUserSummary() {
+    return okapiClient.get("user-summary/" + USER_ID);
   }
 }
