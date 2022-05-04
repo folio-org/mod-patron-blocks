@@ -1,3 +1,6 @@
+## 1.5.3 2022-05-04
+* Delete user summary before user-level synchronization (MODPATBLK-129)
+
 ## 1.5.2 2022-04-12
 * Make renewal LOAN_DUE_DATE_CHANGED event remove item lost flag (MODPATBLK-126)
 
