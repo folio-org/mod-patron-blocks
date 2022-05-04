@@ -1,3 +1,6 @@
+## 1.4.2 2022-05-04
+* Delete user summary before user-level synchronization (MODPATBLK-129)
+
 ## 1.4.1 2021-12-16
 * Upgrade to RMB to v33.0.4 and Log4j 2.16.0 (MODPATBLK-106)
 
