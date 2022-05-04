@@ -6,7 +6,6 @@ import static org.folio.util.UuidHelper.randomId;
 import java.util.Optional;
 
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 
@@ -15,7 +14,6 @@ import io.vertx.core.Future;
 public class UserSummaryRepository extends BaseRepository<UserSummary> {
   public static final String USER_SUMMARY_TABLE_NAME = "user_summary";
   private static final String USER_ID_FIELD = "'userId'";
-  private static final String OPERATION_EQUALS = "=";
   private static final String FIND_SUMMARY_BY_FEE_FINE_ID_QUERY_TEMPLATE =
     "openFeesFines == \"*\\\"feeFineId\\\": \\\"%s\\\"*\"";
 
@@ -48,13 +46,7 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
   }
 
   public Future<Optional<UserSummary>> getByUserId(String userId) {
-    Criterion criterion = new Criterion(new Criteria()
-      .addField(USER_ID_FIELD)
-      .setOperation(OPERATION_EQUALS)
-      .setVal(userId)
-      .setJSONB(true));
-
-    return this.get(criterion)
+    return this.get(buildCriterionWithUserId(userId))
       .compose(results -> {
         if (results.isEmpty()) {
           return succeededFuture(Optional.empty());
@@ -64,9 +56,18 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
       });
   }
 
+  public Future<Boolean> deleteByUserId(String userId) {
+    return delete(buildCriterionWithUserId(userId));
+  }
+
   private UserSummary buildEmptyUserSummary(String userId) {
     return new UserSummary()
       .withId(randomId())
       .withUserId(userId);
   }
+
+  private static Criterion buildCriterionWithUserId(String userId) {
+    return buildCriterion(USER_ID_FIELD, userId);
+  }
+
 }

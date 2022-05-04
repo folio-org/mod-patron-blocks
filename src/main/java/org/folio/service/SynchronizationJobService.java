@@ -120,7 +120,7 @@ public class SynchronizationJobService {
         .map(job);
     }
     else if (job.getScope() == USER) {
-      return userSummaryRepository.delete(job.getUserId())
+      return userSummaryRepository.deleteByUserId(job.getUserId())
         .map(job);
     }
     else {
@@ -161,8 +161,8 @@ public class SynchronizationJobService {
     SynchronizationStatus syncStatus) {
 
     return syncRepository.update(job.withStatus(syncStatus.getValue()))
-      .onSuccess(r -> log.info("Synchronization job status updated: " + syncStatus.getValue()))
-      .onFailure(t -> log.error("Failed to update synchronization job status: " + t.getMessage()))
+      .onSuccess(r -> log.info("Synchronization job status updated: {}", syncStatus.getValue()))
+      .onFailure(t -> log.error("Failed to update synchronization job status", t))
       .map(job);
   }
 }
