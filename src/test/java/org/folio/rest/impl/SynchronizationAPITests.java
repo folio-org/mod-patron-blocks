@@ -274,6 +274,32 @@ public class SynchronizationAPITests extends TestBase {
       .statusCode(422);
   }
 
+  @Test
+  public void summaryShouldBeDeletedWhenNoEventsWereGeneratedDuringUserSynchronization() {
+    stubLoansWithEmptyResponse();
+    stubAccounts();
+    String firstJobId = createOpenSynchronizationJobByUser();
+    runSynchronization();
+
+    Awaitility.await()
+      .atMost(5, SECONDS)
+      .until(() -> waitFor(synchronizationJobRepository.get(firstJobId))
+        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 1)));
+
+    getUserSummary().then().statusCode(200);
+
+    stubAccountsWithEmptyResponse();
+    String secondJobId = createOpenSynchronizationJobByUser();
+    runSynchronization();
+
+    Awaitility.await()
+      .atMost(5, SECONDS)
+      .until(() -> waitFor(synchronizationJobRepository.get(secondJobId))
+        .orElse(null), is(synchronizationJobMatcher(JOB_STATUS_DONE, 0, 0, 0, 0)));
+
+    getUserSummary().then().statusCode(404);
+  }
+
   protected void checkThatStatusIsFailed(String syncJobId) {
     Awaitility.await()
       .atMost(30, SECONDS)
@@ -338,7 +364,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   private static void stubAccounts() {
-    wireMock.stubFor(get(urlPathMatching("/accounts"))
+    wireMock.stubFor(get(urlPathMatching("/accounts.*"))
       .atPriority(5)
       .willReturn(aResponse()
         .withStatus(200)
@@ -352,7 +378,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   private static void stubAccountsWithEmptyResponse() {
-    wireMock.stubFor(get(urlPathMatching("/accounts"))
+    wireMock.stubFor(get(urlPathMatching("/accounts.*"))
       .atPriority(5)
       .willReturn(aResponse()
         .withStatus(200)
@@ -385,7 +411,8 @@ public class SynchronizationAPITests extends TestBase {
       .put("loanId", randomId())
       .put("feeFineId", FEE_FINE_TYPE_ID)
       .put("feeFineType", FEE_FINE_TYPE)
-      .put("remaining", 1.0);
+      .put("remaining", 1.0)
+      .put("metadata", new JsonObject().put("createdDate", now().toDate()));
 
     return new JsonObject()
       .put("accounts", new JsonArray()
@@ -399,5 +426,9 @@ public class SynchronizationAPITests extends TestBase {
       .put(entityName, new JsonArray())
       .put("totalRecords", 0)
       .encodePrettily();
+  }
+
+  private Response getUserSummary() {
+    return okapiClient.get("user-summary/" + USER_ID);
   }
 }

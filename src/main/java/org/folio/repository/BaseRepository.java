@@ -3,8 +3,11 @@ package org.folio.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
@@ -19,6 +22,9 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 
 public class BaseRepository<T> {
+
+  private static final Logger log = LogManager.getLogger(BaseRepository.class);
+  private static final String OPERATION_EQUALS = "=";
   private static final int DEFAULT_LIMIT = 100;
 
   protected final PostgresClient pgClient;
@@ -88,6 +94,14 @@ public class BaseRepository<T> {
     return promise.future().map(updateResult -> updateResult.rowCount() == 1);
   }
 
+  public Future<Boolean> delete(Criterion criterion) {
+    return pgClient.delete(tableName, criterion)
+      .map(RowSet::rowCount)
+      .onSuccess(rowCount -> log.info("Deleted {} record(s) from table {} using query: {}",
+        rowCount, tableName, criterion))
+      .map(rowCount -> rowCount > 0);
+  }
+
   public Future<Void> removeAll(String tenantId) {
     Promise<Void> promise = Promise.promise();
     String deleteAllQuery = String.format("DELETE FROM %s_%s.%s", tenantId,
@@ -115,6 +129,14 @@ public class BaseRepository<T> {
     return new CQLWrapper(cql2pgJson, query)
       .setLimit(new Limit(limit))
       .setOffset(new Offset(offset));
+  }
+
+  static Criterion buildCriterion(String key, String value) {
+    return new Criterion(new Criteria()
+      .addField(key)
+      .setOperation(OPERATION_EQUALS)
+      .setVal(value)
+      .setJSONB(true));
   }
 
 }
