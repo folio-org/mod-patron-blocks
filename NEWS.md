@@ -1,3 +1,7 @@
+## 1.7.0 IN-PROGRESS
+
+* Supports users interface version 15.1 16.0 (MODPATBLK-140)
+
 ## 1.6.0 2022-06-28
 * Do not remove loan from summary when FEE_FINE_BALANCE_CHANGED event is received (MODPATBLK-124)
 * Set `openLoan.itemLost` to false on LOAD_DUE_DATE_CHANGED event if due date changed by recall (MOTPATBLK-126)
