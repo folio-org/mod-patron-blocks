@@ -58,7 +58,7 @@ public class UserSummaryRepositoryTest extends TestBase {
     context.assertTrue(saveDuplicateSummary.failed());
     context.assertTrue(saveDuplicateSummary.cause() instanceof PgException);
     context.assertTrue(saveDuplicateSummary.cause().getMessage().contains(
-      "duplicate key value violates unique constraint \\\"user_summary_pkey\\\""));
+      "duplicate key value violates unique constraint \"user_summary_pkey\""));
   }
 
   @Test
@@ -74,7 +74,7 @@ public class UserSummaryRepositoryTest extends TestBase {
     context.assertTrue(saveDuplicateSummary.failed());
     context.assertTrue(saveDuplicateSummary.cause() instanceof PgException);
     context.assertTrue(saveDuplicateSummary.cause().getMessage().contains(
-      "duplicate key value violates unique constraint \\\"user_summary_userid_idx_unique\\\""));
+      "duplicate key value violates unique constraint \"user_summary_userid_idx_unique\""));
   }
 
   @Test
