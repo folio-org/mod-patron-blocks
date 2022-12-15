@@ -1,3 +1,6 @@
+## 1.6.1 2022-12-15
+* Upgrade spring-beans and scala-library (CVE-2022-22965, CVE-2022-36944) (MODPATBLK-152)
+
 ## 1.6.0 2022-06-28
 * Do not remove loan from summary when FEE_FINE_BALANCE_CHANGED event is received (MODPATBLK-124)
 * Set `openLoan.itemLost` to false on LOAD_DUE_DATE_CHANGED event if due date changed by recall (MOTPATBLK-126)
