@@ -2,6 +2,8 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
+import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.loggingResponseHandler;
 
 import java.util.Map;
 
@@ -26,21 +28,23 @@ public class TenantRefAPI extends TenantAPI {
   public void postTenant(TenantAttributes tenantAttributes, Map<String, String> headers,
     Handler<AsyncResult<Response>> handler, Context context) {
 
-    log.info("postTenant called with tenant attributes: {}", JsonObject.mapFrom(tenantAttributes));
+    log.debug("postTenant:: parameters tenantAttributes: {}, headers: {}",
+      logAsJson(tenantAttributes), logAsJson(headers));
+
+    Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler(
+      "postTenant", handler, log);
 
     super.postTenant(tenantAttributes, headers, res -> {
       if (res.failed()) {
-        handler.handle(res);
+        loggingHandler.handle(res);
         return;
       }
       PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, context.owner()))
         .whenComplete((result, throwable) -> {
           if (isTrue(result) && throwable == null) {
-            log.info("postTenant executed successfully");
-            handler.handle(res);
+            loggingHandler.handle(res);
           } else {
-            log.error("postTenant execution failed", throwable);
-            handler.handle(succeededFuture(PostTenantResponse
+            loggingHandler.handle(succeededFuture(PostTenantResponse
               .respond500WithTextPlain(throwable.getLocalizedMessage())));
           }
         });

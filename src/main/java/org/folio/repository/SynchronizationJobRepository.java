@@ -2,6 +2,7 @@ package org.folio.repository;
 
 import static io.vertx.core.json.JsonObject.mapFrom;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
+import static org.folio.util.LogHelper.logAsJson;
 
 import java.util.List;
 
@@ -33,8 +34,8 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
     return save(entity, entity.getId());
   }
 
-  public Future<List<SynchronizationJob>> getJobsByStatus(
-    SynchronizationStatus syncStatus) {
+  public Future<List<SynchronizationJob>> getJobsByStatus(SynchronizationStatus syncStatus) {
+    log.debug("getJobsByStatus:: parameters syncStatus: {}", syncStatus);
 
     Criterion criterion = new Criterion(new Criteria()
       .addField("'status'")
@@ -46,6 +47,7 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
   }
 
   public Future<SynchronizationJob> getTheOldestSyncRequest(String tenantId) {
+    log.debug("getTheOldestSyncRequest:: parameters tenantId: {}", tenantId);
     String tableName = String.format("%s.%s", convertToPsqlStandard(tenantId),
       SYNCHRONIZATION_JOBS_TABLE);
 
@@ -66,15 +68,17 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
   }
 
   public Future<RowSet<Row>> select(String sql) {
+    log.debug("select:: parameters sql: {}", sql);
     Promise<RowSet<Row>> promise = Promise.promise();
     pgClient.select(sql, promise);
     return promise.future();
   }
 
   public Future<SynchronizationJob> update(SynchronizationJob job) {
+    log.debug("update:: parameters job: {}", logAsJson(job));
     return update(job, job.getId())
       .onSuccess(r -> log.info("Synchronization job updated:\n" + mapFrom(job).encodePrettily()))
-      .onFailure(t -> log.error("Synchronization job update failed: " + t.getMessage()))
+      .onFailure(t -> log.warn("Synchronization job update failed: " + t.getMessage()))
       .map(job);
   }
 }

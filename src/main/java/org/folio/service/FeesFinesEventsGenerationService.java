@@ -1,5 +1,7 @@
 package org.folio.service;
 
+import static org.folio.util.LogHelper.logAsJson;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +31,9 @@ public class FeesFinesEventsGenerationService extends EventsGenerationService<Ac
 
   @Override
   protected Future<Account> generateEvents(Account account) {
-    final String accountId = account.getId();
-    log.info("Generating events for account {}...", accountId);
+    log.debug("generateEvents:: parameters account: {}", logAsJson(account));
 
+    final String accountId = account.getId();
     userIds.add(account.getUserId());
 
     final FeeFineBalanceChangedEvent event = new FeeFineBalanceChangedEvent()
@@ -43,16 +45,17 @@ public class FeesFinesEventsGenerationService extends EventsGenerationService<Ac
       .withMetadata(account.getMetadata());
 
     return feeFineBalanceChangedEventHandler.handleSkippingUserSummaryUpdate(event)
-      .onSuccess(r -> log.info("Successfully generated events for account {}", accountId))
-      .onFailure(t -> log.error("Failed to generate events for account {}: {}", accountId,
-        t.getLocalizedMessage()))
+      .onSuccess(r -> log.info("generateEvents:: Successfully generated events for account {}", accountId))
+      .onFailure(t -> log.warn("generateEvents:: Failed to generate events for account {}", accountId, t))
       .map(account);
   }
 
   @Override
   protected Future<SynchronizationJob> updateStats(SynchronizationJob job, List<Account> accounts) {
+    log.debug("updateStats:: parameters job: {}, accounts: list(size={})", logAsJson(job), accounts.size());
     int processedFeesFinesCount = job.getNumberOfProcessedFeesFines() + accounts.size();
-    return syncRepository.update(job.withNumberOfProcessedFeesFines(processedFeesFinesCount));
+    return syncRepository.update(job.withNumberOfProcessedFeesFines(processedFeesFinesCount))
+      .onSuccess(result -> log.info("updateStats:: result: {}", logAsJson(result)));
   }
 
 }

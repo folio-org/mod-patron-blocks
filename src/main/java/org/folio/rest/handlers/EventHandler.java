@@ -1,5 +1,6 @@
 package org.folio.rest.handlers;
 
+import static org.folio.util.LogHelper.logAsJson;
 import static org.folio.util.PostgresUtils.getPostgresClient;
 
 import java.util.Map;
@@ -17,7 +18,6 @@ import org.folio.service.UserSummaryService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 
 public class EventHandler<E extends Event> {
   protected static final Logger log = LogManager.getLogger(EventHandler.class);
@@ -39,33 +39,37 @@ public class EventHandler<E extends Event> {
   }
 
   public Future<String> handle(E event) {
+    log.debug("handle:: parameters event: {}", logAsJson(event));
     return eventService.save(event)
       .compose(eventId -> updateUserSummary(event))
       .onComplete(result -> logResult(result, event));
   }
 
   public Future<String> handleSkippingUserSummaryUpdate(E event) {
+    log.debug("handleSkippingUserSummaryUpdate:: parameters event: {}", logAsJson(event));
     return eventService.save(event)
       .onComplete(result -> logResult(result, event));
   }
 
-  public Future<String> updateUserSummary(E event) {
+  private Future<String> updateUserSummary(E event) {
+    log.debug("updateUserSummary:: parameters event: {}", logAsJson(event));
     return getUserSummary(event)
       .compose(userSummary -> userSummaryService.updateUserSummaryWithEvent(userSummary, event));
   }
 
   protected Future<UserSummary> getUserSummary(E event) {
+    log.debug("getUserSummary:: parameters event: {}", logAsJson(event));
     return userSummaryRepository.findByUserIdOrBuildNew(event.getUserId());
   }
 
-  protected void logResult(AsyncResult<String> result, E event) {
+  private void logResult(AsyncResult<String> result, E event) {
     String eventType = EventType.getNameByEvent(event);
     if (result.failed()) {
-      String eventJson = Json.encodePrettily(event);
-      log.error("Failed to process event {} with payload:\n{}", eventType, eventJson);
+      log.warn("logResult: Failed to process event {} with payload: {}", eventType,
+        logAsJson(event));
     } else {
       String userSummaryId = result.result();
-      log.info("Event {} processed successfully. Affected user summary: {}",
+      log.info("logResult: Event {} processed successfully. Affected user summary: {}",
         eventType, userSummaryId);
     }
   }

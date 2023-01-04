@@ -8,6 +8,7 @@ import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.okapi.common.XOkapiHeaders.TOKEN;
 import static org.folio.okapi.common.XOkapiHeaders.URL;
 import static org.folio.rest.client.WebClientProvider.getWebClient;
+import static org.folio.util.LogHelper.logResponseBody;
 
 import java.util.Map;
 
@@ -30,8 +31,6 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class OkapiClient {
-  public static final String R_N_LINE_SEPARATOR = "\\r|\\n";
-  public static final String R_LINE_SEPARATOR = "\\r";
   private static final Logger log = LogManager.getLogger(OkapiClient.class);
 
   static final ObjectMapper objectMapper = new ObjectMapper();
@@ -65,6 +64,8 @@ public class OkapiClient {
   }
 
   <T> Future<T> fetchById(String pathToEntity, String id, Class<T> responseType) {
+    log.debug("fetchById:: parameters pathToEntity: {}, id: {}, responseType: {}",
+      pathToEntity, id, responseType);
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
     String path = String.format("/%s/%s", pathToEntity, id);
 
@@ -73,18 +74,20 @@ public class OkapiClient {
     return promise.future().compose(response -> {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
-        String errorMessage = String.format("Failed to fetch %s by ID: %s. Response: %d %s",
-          responseType.getName(), id, responseStatus, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
-        log.error(errorMessage);
+        String errorMessage = String.format("fetchById:: Failed to fetch %s by ID: %s. " +
+            "Response: %d %s", responseType.getName(), id, responseStatus,
+          logResponseBody(response));
+        log.warn(errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.debug("Fetched by ID: {}/{}. Response body: \r{}", path, id, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
+          log.info("fetchById:: Fetched by ID: {}/{}. Response body: \r{}", path, id,
+            logResponseBody(response));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
-          log.error("Failed to parse response from {}/{}. Response body: \r{}", path, id,
-            response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR), e);
+          log.warn("fetchById:: Failed to parse response from {}/{}. Response body: \r{}",
+            path, id, logResponseBody(response), e);
           return failedFuture(e);
         }
       }
@@ -92,6 +95,7 @@ public class OkapiClient {
   }
 
   public Future<JsonObject> getMany(String path, int limit, int offset) {
+    log.debug("getMany:: parameters path: {}, limit: {}, offset: {}", path, limit, offset);
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
     HttpRequest<Buffer> request = getAbs(path)
       .addQueryParam("limit", String.valueOf(limit))
@@ -99,35 +103,36 @@ public class OkapiClient {
     request.send(promise);
 
     return promise.future().compose(response -> {
-        int responseStatus = response.statusCode();
-        if (responseStatus != 200) {
-          var errorMessage = String.format("Failed to fetch entities by path: %s. Response: %d %s",
-          path, responseStatus, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
-          log.error(errorMessage);
-        }
-        return succeededFuture(response.bodyAsJsonObject());
+      int responseStatus = response.statusCode();
+      if (responseStatus != 200) {
+        log.warn("getMany:: Failed to fetch entities by path: {}. Response: {} {}",
+          path, responseStatus, logResponseBody(response));
+      }
+      return succeededFuture(response.bodyAsJsonObject());
     });
   }
 
   protected <T> Future<T> fetchAll(String path, Class<T> responseType) {
+    log.debug("fetchAll:: parameters path: {}, responseType: {}", path, responseType);
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
     getAbs(path).send(promise);
 
     return promise.future().compose(response -> {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
-        String errorMessage = String.format("Failed to fetch %s. Response: %d %s",
-          responseType.getName(), responseStatus, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
-        log.error(errorMessage);
+        String errorMessage = String.format("fetchAll:: Failed to fetch %s. Response: %d %s",
+          responseType.getName(), responseStatus, logResponseBody(response));
+        log.warn(errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.debug("Fetched from {}. Response body: \r{}", path, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
+          log.info("fetchAll:: Fetched from {}. Response body: \r{}", path,
+            logResponseBody(response));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
-          log.error("Failed to parse response from {}. Response body: \r{}", path,
-            response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
+          log.warn("fetchAll:: Failed to parse response from {}. Response body: \r{}", path,
+            logResponseBody(response));
           return failedFuture(e);
         }
       }

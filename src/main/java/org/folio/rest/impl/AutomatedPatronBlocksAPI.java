@@ -2,6 +2,8 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
+import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.loggingResponseHandler;
 import static org.folio.util.UuidUtil.isUuid;
 
 import java.util.Map;
@@ -30,17 +32,24 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
+    log.debug("getAutomatedPatronBlocksByUserId:: parameters userId: {}, okapiHeaders: {}",
+      userId, logAsJson(okapiHeaders));
+
     if (!isUuid(userId)) {
+      log.debug("getAutomatedPatronBlocksByUserId:: User ID {} is not a UUID", userId);
       asyncResultHandler.handle(succeededFuture(GetAutomatedPatronBlocksByUserIdResponse
         .respond400WithTextPlain(format("Invalid user UUID: \"%s\"", userId))));
       return;
     }
 
+    Handler<AsyncResult<Response>> loggingResponseHandler =
+      loggingResponseHandler("getAutomatedPatronBlocksByUserId", asyncResultHandler, log);
+
     new PatronBlocksService(okapiHeaders, vertxContext.owner())
       .getBlocksForUser(userId)
-      .onSuccess(blocks -> asyncResultHandler.handle(succeededFuture(
+      .onSuccess(blocks -> loggingResponseHandler.handle(succeededFuture(
         GetAutomatedPatronBlocksByUserIdResponse.respond200WithApplicationJson(blocks))))
-      .onFailure(failure -> asyncResultHandler.handle(succeededFuture(
+      .onFailure(failure -> loggingResponseHandler.handle(succeededFuture(
         GetAutomatedPatronBlocksByUserIdResponse.respond500WithTextPlain(
           failure.getLocalizedMessage()))));
   }
@@ -50,18 +59,28 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
+    log.debug("getAutomatedPatronBlocksByUserId:: parameters request: {}, okapiHeaders: {}",
+      logAsJson(request), logAsJson(okapiHeaders));
+
+    Handler<AsyncResult<Response>> loggingResponseHandler =
+      loggingResponseHandler("postAutomatedPatronBlocksSynchronizationJob", asyncResultHandler, log);
+
     new SynchronizationJobService(okapiHeaders, vertxContext.owner())
       .createSynchronizationJob(request)
-      .onSuccess(response -> asyncResultHandler.handle(succeededFuture(
+      .onSuccess(response -> loggingResponseHandler.handle(succeededFuture(
         PostAutomatedPatronBlocksSynchronizationJobResponse
           .respond201WithApplicationJson(response))))
       .onFailure(throwable -> {
         String errorMessage = throwable.getLocalizedMessage();
+        log.warn("getAutomatedPatronBlocksByUserId:: Failed to create synchronization job",
+          throwable);
         if (throwable instanceof UserIdNotFoundException) {
+          log.debug("getAutomatedPatronBlocksByUserId:: User ID not found");
           asyncResultHandler.handle(succeededFuture(
             PostAutomatedPatronBlocksSynchronizationJobResponse.respond422WithTextPlain(
               errorMessage)));
         } else {
+          log.debug("getAutomatedPatronBlocksByUserId:: unexpected error");
           asyncResultHandler.handle(succeededFuture(
             PostAutomatedPatronBlocksSynchronizationJobResponse
               .respond500WithTextPlain(errorMessage)));
@@ -74,21 +93,30 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
+    log.debug("getAutomatedPatronBlocksSynchronizationJobBySyncJobId:: " +
+        "parameters syncRequestId: {}, okapiHeaders: {}", syncRequestId, logAsJson(okapiHeaders));
+
+    Handler<AsyncResult<Response>> loggingResponseHandler =
+      loggingResponseHandler("getAutomatedPatronBlocksSynchronizationJobBySyncJobId", asyncResultHandler, log);
+
     new SynchronizationJobService(okapiHeaders, vertxContext.owner())
       .getSynchronizationJob(syncRequestId)
       .onSuccess(response ->
-          asyncResultHandler.handle(succeededFuture(
+        loggingResponseHandler.handle(succeededFuture(
             GetAutomatedPatronBlocksSynchronizationJobBySyncJobIdResponse
               .respond200WithApplicationJson(response))))
       .onFailure(throwable -> {
         String errorMessage = throwable.getLocalizedMessage();
+        log.warn("getAutomatedPatronBlocksByUserId:: Failed to create synchronization job",
+          throwable);
         if (throwable instanceof EntityNotFoundException) {
-          asyncResultHandler.handle(succeededFuture(
+          loggingResponseHandler.handle(succeededFuture(
             GetAutomatedPatronBlocksSynchronizationJobBySyncJobIdResponse
               .respond404WithTextPlain(errorMessage)));
         } else {
-          GetAutomatedPatronBlocksSynchronizationJobBySyncJobIdResponse
-            .respond500WithTextPlain(errorMessage);
+          loggingResponseHandler.handle(succeededFuture(
+            GetAutomatedPatronBlocksSynchronizationJobBySyncJobIdResponse
+              .respond500WithTextPlain(errorMessage)));
         }
       });
   }
@@ -97,8 +125,8 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
   public void postAutomatedPatronBlocksSynchronizationStart(Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    asyncResultHandler.handle(succeededFuture(
-      PostAutomatedPatronBlocksSynchronizationStartResponse.respond202()));
+    loggingResponseHandler("postAutomatedPatronBlocksSynchronizationStart", asyncResultHandler, log)
+      .handle(succeededFuture(PostAutomatedPatronBlocksSynchronizationStartResponse.respond202()));
 
     vertxContext.owner().executeBlocking(promise ->
       new SynchronizationJobService(okapiHeaders, vertxContext.owner())

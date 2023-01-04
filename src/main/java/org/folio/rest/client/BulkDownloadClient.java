@@ -3,6 +3,7 @@ package org.folio.rest.client;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+import static org.folio.util.LogHelper.logResponseBody;
 
 import java.util.List;
 import java.util.Map;
@@ -42,11 +43,12 @@ public class BulkDownloadClient<T> extends OkapiClient {
   }
 
   public Future<List<T>> fetchPage(String query, int pageSize) {
+    log.debug("fetchPage:: parameters query: {}, pageSize: {}", query, pageSize);
     String fullQuery = defaultIfBlank(query, DEFAULT_QUERY) + SORT_BY_ID;
     String encodedFullQuery = StringUtil.urlEncode(fullQuery);
     String fullPath = String.format(PATH_TEMPLATE, path, pageSize, encodedFullQuery);
 
-    log.info("Attempting to fetch a page of {} {}...", pageSize, arrayName);
+    log.info("fetchPage:: Attempting to fetch a page of {} {}...", pageSize, arrayName);
 
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
     getAbs(fullPath).send(promise);
@@ -54,9 +56,9 @@ public class BulkDownloadClient<T> extends OkapiClient {
     return promise.future().compose(response -> {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
-        String errorMessage = String.format("Failed to fetch %s. Response: %d %s",
-          arrayName, responseStatus, response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
-        log.error(errorMessage);
+        String errorMessage = String.format("fetchPage:: Failed to fetch %s. Response: %d %s",
+          arrayName, responseStatus, logResponseBody(response));
+        log.warn(errorMessage);
         return failedFuture(new HttpFailureException(errorMessage));
       } else {
         try {
@@ -64,10 +66,11 @@ public class BulkDownloadClient<T> extends OkapiClient {
             .constructCollectionType(List.class, valueType);
           JsonArray jsonArray = response.bodyAsJsonObject().getJsonArray(arrayName);
           List<T> result = objectMapper.readValue(jsonArray.encode(), javaType);
-          log.info("Successfully fetched {} {} from: {}", result.size(), arrayName, path);
+          log.info("fetchPage:: Successfully fetched {} {} from: {}", result.size(), arrayName,
+            path);
           return succeededFuture(result);
         } catch (JsonProcessingException e) {
-          log.error("Failed to parse JSON response from: {}", path);
+          log.warn("fetchPage:: Failed to parse JSON response from: {}", path);
           return failedFuture(e);
         }
       }

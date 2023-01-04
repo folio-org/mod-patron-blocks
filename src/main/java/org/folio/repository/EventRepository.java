@@ -2,6 +2,8 @@ package org.folio.repository;
 
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
@@ -13,6 +15,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 
 public class EventRepository<T> extends BaseRepository<T> {
+
+  private static final Logger log = LogManager.getLogger(EventRepository.class);
   private static final int NUMBER_OF_EVENTS_LIMIT = 10000;
 
   public EventRepository(PostgresClient pgClient, String tableName, Class<T> entityType) {
@@ -24,6 +28,7 @@ public class EventRepository<T> extends BaseRepository<T> {
   }
 
   public Future<List<T>> getByUserId(String userId) {
+    log.debug("getByUserId:: parameters userId: {}", userId);
     return this.get(new Criterion(new Criteria()
       .addField("'userId'")
       .setOperation("=")
@@ -33,6 +38,7 @@ public class EventRepository<T> extends BaseRepository<T> {
   }
 
   public Future<Void> removeByUserId(String tenantId, String userId) {
+    log.debug("removeByUserId:: parameters tenantId: {}, userId: {}", tenantId, userId);
     Promise<Void> promise = Promise.promise();
 
     String deleteByUserIdQuery = String.format(

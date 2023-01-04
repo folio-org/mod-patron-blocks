@@ -18,7 +18,7 @@ public abstract class AsyncProcessingContext {
       message += format(". %s", additionalMessage);
     }
 
-    log.error(message);
+    log.warn(message);
   }
 
   public void logFailedValidationError(String failedStep) {

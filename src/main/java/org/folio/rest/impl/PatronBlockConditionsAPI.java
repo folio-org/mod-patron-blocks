@@ -3,11 +3,15 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
+import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.loggingResponseHandler;
 
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
@@ -20,6 +24,7 @@ import io.vertx.core.Handler;
 
 public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
+  private static final Logger log = LogManager.getLogger(PatronBlockConditionsAPI.class);
   private static final String PATRON_BLOCK_CONDITIONS = "patron_block_conditions";
 
   @Validate
@@ -28,9 +33,13 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     String lang, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
+    log.debug("getPatronBlockConditions:: parameters offset: {}, limit: {}, query: {}, lang: {}, " +
+      "okapiHeaders: {}", offset, limit, query, lang, logAsJson(okapiHeaders));
+
     PgUtil.get(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class,
       org.folio.rest.jaxrs.model.PatronBlockConditions.class, query, offset, limit,
-      okapiHeaders, vertxContext, GetPatronBlockConditionsResponse.class, asyncResultHandler);
+      okapiHeaders, vertxContext, GetPatronBlockConditionsResponse.class,
+      loggingResponseHandler("getPatronBlockConditions", asyncResultHandler, log));
   }
 
   @Validate
@@ -40,8 +49,14 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
+    log.debug("putPatronBlockConditionsByPatronBlockConditionId:: parameters " +
+        "patronBlockConditionId: {}, lang: {}, entity: {}, okapiHeaders: {}",
+      patronBlockConditionId, lang, logAsJson(entity), logAsJson(okapiHeaders));
+
     Errors errors = validateEntity(entity);
     if (errors != null) {
+      log.info("putPatronBlockConditionsByPatronBlockConditionId:: entity is invalid. Errors: {}",
+        logAsJson(errors));
       asyncResultHandler.handle(succeededFuture(
         PutPatronBlockConditionsByPatronBlockConditionIdResponse
           .respond422WithApplicationJson(errors)));
@@ -49,7 +64,8 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     }
 
     PgUtil.put(PATRON_BLOCK_CONDITIONS, entity, patronBlockConditionId, okapiHeaders,
-      vertxContext, PutPatronBlockConditionsByPatronBlockConditionIdResponse.class, asyncResultHandler);
+      vertxContext, PutPatronBlockConditionsByPatronBlockConditionIdResponse.class,
+      loggingResponseHandler("putPatronBlockConditionsByPatronBlockConditionId", asyncResultHandler, log));
   }
 
   @Validate
@@ -58,9 +74,13 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     String patronBlockConditionId, String lang, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
+    log.debug("getPatronBlockConditionsByPatronBlockConditionId:: parameters " +
+        "patronBlockConditionId: {}, lang: {}, okapiHeaders: {}", patronBlockConditionId, lang,
+      logAsJson(okapiHeaders));
+
     PgUtil.getById(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class, patronBlockConditionId,
       okapiHeaders, vertxContext, GetPatronBlockConditionsByPatronBlockConditionIdResponse.class,
-      asyncResultHandler);
+      loggingResponseHandler("getPatronBlockConditionsByPatronBlockConditionId", asyncResultHandler, log));
   }
 
   private Errors validateEntity(PatronBlockCondition entity) {

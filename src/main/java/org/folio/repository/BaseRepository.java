@@ -1,5 +1,7 @@
 package org.folio.repository;
 
+import static org.folio.util.LogHelper.logAsJson;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -40,59 +42,87 @@ public class BaseRepository<T> {
   }
 
   public Future<List<T>> get(String query, int offset, int limit) {
+    log.debug("get:: parameters query: {}, offset: {}, limit: {}", query, offset, limit);
     CQLWrapper cql = new CQLWrapper(cql2pgJson, query, limit, offset);
     return pgClient.get(tableName, entityType, cql, true)
-        .map(Results::getResults);
+      .map(Results::getResults)
+      .onSuccess(results -> log.info("get:: result: list of {} elements {}",
+        results != null ? results.size() : 0, results));
   }
 
   public Future<List<T>> get(Criterion criterion) {
+    log.debug("get:: parameters criterion: {}", criterion);
     return pgClient.get(tableName, entityType, criterion, true)
-        .map(Results::getResults);
+      .map(Results::getResults)
+      .onSuccess(results -> log.info("get:: result: list of {} elements {}",
+        results != null ? results.size() : 0, results));
   }
 
   public Future<Optional<T>> get(String id) {
+    log.debug("get:: parameters id: {}", id);
     return pgClient.getById(tableName, id, entityType)
-        .map(Optional::ofNullable);
+      .map(Optional::ofNullable)
+      .onSuccess(result -> log.info("get:: result: optional, value is {}", result.orElse(null)));
   }
 
   public Future<List<T>> getAllWithDefaultLimit() {
+    log.debug("getAllWithDefaultLimit::");
     return getAllWithLimit(DEFAULT_LIMIT);
   }
 
   public Future<List<T>> getAllWithLimit(int limit) {
+    log.debug("getAllWithLimit:: parameters limit: {}", limit);
     return get(null, 0, limit);
   }
 
   public Future<String> save(T entity, String id) {
-    return pgClient.save(tableName, id, entity);
+    log.debug("save:: parameters entity: {}, id: {}", logAsJson(entity), id);
+    return pgClient.save(tableName, id, entity)
+      .onSuccess(result -> log.info("save:: result: {}", result));
   }
 
   public Future<String> upsert(T entity, String id) {
-    return pgClient.upsert(tableName, id, entity);
+    log.debug("upsert:: parameters entity: {}, id: {}", logAsJson(entity), id);
+    return pgClient.upsert(tableName, id, entity)
+      .onSuccess(result -> log.info("upsert:: result: {}", result));
   }
 
   public Future<Boolean> update(T entity, String id) {
+    log.debug("update:: parameters entity: {}, id: {}", logAsJson(entity), id);
     return pgClient.update(tableName, entity, id)
-        .map(updateResult -> updateResult.rowCount() == 1);
+      .map(updateResult -> updateResult.rowCount() == 1)
+      .onSuccess(result -> log.info("update:: result: {}", result));
   }
 
   public Future<Boolean> delete(String id) {
+    log.debug("delete:: parameters id: {}", id);
     return pgClient.delete(tableName, id)
-        .map(updateResult -> updateResult.rowCount() == 1);
+      .map(updateResult -> updateResult.rowCount() == 1)
+      .onSuccess(result -> log.info("delete:: result: {}", result));
   }
 
   public Future<Boolean> delete(Criterion criterion) {
+    log.debug("delete:: parameters criterion: {}", criterion);
     return pgClient.delete(tableName, criterion)
       .map(RowSet::rowCount)
-      .onSuccess(rowCount -> log.info("Deleted {} record(s) from table {} using query: {}",
+      .onSuccess(rowCount -> log.info("delete:: Deleted {} record(s) from table {} using query: {}",
         rowCount, tableName, criterion))
-      .map(rowCount -> rowCount > 0);
+      .map(rowCount -> rowCount > 0)
+      .map(result -> {
+        log.info("delete:: result: {}", result);
+        return result;
+      });
   }
 
   public Future<Void> removeAll(String tenantId) {
+    log.debug("removeAll:: parameters tenantId: {}", tenantId);
     String deleteAllQuery = String.format("DELETE FROM %s_%s.%s", tenantId,
       ModuleName.getModuleName(), tableName);
-    return pgClient.execute(deleteAllQuery).mapEmpty();
+    return pgClient.execute(deleteAllQuery)
+      .map(RowSet::rowCount)
+      .onSuccess(rowCount -> log.info("removeAll:: Deleted {} record(s) from table {}.{}",
+        rowCount, tenantId, tableName))
+      .mapEmpty();
   }
 
   static Criterion buildCriterion(String key, String value) {

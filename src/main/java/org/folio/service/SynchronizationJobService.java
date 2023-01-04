@@ -7,6 +7,8 @@ import static org.folio.domain.SynchronizationStatus.FAILED;
 import static org.folio.domain.SynchronizationStatus.IN_PROGRESS;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
+import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.logList;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,6 +54,7 @@ public class SynchronizationJobService {
   }
 
   public Future<SynchronizationJob> createSynchronizationJob(SynchronizationJob request) {
+    log.debug("createSynchronizationJob:: parameters request: {}", logAsJson(request));
     if (USER == request.getScope() && request.getUserId() == null) {
       return failedFuture(new UserIdNotFoundException(
         "UserId is required for synchronization job with scope: USER"));
@@ -72,38 +75,46 @@ public class SynchronizationJobService {
       .map(id -> new SynchronizationJob()
         .withId(id)
         .withScope(entity.getScope())
-        .withStatus(entity.getStatus()));
+        .withStatus(entity.getStatus()))
+      .onSuccess(result -> log.info("createSynchronizationJob:: result: {}", logAsJson(result)));
   }
 
   public Future<SynchronizationJob> getSynchronizationJob(String syncRequestId) {
+    log.debug("getSynchronizationJob:: parameters syncRequestId: {}", syncRequestId);
     return syncRepository.get(syncRequestId)
-      .compose(optionalSyncResponse -> {
-        if (optionalSyncResponse.isPresent()) {
-          return succeededFuture(optionalSyncResponse.get());
-        }
-        return failedFuture(new EntityNotFoundException(
-          "This synchronization request does not exist"));
-      });
+      .compose(optionalSyncResponse -> optionalSyncResponse.map(Future::succeededFuture)
+        .orElseGet(() -> failedFuture(new EntityNotFoundException(
+          "This synchronization request does not exist"))))
+      .onSuccess(result -> log.info("getSynchronizationJob:: result: {}", logAsJson(result)));
   }
 
   public Future<SynchronizationJob> runSynchronization() {
-     return syncRepository.getJobsByStatus(IN_PROGRESS)
-       .compose(this::doSynchronization);
+    log.debug("runSynchronization:: no parameters");
+    return syncRepository.getJobsByStatus(IN_PROGRESS)
+      .compose(this::doSynchronization)
+      .onSuccess(result -> log.info("runSynchronization:: result: {}", logAsJson(result)));
   }
 
   private Future<SynchronizationJob> doSynchronization(
     List<SynchronizationJob> inProgressSynchronizationJobs) {
 
+    log.debug("doSynchronization:: parameters inProgressSynchronizationJobs: {}",
+      logList(inProgressSynchronizationJobs));
+
     if (!inProgressSynchronizationJobs.isEmpty()) {
-      log.debug("Synchronization is in-progress now");
+      log.debug("doSynchronization:: Synchronization is in-progress now");
       return succeededFuture();
     }
 
     return syncRepository.getTheOldestSyncRequest(tenantId)
-      .compose(this::doSynchronization);
+      .compose(this::doSynchronization)
+      .onSuccess(result -> log.info("doSynchronization:: result: {}", logAsJson(result)));
   }
 
   private Future<SynchronizationJob> doSynchronization(SynchronizationJob synchronizationJob) {
+    log.debug("doSynchronization:: parameters synchronizationJob: {}",
+      logAsJson(synchronizationJob));
+
     return updateJobStatus(synchronizationJob, IN_PROGRESS)
       .compose(syncJob -> cleanExistingEvents(syncJob, tenantId))
       .compose(loanEventsGenerationService::generateEvents)
@@ -111,24 +122,30 @@ public class SynchronizationJobService {
       .compose(this::deleteUserSummaries)
       .compose(this::rebuildUserSummaries)
       .compose(job -> updateJobStatus(job, DONE))
-      .recover(t -> updateJobAsFailed(synchronizationJob, t.getLocalizedMessage()));
+      .recover(t -> updateJobAsFailed(synchronizationJob, t.getLocalizedMessage()))
+      .onSuccess(result -> log.info("doSynchronization:: result: {}", logAsJson(result)));
   }
 
   private Future<SynchronizationJob> deleteUserSummaries(SynchronizationJob job) {
+    log.debug("deleteUserSummaries:: parameters job: {}", logAsJson(job));
     if (job.getScope() == FULL) {
+      log.debug("deleteUserSummaries:: scope: {}", FULL);
       return userSummaryRepository.removeAll(tenantId)
         .map(job);
     }
     else if (job.getScope() == USER) {
+      log.debug("deleteUserSummaries:: scope: {}", USER);
       return userSummaryRepository.deleteByUserId(job.getUserId())
         .map(job);
     }
     else {
+      log.debug("deleteUserSummaries:: scope: unknown");
       return succeededFuture(job);
     }
   }
 
   private Future<SynchronizationJob> rebuildUserSummaries(SynchronizationJob job) {
+    log.debug("rebuildUserSummaries:: parameters job: {}", logAsJson(job));
     Set<String> userIds = new HashSet<>();
     userIds.addAll(loanEventsGenerationService.getUserIds());
     userIds.addAll(feesFinesEventsGenerationService.getUserIds());
@@ -137,21 +154,28 @@ public class SynchronizationJobService {
       .filter(Objects::nonNull)
       .map(userSummaryService::rebuild)
       .collect(Collectors.toList()))
-      .map(job);
+      .map(job)
+      .onSuccess(result -> log.info("rebuildUserSummaries:: result: {}", logAsJson(result)));
+
   }
 
   private Future<SynchronizationJob> cleanExistingEvents(SynchronizationJob syncJob,
     String tenantId) {
 
+    log.debug("cleanExistingEvents:: parameters syncJob: {}, tenantId: {}", logAsJson(syncJob),
+      tenantId);
     return (syncJob.getScope() == FULL
       ? eventService.removeAllEvents(tenantId)
       : eventService.removeAllEventsForUser(tenantId, syncJob.getUserId()))
-      .map(syncJob);
+      .map(syncJob)
+      .onSuccess(result -> log.info("cleanExistingEvents:: result: {}", logAsJson(result)));
   }
 
   private Future<SynchronizationJob> updateJobAsFailed(SynchronizationJob syncJob,
     String errorMessage) {
 
+    log.debug("updateJobAsFailed:: parameters syncJob: {}, errorMessage: {}", logAsJson(syncJob),
+      errorMessage);
     syncJob.getErrors().add(errorMessage);
 
     return updateJobStatus(syncJob, FAILED);
@@ -160,9 +184,11 @@ public class SynchronizationJobService {
   private Future<SynchronizationJob> updateJobStatus(SynchronizationJob job,
     SynchronizationStatus syncStatus) {
 
+    log.debug("updateJobStatus:: parameters job: {}, syncStatus: {}", logAsJson(job), syncStatus);
     return syncRepository.update(job.withStatus(syncStatus.getValue()))
       .onSuccess(r -> log.info("Synchronization job status updated: {}", syncStatus.getValue()))
       .onFailure(t -> log.error("Failed to update synchronization job status", t))
-      .map(job);
+      .map(job)
+      .onSuccess(result -> log.info("updateJobStatus:: result: {}", logAsJson(result)));
   }
 }
