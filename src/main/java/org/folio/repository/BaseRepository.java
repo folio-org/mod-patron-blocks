@@ -1,6 +1,7 @@
 package org.folio.repository;
 
 import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.logList;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,23 +47,22 @@ public class BaseRepository<T> {
     CQLWrapper cql = new CQLWrapper(cql2pgJson, query, limit, offset);
     return pgClient.get(tableName, entityType, cql, true)
       .map(Results::getResults)
-      .onSuccess(results -> log.info("get:: result: list of {} elements {}",
-        results != null ? results.size() : 0, results));
+      .onSuccess(result -> log.info("get:: result: {}", logList(result)));
   }
 
   public Future<List<T>> get(Criterion criterion) {
     log.debug("get:: parameters criterion: {}", criterion);
     return pgClient.get(tableName, entityType, criterion, true)
       .map(Results::getResults)
-      .onSuccess(results -> log.info("get:: result: list of {} elements {}",
-        results != null ? results.size() : 0, results));
+      .onSuccess(result -> log.info("get:: result: {}", logList(result)));
   }
 
   public Future<Optional<T>> get(String id) {
     log.debug("get:: parameters id: {}", id);
     return pgClient.getById(tableName, id, entityType)
       .map(Optional::ofNullable)
-      .onSuccess(result -> log.info("get:: result: optional, value is {}", result.orElse(null)));
+      .onSuccess(result -> log.info("get:: result: optional, value is {}",
+        logAsJson(result.orElse(null))));
   }
 
   public Future<List<T>> getAllWithDefaultLimit() {

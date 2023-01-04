@@ -2,6 +2,7 @@ package org.folio.rest.client;
 
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
@@ -12,7 +13,6 @@ import static org.folio.util.LogHelper.logResponseBody;
 
 import java.util.Map;
 
-import io.vertx.core.http.HttpMethod;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +25,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
@@ -67,17 +68,17 @@ public class OkapiClient {
     log.debug("fetchById:: parameters pathToEntity: {}, id: {}, responseType: {}",
       pathToEntity, id, responseType);
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
-    String path = String.format("/%s/%s", pathToEntity, id);
+    String path = format("/%s/%s", pathToEntity, id);
 
     getAbs(path).send(promise);
 
     return promise.future().compose(response -> {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
-        String errorMessage = String.format("fetchById:: Failed to fetch %s by ID: %s. " +
+        String errorMessage = format("Failed to fetch %s by ID: %s. " +
             "Response: %d %s", responseType.getName(), id, responseStatus,
           logResponseBody(response));
-        log.warn(errorMessage);
+        log.warn("fetchById:: {}", errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
@@ -120,7 +121,7 @@ public class OkapiClient {
     return promise.future().compose(response -> {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
-        String errorMessage = String.format("fetchAll:: Failed to fetch %s. Response: %d %s",
+        String errorMessage = format("fetchAll:: Failed to fetch %s. Response: %d %s",
           responseType.getName(), responseStatus, logResponseBody(response));
         log.warn(errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));

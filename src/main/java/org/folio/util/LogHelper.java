@@ -4,6 +4,7 @@ import static com.google.common.primitives.Ints.min;
 import static java.lang.String.format;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
@@ -16,24 +17,39 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 
 public class LogHelper {
   private static final Logger log = LogManager.getLogger(LogHelper.class);
   public static final String R_N_LINE_SEPARATOR = "\\r|\\n";
   public static final String R_LINE_SEPARATOR = "\\r";
-  private static final int MAX_OBJECT_LENGTH = 10000;
-  private static final int DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG = 5;
+  private static final int MAX_OBJECT_JSON_LENGTH = 10 * 1024;
+  private static final int DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG = 10;
 
   public static String logAsJson(Object object) {
     if (object == null) {
       return null;
     }
 
+    if (object instanceof JsonObject) {
+      try {
+        return crop(((JsonObject) object).encode());
+      } catch (Exception ex) {
+        log.warn("logAsJson:: Error while logging JsonObject", ex);
+        return null;
+      }
+    }
+
     try {
-      return PostgresClient.pojo2JsonObject(object).encode().substring(0, MAX_OBJECT_LENGTH);
-    } catch (JsonProcessingException ex) {
-      log.warn("Error logging an object of type {}", object.getClass().getCanonicalName(), ex);
+      return crop(PostgresClient.pojo2JsonObject(object).encode());
+    } catch (JsonProcessingException jsonProcessingException) {
+      log.warn("logAsJson:: Error while logging an object of type {}",
+        object.getClass().getCanonicalName(), jsonProcessingException);
+      return null;
+    } catch (Exception ex) {
+      log.warn("logAsJson:: Unexpected error while logging an object of type {}",
+        object.getClass().getCanonicalName(), ex);
       return null;
     }
   }
@@ -42,29 +58,58 @@ public class LogHelper {
     return logList(list, DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG);
   }
 
-  public static String logList(List<? extends Object> list, int numberOfElementsToLog) {
-    if (list == null) {
-      return "null";
-    } else {
-      return format("list(size=%d, first %d elements: %s)", list.size(),
-        min(list.size(), numberOfElementsToLog), logAsJson(list.subList(0, numberOfElementsToLog)));
+  public static String logList(List<? extends Object> list, int maxNumberOfElementsToLog) {
+    try {
+      if (list == null) {
+        return null;
+      } else {
+        int numberOfElementsToLog = min(list.size(), maxNumberOfElementsToLog);
+        return format("list(size: %d, %s: [%s])", list.size(),
+          numberOfElementsToLog == list.size() ? "elements"
+            : format("first %d element%s", numberOfElementsToLog,
+            numberOfElementsToLog == 1 ? "" : "s"),
+          list.subList(0, numberOfElementsToLog).stream()
+            .map(LogHelper::logAsJson)
+            .collect(Collectors.joining(", ")));
+      }
+    } catch (Exception ex) {
+      log.warn("logList:: Unexpected error while logging a list", ex);
+      return null;
     }
   }
 
   public static String logResponseBody(HttpResponse<Buffer> response) {
-    return response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR)
-      .substring(0, MAX_OBJECT_LENGTH);
+    try {
+      return crop(response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
+    } catch (Exception ex) {
+      log.warn("logResponseBody:: Unexpected error while logging an HTTP response", ex);
+      return null;
+    }
   }
 
   public static Handler<AsyncResult<Response>> loggingResponseHandler(String methodName,
     Handler<AsyncResult<Response>> asyncResultHandler, Logger logger) {
 
-    return responseAsyncResult -> {
-      asyncResultHandler.handle(responseAsyncResult);
+    try {
+      return responseAsyncResult -> {
+        Response response = responseAsyncResult.result();
+        logger.info("{}:: result: HTTP response (code: {}, body: {})", methodName, response.getStatus(),
+          logAsJson(response.getEntity()));
+        asyncResultHandler.handle(responseAsyncResult);
+      };
+    } catch (Exception ex) {
+      log.warn("loggingResponseHandler:: Unexpected error while creating a logging HTTP response " +
+        "handler", ex);
+      return null;
+    }
+  }
 
-      Response response = responseAsyncResult.result();
-      logger.info("{}:: result: Response code {}, body {}", methodName, response.getStatus(),
-        response.readEntity(String.class).substring(0, MAX_OBJECT_LENGTH));
-    };
+  private static String crop(String str) {
+    try {
+      return str.substring(0, min(str.length(), MAX_OBJECT_JSON_LENGTH));
+    } catch (Exception ex) {
+      log.warn("crop:: failed to crop string", ex);
+      return null;
+    }
   }
 }

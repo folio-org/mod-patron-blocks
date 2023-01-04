@@ -32,7 +32,7 @@ public class ActionBlocks {
     log.debug("byLimit:: parameters userSummary: {}, patronBlockLimit: {}",
       logAsJson(userSummary), patronBlockLimit);
     if (userSummary == null || patronBlockLimit == null || userSummary.getOpenLoans() == null) {
-      log.warn("byLimit:: Failed to determine blocks because one of the parameters is null;  " +
+      log.warn("byLimit:: Failed to determine blocks because one of the parameters is null; " +
         "parameters userSummary: {}, patronBlockLimit: {}", logAsJson(userSummary),
         patronBlockLimit);
       return empty();

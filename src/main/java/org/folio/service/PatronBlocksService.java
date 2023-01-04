@@ -32,6 +32,7 @@ import org.folio.util.AsyncProcessingContext;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.With;
 
@@ -255,6 +256,7 @@ public class PatronBlocksService {
   @With
   @AllArgsConstructor
   @NoArgsConstructor(force = true)
+  @Getter
   private static class BlocksCalculationContext extends AsyncProcessingContext {
     final UserSummary userSummary;
     final String userGroupId;

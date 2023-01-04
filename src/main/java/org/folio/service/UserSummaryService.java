@@ -44,6 +44,7 @@ import org.folio.util.AsyncProcessingContext;
 
 import io.vertx.core.Future;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.With;
@@ -68,7 +69,7 @@ public class UserSummaryService {
   }
 
   public Future<UserSummary> getByUserId(String userId) {
-    log.debug("getByUserId:: parameters userId: {}", logAsJson(userId));
+    log.debug("getByUserId:: parameters userId: {}", userId);
     return userSummaryRepository.getByUserId(userId)
       .map(optionalUserSummary -> optionalUserSummary.orElseThrow(() ->
         new EntityNotFoundInDbException(format("User summary for user ID %s not found", userId))))
@@ -409,6 +410,7 @@ public class UserSummaryService {
   @With
   @AllArgsConstructor
   @NoArgsConstructor(force = true)
+  @Getter
   private static class RebuildContext extends AsyncProcessingContext {
     final UserSummary userSummary;
     final List<Event> events = new ArrayList<>();
@@ -419,6 +421,7 @@ public class UserSummaryService {
     }
   }
 
+  @Getter
   private static class UpdateRetryContext {
     @Setter
     private UserSummary userSummary;

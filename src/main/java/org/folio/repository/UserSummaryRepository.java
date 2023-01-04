@@ -69,7 +69,7 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
         }
 
         UserSummary result = results.get(0);
-        log.info("getByUserId:: result: {}", result);
+        log.info("getByUserId:: result: {}", logAsJson(result));
         return succeededFuture(Optional.ofNullable(result));
       });
   }
