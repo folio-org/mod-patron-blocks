@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 
 import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.logOkapiHeaders;
 
 import java.util.Map;
 
@@ -146,6 +147,6 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
     Map<String, String> okapiHeaders) {
 
     log.info("{}:: parameters : {} event {}, okapiHeaders: {}", methodName,
-      EventType.getNameByEvent(event), logAsJson(event), logAsJson(okapiHeaders));
+      EventType.getNameByEvent(event), logAsJson(event), logOkapiHeaders(okapiHeaders));
   }
 }

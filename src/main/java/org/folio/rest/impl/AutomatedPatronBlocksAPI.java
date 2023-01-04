@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
 import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.logOkapiHeaders;
 import static org.folio.util.LogHelper.loggingResponseHandler;
 import static org.folio.util.UuidUtil.isUuid;
 
@@ -33,7 +34,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Context vertxContext) {
 
     log.debug("getAutomatedPatronBlocksByUserId:: parameters userId: {}, okapiHeaders: {}",
-      userId, logAsJson(okapiHeaders));
+      userId, logOkapiHeaders(okapiHeaders));
 
     if (!isUuid(userId)) {
       log.debug("getAutomatedPatronBlocksByUserId:: User ID {} is not a UUID", userId);
@@ -60,7 +61,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Context vertxContext) {
 
     log.debug("getAutomatedPatronBlocksByUserId:: parameters request: {}, okapiHeaders: {}",
-      logAsJson(request), logAsJson(okapiHeaders));
+      logAsJson(request), logOkapiHeaders(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
       loggingResponseHandler("postAutomatedPatronBlocksSynchronizationJob", asyncResultHandler, log);
@@ -94,7 +95,8 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Context vertxContext) {
 
     log.debug("getAutomatedPatronBlocksSynchronizationJobBySyncJobId:: " +
-        "parameters syncRequestId: {}, okapiHeaders: {}", syncRequestId, logAsJson(okapiHeaders));
+        "parameters syncRequestId: {}, okapiHeaders: {}", syncRequestId,
+      logOkapiHeaders(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
       loggingResponseHandler("getAutomatedPatronBlocksSynchronizationJobBySyncJobId", asyncResultHandler, log);

@@ -2,8 +2,11 @@ package org.folio.util;
 
 import static com.google.common.primitives.Ints.min;
 import static java.lang.String.format;
+import static java.util.function.Predicate.not;
+import static java.util.function.UnaryOperator.identity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
@@ -73,7 +76,18 @@ public class LogHelper {
             .collect(Collectors.joining(", ")));
       }
     } catch (Exception ex) {
-      log.warn("logList:: Unexpected error while logging a list", ex);
+      log.warn("logList:: Failed to log a list", ex);
+      return null;
+    }
+  }
+
+  public static String logOkapiHeaders(Map<String, String> okapiHeaders) {
+    try {
+      return logAsJson(new JsonObject(okapiHeaders.keySet().stream()
+        .filter(not("x-okapi-token"::equalsIgnoreCase))
+        .collect(Collectors.toMap(identity(), okapiHeaders::get))));
+    } catch (Exception ex) {
+      log.warn("logOkapiHeaders:: Failed to log Okapi headers", ex);
       return null;
     }
   }
@@ -82,7 +96,7 @@ public class LogHelper {
     try {
       return crop(response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
     } catch (Exception ex) {
-      log.warn("logResponseBody:: Unexpected error while logging an HTTP response", ex);
+      log.warn("logResponseBody:: Failed to log an HTTP response", ex);
       return null;
     }
   }
@@ -98,7 +112,7 @@ public class LogHelper {
         asyncResultHandler.handle(responseAsyncResult);
       };
     } catch (Exception ex) {
-      log.warn("loggingResponseHandler:: Unexpected error while creating a logging HTTP response " +
+      log.warn("loggingResponseHandler:: Failed to create a logging HTTP response " +
         "handler", ex);
       return null;
     }
@@ -108,7 +122,7 @@ public class LogHelper {
     try {
       return str.substring(0, min(str.length(), MAX_OBJECT_JSON_LENGTH));
     } catch (Exception ex) {
-      log.warn("crop:: failed to crop string", ex);
+      log.warn("crop:: Failed to crop a string", ex);
       return null;
     }
   }

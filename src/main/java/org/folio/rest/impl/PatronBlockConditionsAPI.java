@@ -4,6 +4,7 @@ import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
 import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.logOkapiHeaders;
 import static org.folio.util.LogHelper.loggingResponseHandler;
 
 import java.util.Map;
@@ -34,7 +35,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     log.debug("getPatronBlockConditions:: parameters offset: {}, limit: {}, query: {}, lang: {}, " +
-      "okapiHeaders: {}", offset, limit, query, lang, logAsJson(okapiHeaders));
+      "okapiHeaders: {}", offset, limit, query, lang, logOkapiHeaders(okapiHeaders));
 
     PgUtil.get(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class,
       org.folio.rest.jaxrs.model.PatronBlockConditions.class, query, offset, limit,
@@ -51,7 +52,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
     log.debug("putPatronBlockConditionsByPatronBlockConditionId:: parameters " +
         "patronBlockConditionId: {}, lang: {}, entity: {}, okapiHeaders: {}",
-      patronBlockConditionId, lang, logAsJson(entity), logAsJson(okapiHeaders));
+      patronBlockConditionId, lang, logAsJson(entity), logOkapiHeaders(okapiHeaders));
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
@@ -76,7 +77,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
     log.debug("getPatronBlockConditionsByPatronBlockConditionId:: parameters " +
         "patronBlockConditionId: {}, lang: {}, okapiHeaders: {}", patronBlockConditionId, lang,
-      logAsJson(okapiHeaders));
+      logOkapiHeaders(okapiHeaders));
 
     PgUtil.getById(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class, patronBlockConditionId,
       okapiHeaders, vertxContext, GetPatronBlockConditionsByPatronBlockConditionIdResponse.class,

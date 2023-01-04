@@ -4,6 +4,7 @@ import static io.vertx.core.Future.succeededFuture;
 import static org.folio.repository.PatronBlockLimitsRepository.PATRON_BLOCK_LIMITS_TABLE_NAME;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
 import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogHelper.logOkapiHeaders;
 import static org.folio.util.LogHelper.loggingResponseHandler;
 
 import java.util.List;
@@ -45,7 +46,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     Context vertxContext) {
 
     log.debug("getPatronBlockLimits:: parameters offset: {}, limit: {}, query: {}, lang: {}, " +
-        "okapiHeaders: {}", offset, limit, query, lang, logAsJson(okapiHeaders));
+        "okapiHeaders: {}", offset, limit, query, lang, logOkapiHeaders(okapiHeaders));
 
     PgUtil.get(PATRON_BLOCK_LIMITS_TABLE_NAME, PatronBlockLimit.class,
       org.folio.rest.jaxrs.model.PatronBlockLimits.class, query, offset, limit,
@@ -60,7 +61,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     Context vertxContext) {
 
     log.debug("postPatronBlockLimits:: parameters lang: {}, entity: {}, okapiHeaders: {}",
-      lang, logAsJson(entity), logAsJson(okapiHeaders));
+      lang, logAsJson(entity), logOkapiHeaders(okapiHeaders));
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
@@ -83,7 +84,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     log.debug("putPatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
       "lang: {}, entity: {}, okapiHeaders: {}", patronBlockLimitId, lang, logAsJson(entity),
-      logAsJson(okapiHeaders));
+      logOkapiHeaders(okapiHeaders));
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
@@ -106,7 +107,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     Context vertxContext) {
 
     log.debug("getPatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
-        "lang: {}, okapiHeaders: {}", patronBlockLimitId, lang, logAsJson(okapiHeaders));
+        "lang: {}, okapiHeaders: {}", patronBlockLimitId, lang, logOkapiHeaders(okapiHeaders));
 
     PgUtil.getById(PATRON_BLOCK_LIMITS_TABLE_NAME, PatronBlockLimit.class, patronBlockLimitId,
       okapiHeaders, vertxContext, GetPatronBlockLimitsByPatronBlockLimitIdResponse.class,
@@ -120,7 +121,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     Context vertxContext) {
 
     log.debug("deletePatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
-      "lang: {}, okapiHeaders: {}", patronBlockLimitId, lang, logAsJson(okapiHeaders));
+      "lang: {}, okapiHeaders: {}", patronBlockLimitId, lang, logOkapiHeaders(okapiHeaders));
 
     PgUtil.deleteById(PATRON_BLOCK_LIMITS_TABLE_NAME, patronBlockLimitId, okapiHeaders,
       vertxContext, DeletePatronBlockLimitsByPatronBlockLimitIdResponse.class,
