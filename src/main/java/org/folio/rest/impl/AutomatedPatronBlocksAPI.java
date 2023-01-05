@@ -34,7 +34,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Context vertxContext) {
 
     log.debug("getAutomatedPatronBlocksByUserId:: parameters userId: {}, okapiHeaders: {}",
-      userId, logOkapiHeaders(okapiHeaders));
+      () -> userId, () -> logOkapiHeaders(okapiHeaders));
 
     if (!isUuid(userId)) {
       log.debug("getAutomatedPatronBlocksByUserId:: User ID {} is not a UUID", userId);
@@ -61,7 +61,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Context vertxContext) {
 
     log.debug("getAutomatedPatronBlocksByUserId:: parameters request: {}, okapiHeaders: {}",
-      logAsJson(request), logOkapiHeaders(okapiHeaders));
+      () -> logAsJson(request), () -> logOkapiHeaders(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
       loggingResponseHandler("postAutomatedPatronBlocksSynchronizationJob", asyncResultHandler, log);
@@ -95,8 +95,8 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Context vertxContext) {
 
     log.debug("getAutomatedPatronBlocksSynchronizationJobBySyncJobId:: " +
-        "parameters syncRequestId: {}, okapiHeaders: {}", syncRequestId,
-      logOkapiHeaders(okapiHeaders));
+        "parameters syncRequestId: {}, okapiHeaders: {}", () -> syncRequestId,
+      () -> logOkapiHeaders(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
       loggingResponseHandler("getAutomatedPatronBlocksSynchronizationJobBySyncJobId", asyncResultHandler, log);
