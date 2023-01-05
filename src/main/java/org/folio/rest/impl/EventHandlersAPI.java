@@ -1,8 +1,8 @@
 package org.folio.rest.impl;
 
 
-import static org.folio.util.LogHelper.logAsJson;
-import static org.folio.util.LogHelper.logOkapiHeaders;
+import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.logOkapiHeaders;
 
 import java.util.Map;
 

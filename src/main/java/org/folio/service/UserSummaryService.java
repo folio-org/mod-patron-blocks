@@ -6,7 +6,7 @@ import static java.lang.String.format;
 import static org.folio.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.domain.EventType.getByEvent;
 import static org.folio.domain.EventType.getNameByEvent;
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

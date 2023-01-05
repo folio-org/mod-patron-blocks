@@ -1,6 +1,6 @@
 package org.folio.service;
 
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 
 import java.math.BigDecimal;
 import java.util.List;

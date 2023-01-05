@@ -6,7 +6,7 @@ import static org.folio.domain.Condition.MAX_NUMBER_OF_OVERDUE_ITEMS;
 import static org.folio.domain.Condition.MAX_NUMBER_OF_OVERDUE_RECALLS;
 import static org.folio.domain.Condition.MAX_OUTSTANDING_FEE_FINE_BALANCE;
 import static org.folio.domain.Condition.RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS;
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 
 import java.math.BigDecimal;
 import java.util.Map;

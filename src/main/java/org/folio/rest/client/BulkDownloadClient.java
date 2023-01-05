@@ -3,7 +3,7 @@ package org.folio.rest.client;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
-import static org.folio.util.LogHelper.logResponseBody;
+import static org.folio.util.LogUtil.logResponseBody;
 
 import java.util.List;
 import java.util.Map;

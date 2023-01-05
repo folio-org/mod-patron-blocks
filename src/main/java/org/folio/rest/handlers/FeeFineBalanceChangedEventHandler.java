@@ -1,7 +1,7 @@
 package org.folio.rest.handlers;
 
 import static java.lang.String.format;
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 
 import java.util.Map;
 

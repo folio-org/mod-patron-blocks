@@ -2,8 +2,8 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
-import static org.folio.util.LogHelper.logAsJson;
-import static org.folio.util.LogHelper.loggingResponseHandler;
+import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.loggingResponseHandler;
 
 import java.util.Map;
 

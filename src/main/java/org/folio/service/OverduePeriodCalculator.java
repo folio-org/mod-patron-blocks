@@ -1,7 +1,7 @@
 package org.folio.service;
 
 import static java.util.Optional.ofNullable;
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 import static org.joda.time.Minutes.minutesBetween;
 
 import org.apache.logging.log4j.LogManager;

@@ -2,8 +2,8 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
-import static org.folio.util.LogHelper.logOkapiHeaders;
-import static org.folio.util.LogHelper.loggingResponseHandler;
+import static org.folio.util.LogUtil.logOkapiHeaders;
+import static org.folio.util.LogUtil.loggingResponseHandler;
 import static org.folio.util.PostgresUtils.getPostgresClient;
 import static org.folio.util.UuidUtil.isUuid;
 

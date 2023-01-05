@@ -2,7 +2,7 @@ package org.folio.service;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 
 import java.util.ArrayList;
 import java.util.HashSet;

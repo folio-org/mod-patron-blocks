@@ -1,7 +1,7 @@
 package org.folio.repository;
 
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 
 import java.util.List;
 

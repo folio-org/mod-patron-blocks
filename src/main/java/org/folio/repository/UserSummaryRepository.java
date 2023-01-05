@@ -1,7 +1,7 @@
 package org.folio.repository;
 
 import static io.vertx.core.Future.succeededFuture;
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 import static org.folio.util.UuidHelper.randomId;
 
 import java.util.Optional;

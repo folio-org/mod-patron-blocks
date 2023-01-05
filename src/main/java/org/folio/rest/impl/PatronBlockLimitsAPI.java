@@ -3,9 +3,9 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.repository.PatronBlockLimitsRepository.PATRON_BLOCK_LIMITS_TABLE_NAME;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
-import static org.folio.util.LogHelper.logAsJson;
-import static org.folio.util.LogHelper.logOkapiHeaders;
-import static org.folio.util.LogHelper.loggingResponseHandler;
+import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.logOkapiHeaders;
+import static org.folio.util.LogUtil.loggingResponseHandler;
 
 import java.util.List;
 import java.util.Map;

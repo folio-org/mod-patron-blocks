@@ -7,8 +7,8 @@ import static org.folio.domain.SynchronizationStatus.FAILED;
 import static org.folio.domain.SynchronizationStatus.IN_PROGRESS;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
-import static org.folio.util.LogHelper.logAsJson;
-import static org.folio.util.LogHelper.logList;
+import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.logList;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -5,7 +5,7 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 
 import java.util.List;
 import java.util.Map;

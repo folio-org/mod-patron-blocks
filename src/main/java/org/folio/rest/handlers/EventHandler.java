@@ -1,6 +1,6 @@
 package org.folio.rest.handlers;
 
-import static org.folio.util.LogHelper.logAsJson;
+import static org.folio.util.LogUtil.logAsJson;
 import static org.folio.util.PostgresUtils.getPostgresClient;
 
 import java.util.Map;

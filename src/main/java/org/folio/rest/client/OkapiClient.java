@@ -9,7 +9,7 @@ import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.okapi.common.XOkapiHeaders.TOKEN;
 import static org.folio.okapi.common.XOkapiHeaders.URL;
 import static org.folio.rest.client.WebClientProvider.getWebClient;
-import static org.folio.util.LogHelper.logResponseBody;
+import static org.folio.util.LogUtil.logResponseBody;
 
 import java.util.Map;
 
