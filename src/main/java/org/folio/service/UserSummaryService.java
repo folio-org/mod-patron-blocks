@@ -336,8 +336,7 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, LoanDueDateChangedEvent event) {
-    log.debug("updateUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary), () -> logAsJson(event));
     userSummary.getOpenLoans().stream()
       .filter(loan -> StringUtils.equals(loan.getLoanId(), event.getLoanId()))
       .findFirst()
@@ -356,8 +355,7 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, FeeFineBalanceChangedEvent event) {
-    log.debug("updateUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary), () -> logAsJson(event));
     List<OpenFeeFine> openFeesFines = userSummary.getOpenFeesFines();
 
     OpenFeeFine openFeeFine = openFeesFines.stream()
@@ -383,8 +381,7 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, LoanClosedEvent event) {
-    log.debug("updateUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary), () -> logAsJson(event));
     removeLoanFromUserSummary(userSummary, event, event.getLoanId());
   }
 

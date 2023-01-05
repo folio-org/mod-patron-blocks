@@ -25,10 +25,14 @@ import io.vertx.ext.web.client.HttpResponse;
 
 public class LogHelper {
   private static final Logger log = LogManager.getLogger(LogHelper.class);
-  public static final String R_N_LINE_SEPARATOR = "\\r|\\n";
+  public static final String R_N_LINE_SEPARATOR = "[\\r\\n]";
   public static final String R_LINE_SEPARATOR = "\\r";
   private static final int MAX_OBJECT_JSON_LENGTH = 10 * 1024;
   private static final int DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG = 10;
+
+  private LogHelper() {
+    throw new IllegalStateException("Utility class");
+  }
 
   public static String logAsJson(Object object) {
     if (object == null) {
@@ -61,7 +65,7 @@ public class LogHelper {
     return logList(list, DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG);
   }
 
-  private static String logList(List<? extends Object> list, int maxNumberOfElementsToLog) {
+  public static String logList(List<?> list, int maxNumberOfElementsToLog) {
     try {
       if (list == null) {
         return null;

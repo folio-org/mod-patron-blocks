@@ -1,6 +1,5 @@
 package org.folio.repository;
 
-import static io.vertx.core.json.JsonObject.mapFrom;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 import static org.folio.util.LogHelper.logAsJson;
 
