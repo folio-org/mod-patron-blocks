@@ -25,7 +25,7 @@ public class FeeFineBalanceChangedEventHandler extends EventHandler<FeeFineBalan
 
   @Override
   protected Future<UserSummary> getUserSummary(FeeFineBalanceChangedEvent event) {
-    log.debug("getUserSummary:: parameters event: {}", logAsJson(event));
+    log.debug("getUserSummary:: parameters event: {}", () -> logAsJson(event));
     return event.getUserId() != null
       ? userSummaryRepository.findByUserIdOrBuildNew(event.getUserId())
       : findSummaryByFeeFineIdOrFail(event.getFeeFineId());

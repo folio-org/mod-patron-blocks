@@ -71,7 +71,7 @@ public class EventService {
   }
 
   public Future<String> save(Event event) {
-    log.debug("save:: parameters event: {}", logAsJson(event));
+    log.debug("save:: parameters event: {}", () -> logAsJson(event));
 
     EventType eventType = EventType.getByEvent(event);
 

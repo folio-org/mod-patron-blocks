@@ -29,7 +29,7 @@ public class TenantRefAPI extends TenantAPI {
     Handler<AsyncResult<Response>> handler, Context context) {
 
     log.debug("postTenant:: parameters tenantAttributes: {}, headers: {}",
-      logAsJson(tenantAttributes), logAsJson(headers));
+      () -> logAsJson(tenantAttributes), () -> logAsJson(headers));
 
     Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler(
       "postTenant", handler, log);

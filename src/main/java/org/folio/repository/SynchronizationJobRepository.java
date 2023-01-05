@@ -75,7 +75,7 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
   }
 
   public Future<SynchronizationJob> update(SynchronizationJob job) {
-    log.debug("update:: parameters job: {}", logAsJson(job));
+    log.debug("update:: parameters job: {}", () -> logAsJson(job));
     return update(job, job.getId())
       .onSuccess(r -> log.info("Synchronization job updated:\n" + mapFrom(job).encodePrettily()))
       .onFailure(t -> log.warn("Synchronization job update failed: " + t.getMessage()))

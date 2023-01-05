@@ -30,30 +30,31 @@ public class ActionBlocks {
 
   public static ActionBlocks byLimit(UserSummary userSummary, PatronBlockLimit patronBlockLimit) {
     log.debug("byLimit:: parameters userSummary: {}, patronBlockLimit: {}",
-      logAsJson(userSummary), patronBlockLimit);
+      () -> logAsJson(userSummary), () -> patronBlockLimit);
     if (userSummary == null || patronBlockLimit == null || userSummary.getOpenLoans() == null) {
       log.warn("byLimit:: Failed to determine blocks because one of the parameters is null; " +
-        "parameters userSummary: {}, patronBlockLimit: {}", logAsJson(userSummary),
-        patronBlockLimit);
+        "parameters userSummary: {}, patronBlockLimit: {}", () -> logAsJson(userSummary),
+        () -> patronBlockLimit);
       return empty();
     }
     ActionBlocks actionBlocks = byLimit(userSummary, patronBlockLimit, userSummary.getOpenLoans().stream()
       .filter(openLoan -> openLoan.getLoanId() != null)
       .collect(Collectors.toMap(OpenLoan::getLoanId, r -> 0)));
-    log.info("byLimit:: result: {}", logAsJson(actionBlocks));
+    log.info("byLimit:: result: {}", () -> logAsJson(actionBlocks));
     return actionBlocks;
   }
 
   public static ActionBlocks byLimit(UserSummary userSummary, PatronBlockLimit patronBlockLimit,
     Map<String, Integer> overdueMinutes) {
     log.debug("byLimit:: parameters userSummary: {}, patronBlockLimit: {}, " +
-      "overdueMinutes: {}", logAsJson(userSummary), patronBlockLimit, overdueMinutes);
+      "overdueMinutes: {}", () -> logAsJson(userSummary), () -> patronBlockLimit,
+      () -> overdueMinutes);
     if (userSummary == null || patronBlockLimit == null || overdueMinutes == null ||
       patronBlockLimit.getValue() == null || patronBlockLimit.getConditionId() == null) {
       log.warn("byLimit:: Failed to determine blocks because one of the parameters is null; " +
         "parameters userSummary: {}, patronBlockLimit: {}, patronBlockLimit.value, " +
-        "patronBlockLimit.conditionId), overdueMinutes: {}", logAsJson(userSummary),
-        patronBlockLimit, overdueMinutes);
+        "patronBlockLimit.conditionId), overdueMinutes: {}", () -> logAsJson(userSummary),
+        () -> patronBlockLimit, () -> overdueMinutes);
       return empty();
     }
 
@@ -115,7 +116,7 @@ public class ActionBlocks {
     }
 
     ActionBlocks actionBlocks = new ActionBlocks(blockBorrowing, blockRenewals, blockRequests);
-    log.info("byLimit:: result: {}", logAsJson(actionBlocks));
+    log.info("byLimit:: result: {}", () -> logAsJson(actionBlocks));
     return actionBlocks;
   }
 
@@ -153,7 +154,7 @@ public class ActionBlocks {
 
   private static int getLoanOverdueMinutes(OpenLoan openLoan, Map<String, Integer> overdueMinutes) {
     log.debug("getLoanOverdueMinutes:: parameters openLoan: {}, overdueMinutes: {}",
-      logAsJson(openLoan), overdueMinutes);
+      () -> logAsJson(openLoan), () -> overdueMinutes);
     if (openLoan == null || openLoan.getLoanId() == null ||
       overdueMinutes.get(openLoan.getLoanId()) == null) {
       log.warn("getLoanOverdueMinutes:: Failed to get loan overdue minutes because one of the" +
@@ -168,7 +169,7 @@ public class ActionBlocks {
 
   private static boolean isLoanOverdue(OpenLoan openLoan, Map<String, Integer> overdueMinutes) {
     log.debug("isLoanOverdue: parameters openLoan: {}, overdueMinutes: {}",
-      logAsJson(openLoan), overdueMinutes);
+      () -> logAsJson(openLoan), () -> overdueMinutes);
     boolean loanIsOverdue = getLoanOverdueMinutes(openLoan, overdueMinutes) > 0;
     log.info("isLoanOverdue:: result: {}", loanIsOverdue);
     return loanIsOverdue;
@@ -176,7 +177,7 @@ public class ActionBlocks {
 
   private static int getLoanOverdueDays(OpenLoan openLoan, Map<String, Integer> overdueMinutes) {
     log.debug("getLoanOverdueDays:: parameters openLoan: {}, overdueMinutes: {}",
-      logAsJson(openLoan), overdueMinutes);
+      () -> logAsJson(openLoan), () -> overdueMinutes);
     int loanOverdueDays = (int) Math.ceil(
       ((double) getLoanOverdueMinutes(openLoan, overdueMinutes)) / NUMBER_OF_MINUTES_IN_ONE_DAY);
     log.info("getLoanOverdueDays:: result: {}", loanOverdueDays);
@@ -184,7 +185,8 @@ public class ActionBlocks {
   }
 
   private static boolean itemIsNotClaimedReturned(OpenLoan openLoan) {
-    log.debug("itemIsNotClaimedReturned:: parameters openLoan: {}", logAsJson(openLoan));
+    log.debug("itemIsNotClaimedReturned:: parameters openLoan: {}",
+      () -> logAsJson(openLoan));
     boolean itemIsNotClaimedReturned = !openLoan.getItemClaimedReturned();
     log.info("itemIsNotClaimedReturned:: result: {}", itemIsNotClaimedReturned);
     return itemIsNotClaimedReturned;
@@ -193,7 +195,7 @@ public class ActionBlocks {
   private static boolean feeFineIsNotRelatedToItemClaimedReturned(OpenFeeFine feeFine,
     UserSummary userSummary) {
     log.debug("feeFineIsNotRelatedToItemClaimedReturned:: parameters feeFine: {}, userSummary: {}",
-      logAsJson(feeFine), logAsJson(userSummary));
+      () -> logAsJson(feeFine), () -> logAsJson(userSummary));
     if (feeFine.getLoanId() == null) {
       log.info("feeFineIsNotRelatedToItemClaimedReturned:: feeFine: {}, feeFine.getLoanId is null",
         feeFine);

@@ -39,7 +39,7 @@ public abstract class EventsGenerationService<T> {
   }
 
   public Future<SynchronizationJob> generateEvents(SynchronizationJob job) {
-    log.debug("generateEvents:: parameters job: {}", logAsJson(job));
+    log.debug("generateEvents:: parameters job: {}", () -> logAsJson(job));
     return generateEventsRecursively(job, buildQuery(job), null);
   }
 
@@ -47,7 +47,7 @@ public abstract class EventsGenerationService<T> {
     String originalQuery, String lastFetchedId) {
 
     log.debug("generateEventsRecursively:: parameters job: {}, originalQuery: {}," +
-      " lastFetchedId: {}", logAsJson(job), originalQuery, lastFetchedId);
+      " lastFetchedId: {}", () -> logAsJson(job), () -> originalQuery, () -> lastFetchedId);
 
     String query = lastFetchedId != null
       ? originalQuery + String.format(FILTER_BY_ID_QUERY_TEMPLATE, lastFetchedId)
@@ -62,7 +62,8 @@ public abstract class EventsGenerationService<T> {
       .compose(page -> updateStats(job, page))
       .recover(error -> handleError(job, error))
       .compose(syncJob -> fetchNextPage(syncJob, currentPage.get(), originalQuery))
-      .onSuccess(result -> log.info("generateEventsRecursively:: result: {}", logAsJson(result)));
+      .onSuccess(result -> log.info("generateEventsRecursively:: result: {}",
+        () -> logAsJson(result)));
   }
 
   private Future<List<T>> generateEventsForPage(List<T> page) {
@@ -89,7 +90,7 @@ public abstract class EventsGenerationService<T> {
     UuidHelper.validateUUID(lastElementId, true);
 
     return generateEventsRecursively(job, query, lastElementId)
-      .onSuccess(result -> log.info("fetchNextPage:: result: {}", logAsJson(job)));
+      .onSuccess(result -> log.info("fetchNextPage:: result: {}", () -> logAsJson(job)));
   }
 
   private Future<SynchronizationJob> handleError(SynchronizationJob syncJob, Throwable error) {
@@ -110,7 +111,7 @@ public abstract class EventsGenerationService<T> {
   }
 
   private static String buildQuery(SynchronizationJob job) {
-    log.debug("buildQuery:: parameters job: {}", logAsJson(job));
+    log.debug("buildQuery:: parameters job: {}", () -> logAsJson(job));
 
     StringBuilder query = new StringBuilder("status.name==Open");
     if (job.getScope() == USER) {

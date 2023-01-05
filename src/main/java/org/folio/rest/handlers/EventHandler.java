@@ -39,34 +39,35 @@ public class EventHandler<E extends Event> {
   }
 
   public Future<String> handle(E event) {
-    log.debug("handle:: parameters event: {}", logAsJson(event));
+    log.debug("handle:: parameters event: {}", () -> logAsJson(event));
     return eventService.save(event)
       .compose(eventId -> updateUserSummary(event))
       .onComplete(result -> logResult(result, event));
   }
 
   public Future<String> handleSkippingUserSummaryUpdate(E event) {
-    log.debug("handleSkippingUserSummaryUpdate:: parameters event: {}", logAsJson(event));
+    log.debug("handleSkippingUserSummaryUpdate:: parameters event: {}",
+      () -> logAsJson(event));
     return eventService.save(event)
       .onComplete(result -> logResult(result, event));
   }
 
   private Future<String> updateUserSummary(E event) {
-    log.debug("updateUserSummary:: parameters event: {}", logAsJson(event));
+    log.debug("updateUserSummary:: parameters event: {}", () -> logAsJson(event));
     return getUserSummary(event)
       .compose(userSummary -> userSummaryService.updateUserSummaryWithEvent(userSummary, event));
   }
 
   protected Future<UserSummary> getUserSummary(E event) {
-    log.debug("getUserSummary:: parameters event: {}", logAsJson(event));
+    log.debug("getUserSummary:: parameters event: {}", () -> logAsJson(event));
     return userSummaryRepository.findByUserIdOrBuildNew(event.getUserId());
   }
 
   private void logResult(AsyncResult<String> result, E event) {
     String eventType = EventType.getNameByEvent(event);
     if (result.failed()) {
-      log.warn("logResult: Failed to process event {} with payload: {}", eventType,
-        logAsJson(event));
+      log.warn("logResult: Failed to process event {} with payload: {}", () -> eventType,
+        () -> logAsJson(event));
     } else {
       String userSummaryId = result.result();
       log.info("logResult: Event {} processed successfully. Affected user summary: {}",

@@ -31,7 +31,7 @@ public class FeesFinesEventsGenerationService extends EventsGenerationService<Ac
 
   @Override
   protected Future<Account> generateEvents(Account account) {
-    log.debug("generateEvents:: parameters account: {}", logAsJson(account));
+    log.debug("generateEvents:: parameters account: {}", () -> logAsJson(account));
 
     final String accountId = account.getId();
     userIds.add(account.getUserId());
@@ -52,10 +52,11 @@ public class FeesFinesEventsGenerationService extends EventsGenerationService<Ac
 
   @Override
   protected Future<SynchronizationJob> updateStats(SynchronizationJob job, List<Account> accounts) {
-    log.debug("updateStats:: parameters job: {}, accounts: list(size={})", logAsJson(job), accounts.size());
+    log.debug("updateStats:: parameters job: {}, accounts: list(size={})", () -> logAsJson(job),
+      () -> accounts.size());
     int processedFeesFinesCount = job.getNumberOfProcessedFeesFines() + accounts.size();
     return syncRepository.update(job.withNumberOfProcessedFeesFines(processedFeesFinesCount))
-      .onSuccess(result -> log.info("updateStats:: result: {}", logAsJson(result)));
+      .onSuccess(result -> log.info("updateStats:: result: {}", () -> logAsJson(result)));
   }
 
 }

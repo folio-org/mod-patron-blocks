@@ -83,12 +83,14 @@ public class OkapiClient {
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.info("fetchById:: Fetched by ID: {}/{}. Response body: \r{}", path, id,
-            logResponseBody(response));
+          log.info("fetchById:: Fetched by ID: {}/{}. Response body: \r{}", () -> path, () -> id,
+            () -> logResponseBody(response));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
-          log.warn("fetchById:: Failed to parse response from {}/{}. Response body: \r{}",
-            path, id, logResponseBody(response), e);
+          int statusCode = response.statusCode();
+          String responseBody = logResponseBody(response);
+          log.warn("fetchById:: Failed to parse response from {}/{}. Status code: {}, " +
+              "response body: \r{}", path, id, statusCode, responseBody, e);
           return failedFuture(e);
         }
       }
@@ -107,7 +109,7 @@ public class OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         log.warn("getMany:: Failed to fetch entities by path: {}. Response: {} {}",
-          path, responseStatus, logResponseBody(response));
+          () -> path, () -> responseStatus, () -> logResponseBody(response));
       }
       return succeededFuture(response.bodyAsJsonObject());
     });
@@ -128,12 +130,14 @@ public class OkapiClient {
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.info("fetchAll:: Fetched from {}. Response body: \r{}", path,
-            logResponseBody(response));
+          log.info("fetchAll:: Fetched from {}. Response body: \r{}", () -> path,
+            () -> logResponseBody(response));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
-          log.warn("fetchAll:: Failed to parse response from {}. Response body: \r{}", path,
-            logResponseBody(response));
+          int statusCode = response.statusCode();
+          String responseBody = logResponseBody(response);
+          log.warn("fetchAll:: Failed to parse response from {}. Status code: {}, " +
+            "response body: {}", path, statusCode, responseBody, e);
           return failedFuture(e);
         }
       }

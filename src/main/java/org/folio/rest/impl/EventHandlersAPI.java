@@ -146,7 +146,8 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
   private static void logEventReceived(String methodName, Event event,
     Map<String, String> okapiHeaders) {
 
-    log.info("{}:: parameters : {} event {}, okapiHeaders: {}", methodName,
-      EventType.getNameByEvent(event), logAsJson(event), logOkapiHeaders(okapiHeaders));
+    log.info("{}:: parameters : {} event {}, okapiHeaders: {}", () -> methodName,
+      () -> EventType.getNameByEvent(event), () -> logAsJson(event),
+      () -> logOkapiHeaders(okapiHeaders));
   }
 }

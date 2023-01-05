@@ -61,7 +61,7 @@ public class LogHelper {
     return logList(list, DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG);
   }
 
-  public static String logList(List<? extends Object> list, int maxNumberOfElementsToLog) {
+  private static String logList(List<? extends Object> list, int maxNumberOfElementsToLog) {
     try {
       if (list == null) {
         return null;

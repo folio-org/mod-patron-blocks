@@ -30,7 +30,7 @@ public class UserSummaryAPI implements UserSummaryUserId {
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     log.debug("getUserSummaryByUserId:: parameters userId: {}, okapiHeaders: {}",
-      userId, logOkapiHeaders(okapiHeaders));
+      () -> userId, () -> logOkapiHeaders(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler(
       "getUserSummaryByUserId", asyncResultHandler, log);
