@@ -61,7 +61,7 @@ public class LogUtil {
     }
   }
 
-  public static String logList(List<? extends Object> list) {
+  public static String logList(List<?> list) {
     return logList(list, DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG);
   }
 
