@@ -190,7 +190,7 @@ public class SynchronizationJobService {
     log.debug("updateJobStatus:: parameters job: {}, syncStatus: {}", () -> logAsJson(job),
       () -> syncStatus);
     return syncRepository.update(job.withStatus(syncStatus.getValue()))
-      .onSuccess(r -> log.info("Synchronization job status updated: {}", syncStatus.getValue()))
+      .onSuccess(r -> log.info("Synchronization job status updated: {}", syncStatus::getValue))
       .onFailure(t -> log.error("Failed to update synchronization job status", t))
       .map(job)
       .onSuccess(result -> log.info("updateJobStatus:: result: {}", () -> logAsJson(result)));
