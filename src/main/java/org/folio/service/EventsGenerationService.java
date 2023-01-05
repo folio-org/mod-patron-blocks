@@ -78,7 +78,7 @@ public abstract class EventsGenerationService<T> {
   private Future<SynchronizationJob> fetchNextPage(SynchronizationJob job, List<T> lastPage,
     String query) {
     log.debug("fetchNextPage:: parameters job: {}, lastPage: list(size={}), query: {}",
-      logAsJson(job), lastPage.size(), query);
+      () -> logAsJson(job), lastPage::size, () -> query);
 
     if (lastPage.size() < PAGE_SIZE) {
       log.info("fetchNextPage:: {} finished processing last page", getClass().getSimpleName());
@@ -118,7 +118,7 @@ public abstract class EventsGenerationService<T> {
       query.append(" and userId==").append(job.getUserId());
     }
 
-    log.info("buildQuery:: result: {}", query.toString());
+    log.info("buildQuery:: result: {}", query);
     return query.toString();
   }
 

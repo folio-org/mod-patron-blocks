@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.domain.Event;
 import org.folio.domain.EventType;
 import org.folio.okapi.common.GenericCompositeFuture;
-import org.folio.repository.BaseRepository;
 import org.folio.repository.EventRepository;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;

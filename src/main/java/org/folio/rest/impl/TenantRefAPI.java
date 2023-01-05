@@ -12,14 +12,12 @@ import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 
 public class TenantRefAPI extends TenantAPI {
   private static final Logger log = LogManager.getLogger(TenantRefAPI.class);

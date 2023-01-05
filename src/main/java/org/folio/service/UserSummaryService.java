@@ -52,6 +52,8 @@ import lombok.With;
 public class UserSummaryService {
   private static final Logger log = LogManager.getLogger(UserSummaryService.class);
 
+  private static final String LOG_TEMPLATE_UPDATE_USER_SUMMARY =
+    "updateUserSummary:: parameters userSummary: {}, event: {}";
   private static final String FAILED_TO_REBUILD_USER_SUMMARY_ERROR_MESSAGE =
     "Failed to rebuild user summary";
   private static final int MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT = 10;
@@ -261,8 +263,8 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemCheckedOutEvent event) {
-    log.debug("updateUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
+      () -> logAsJson(event));
     List<OpenLoan> openLoans = userSummary.getOpenLoans();
 
     if (openLoans.stream()
@@ -280,8 +282,8 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemCheckedInEvent event) {
-    log.debug("updateUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
+      () -> logAsJson(event));
     removeLoanFromUserSummary(userSummary, event, event.getLoanId());
   }
 
@@ -298,8 +300,8 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemClaimedReturnedEvent event) {
-    log.debug("updateUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
+      () -> logAsJson(event));
     userSummary.getOpenLoans().stream()
       .filter(loan -> StringUtils.equals(loan.getLoanId(), event.getLoanId()))
       .findFirst()
@@ -310,14 +312,14 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemDeclaredLostEvent event) {
-    log.debug("updateUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
+      () -> logAsJson(event));
     updateUserSummaryForLostItem(userSummary, event, event.getLoanId());
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemAgedToLostEvent event) {
-    log.debug("updateUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
+      () -> logAsJson(event));
     updateUserSummaryForLostItem(userSummary, event, event.getLoanId());
   }
 

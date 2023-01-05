@@ -115,7 +115,7 @@ public class SynchronizationJobService {
 
   private Future<SynchronizationJob> doSynchronization(SynchronizationJob synchronizationJob) {
     log.debug("doSynchronization:: parameters synchronizationJob: {}",
-      logAsJson(synchronizationJob));
+      () -> logAsJson(synchronizationJob));
 
     return updateJobStatus(synchronizationJob, IN_PROGRESS)
       .compose(syncJob -> cleanExistingEvents(syncJob, tenantId))
