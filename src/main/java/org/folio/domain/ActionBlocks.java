@@ -23,6 +23,7 @@ import org.folio.rest.jaxrs.model.UserSummary;
 public class ActionBlocks {
   private static final Logger log = LogManager.getLogger(ActionBlocks.class);
   private static final Double NUMBER_OF_MINUTES_IN_ONE_DAY = 1440.0;
+  private static final String LOG_TEMPLATE_BY_LIMIT_CONDITION = "byLimit:: condition is {}";
 
   private final boolean blockBorrowing;
   private final boolean blockRenewals;
@@ -67,7 +68,7 @@ public class ActionBlocks {
     double limitValue = patronBlockLimit.getValue();
 
     if (condition == MAX_NUMBER_OF_ITEMS_CHARGED_OUT) {
-      log.info("byLimit:: condition is {}", condition);
+      log.info(LOG_TEMPLATE_BY_LIMIT_CONDITION, condition);
       int numberOfOpenLoans = (int) userSummary.getOpenLoans().stream()
         .filter(ActionBlocks::itemIsNotClaimedReturned)
         .count();
@@ -76,21 +77,21 @@ public class ActionBlocks {
       blockRenewals = blockRequests = numberOfOpenLoans > limitValue;
     }
     else if (condition == MAX_NUMBER_OF_LOST_ITEMS) {
-      log.info("byLimit:: condition is {}", condition);
+      log.info(LOG_TEMPLATE_BY_LIMIT_CONDITION, condition);
       blockBorrowing = blockRenewals = blockRequests = userSummary.getOpenLoans().stream()
         .filter(ActionBlocks::itemIsNotClaimedReturned)
         .filter(OpenLoan::getItemLost)
         .count() > limitValue;
     }
     else if (condition == MAX_NUMBER_OF_OVERDUE_ITEMS) {
-      log.info("byLimit:: condition is {}", condition);
+      log.info(LOG_TEMPLATE_BY_LIMIT_CONDITION, condition);
       blockBorrowing = blockRenewals = blockRequests = userSummary.getOpenLoans().stream()
         .filter(ActionBlocks::itemIsNotClaimedReturned)
         .filter(openLoan -> ActionBlocks.isLoanOverdue(openLoan, overdueMinutes))
         .count() > limitValue;
     }
     else if (condition == MAX_NUMBER_OF_OVERDUE_RECALLS) {
-      log.info("byLimit:: condition is {}", condition);
+      log.info(LOG_TEMPLATE_BY_LIMIT_CONDITION, condition);
       blockBorrowing = blockRenewals = blockRequests = userSummary.getOpenLoans().stream()
         .filter(ActionBlocks::itemIsNotClaimedReturned)
         .filter(openLoan -> ActionBlocks.isLoanOverdue(openLoan, overdueMinutes))
@@ -98,7 +99,7 @@ public class ActionBlocks {
         .count() > limitValue;
     }
     else if (condition == RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS) {
-      log.info("byLimit:: condition is {}", condition);
+      log.info(LOG_TEMPLATE_BY_LIMIT_CONDITION, condition);
       blockBorrowing = blockRenewals = blockRequests = userSummary.getOpenLoans().stream()
         .filter(ActionBlocks::itemIsNotClaimedReturned)
         .filter(openLoan -> ActionBlocks.isLoanOverdue(openLoan, overdueMinutes))
@@ -107,7 +108,7 @@ public class ActionBlocks {
         .anyMatch(days -> days > limitValue);
     }
     else if (condition == MAX_OUTSTANDING_FEE_FINE_BALANCE) {
-      log.info("byLimit:: condition is {}", condition);
+      log.info(LOG_TEMPLATE_BY_LIMIT_CONDITION, condition);
       blockBorrowing = blockRenewals = blockRequests = userSummary.getOpenFeesFines().stream()
         .filter(feeFine -> feeFineIsNotRelatedToItemClaimedReturned(feeFine, userSummary))
         .map(OpenFeeFine::getBalance)
