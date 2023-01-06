@@ -73,8 +73,7 @@ public class LogUtil {
         int numberOfElementsToLog = min(list.size(), maxNumberOfElementsToLog);
         return format("list(size: %d, %s: [%s])", list.size(),
           numberOfElementsToLog == list.size() ? "elements"
-            : format("first %d element%s", numberOfElementsToLog,
-            numberOfElementsToLog == 1 ? "" : "s"),
+            : format("first %d element%s", numberOfElementsToLog, plural(numberOfElementsToLog)),
           list.subList(0, numberOfElementsToLog).stream()
             .map(LogUtil::logAsJson)
             .collect(Collectors.joining(", ")));
@@ -83,6 +82,10 @@ public class LogUtil {
       log.warn("logList:: Failed to log a list", ex);
       return null;
     }
+  }
+
+  private static String plural(int number) {
+    return number == 1 ? "" : "s";
   }
 
   public static String logOkapiHeaders(Map<String, String> okapiHeaders) {
@@ -111,8 +114,8 @@ public class LogUtil {
     try {
       return responseAsyncResult -> {
         Response response = responseAsyncResult.result();
-        logger.info("{}:: result: HTTP response (code: {}, body: {})", methodName, response.getStatus(),
-          logAsJson(response.getEntity()));
+        logger.info("{}:: result: HTTP response (code: {}, body: {})", () -> methodName,
+          response::getStatus, () -> logAsJson(response.getEntity()));
         asyncResultHandler.handle(responseAsyncResult);
       };
     } catch (Exception ex) {
