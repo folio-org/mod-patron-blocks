@@ -2,8 +2,6 @@ package org.folio.util;
 
 import static com.google.common.primitives.Ints.min;
 import static java.lang.String.format;
-import static java.util.function.Predicate.not;
-import static java.util.function.UnaryOperator.identity;
 
 import java.util.List;
 import java.util.Map;
@@ -90,9 +88,9 @@ public class LogUtil {
 
   public static String logOkapiHeaders(Map<String, String> okapiHeaders) {
     try {
-      return logAsJson(new JsonObject(okapiHeaders.keySet().stream()
-        .filter(not("x-okapi-token"::equalsIgnoreCase))
-        .collect(Collectors.toMap(identity(), okapiHeaders::get))));
+      return logAsJson(new JsonObject(okapiHeaders.entrySet().stream()
+        .filter(entry -> !entry.getKey().equalsIgnoreCase("x-okapi-token"))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
     } catch (Exception ex) {
       log.warn("logOkapiHeaders:: Failed to log Okapi headers", ex);
       return null;
