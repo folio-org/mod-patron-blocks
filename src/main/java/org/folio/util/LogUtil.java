@@ -121,7 +121,7 @@ public class LogUtil {
     } catch (Exception ex) {
       log.warn("loggingResponseHandler:: Failed to create a logging HTTP response " +
         "handler", ex);
-      return null;
+      return asyncResultHandler;
     }
   }
 

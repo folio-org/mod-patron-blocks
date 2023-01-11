@@ -60,7 +60,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    log.debug("getAutomatedPatronBlocksByUserId:: parameters request: {}, okapiHeaders: {}",
+    log.debug("postAutomatedPatronBlocksSynchronizationJob:: parameters request: {}, okapiHeaders: {}",
       () -> logAsJson(request), () -> logOkapiHeaders(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
@@ -73,15 +73,15 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
           .respond201WithApplicationJson(response))))
       .onFailure(throwable -> {
         String errorMessage = throwable.getLocalizedMessage();
-        log.warn("getAutomatedPatronBlocksByUserId:: Failed to create synchronization job",
+        log.warn("postAutomatedPatronBlocksSynchronizationJob:: Failed to create synchronization job",
           throwable);
         if (throwable instanceof UserIdNotFoundException) {
-          log.debug("getAutomatedPatronBlocksByUserId:: User ID not found");
+          log.debug("postAutomatedPatronBlocksSynchronizationJob:: User ID not found");
           asyncResultHandler.handle(succeededFuture(
             PostAutomatedPatronBlocksSynchronizationJobResponse.respond422WithTextPlain(
               errorMessage)));
         } else {
-          log.debug("getAutomatedPatronBlocksByUserId:: unexpected error");
+          log.debug("postAutomatedPatronBlocksSynchronizationJob:: unexpected error");
           asyncResultHandler.handle(succeededFuture(
             PostAutomatedPatronBlocksSynchronizationJobResponse
               .respond500WithTextPlain(errorMessage)));
@@ -99,7 +99,8 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
       () -> logOkapiHeaders(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
-      loggingResponseHandler("getAutomatedPatronBlocksSynchronizationJobBySyncJobId", asyncResultHandler, log);
+      loggingResponseHandler("getAutomatedPatronBlocksSynchronizationJobBySyncJobId",
+        asyncResultHandler, log);
 
     new SynchronizationJobService(okapiHeaders, vertxContext.owner())
       .getSynchronizationJob(syncRequestId)
@@ -109,7 +110,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
               .respond200WithApplicationJson(response))))
       .onFailure(throwable -> {
         String errorMessage = throwable.getLocalizedMessage();
-        log.warn("getAutomatedPatronBlocksByUserId:: Failed to create synchronization job",
+        log.warn("getAutomatedPatronBlocksSynchronizationJobBySyncJobId:: Failed to create synchronization job",
           throwable);
         if (throwable instanceof EntityNotFoundException) {
           loggingResponseHandler.handle(succeededFuture(
@@ -136,9 +137,10 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
         .onComplete(v -> promise.complete()),
       response -> {
         if (response.failed()) {
-          log.error("Synchronization error processing");
+          log.warn("postAutomatedPatronBlocksSynchronizationStart:: synchronization failed",
+            response.cause());
         } else {
-          log.info("Synchronization has been completed");
+          log.info("postAutomatedPatronBlocksSynchronizationStart:: synchronization completed");
         }
     });
   }

@@ -1,5 +1,7 @@
 package org.folio.repository;
 
+import static org.folio.util.LogUtil.logList;
+
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +36,8 @@ public class EventRepository<T> extends BaseRepository<T> {
       .setOperation("=")
       .setVal(userId)
       .setJSONB(true)
-    ).setLimit(new Limit(NUMBER_OF_EVENTS_LIMIT)));
+    ).setLimit(new Limit(NUMBER_OF_EVENTS_LIMIT)))
+      .onSuccess(result -> log.info("getByUserId:: result: {}", () -> logList(result)));
   }
 
   public Future<Void> removeByUserId(String tenantId, String userId) {
