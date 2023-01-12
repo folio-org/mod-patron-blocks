@@ -31,11 +31,11 @@ public class ActionBlocks {
 
   public static ActionBlocks byLimit(UserSummary userSummary, PatronBlockLimit patronBlockLimit) {
     log.debug("byLimit:: parameters userSummary: {}, patronBlockLimit: {}",
-      () -> logAsJson(userSummary), () -> patronBlockLimit);
+      () -> logAsJson(userSummary), () -> logAsJson(patronBlockLimit));
     if (userSummary == null || patronBlockLimit == null || userSummary.getOpenLoans() == null) {
       log.warn("byLimit:: Failed to determine blocks because one of the parameters is null; " +
         "parameters userSummary: {}, patronBlockLimit: {}", () -> logAsJson(userSummary),
-        () -> patronBlockLimit);
+        () -> logAsJson(patronBlockLimit));
       return empty();
     }
     ActionBlocks actionBlocks = byLimit(userSummary, patronBlockLimit, userSummary.getOpenLoans().stream()
@@ -48,14 +48,14 @@ public class ActionBlocks {
   public static ActionBlocks byLimit(UserSummary userSummary, PatronBlockLimit patronBlockLimit,
     Map<String, Integer> overdueMinutes) {
     log.debug("byLimit:: parameters userSummary: {}, patronBlockLimit: {}, " +
-      "overdueMinutes: {}", () -> logAsJson(userSummary), () -> patronBlockLimit,
+      "overdueMinutes: {}", () -> logAsJson(userSummary), () -> logAsJson(patronBlockLimit),
       () -> overdueMinutes);
     if (userSummary == null || patronBlockLimit == null || overdueMinutes == null ||
       patronBlockLimit.getValue() == null || patronBlockLimit.getConditionId() == null) {
       log.warn("byLimit:: Failed to determine blocks because one of the parameters is null; " +
         "parameters userSummary: {}, patronBlockLimit: {}, patronBlockLimit.value, " +
         "patronBlockLimit.conditionId), overdueMinutes: {}", () -> logAsJson(userSummary),
-        () -> patronBlockLimit, () -> overdueMinutes);
+        () -> logAsJson(patronBlockLimit), () -> overdueMinutes);
       return empty();
     }
 
@@ -160,7 +160,7 @@ public class ActionBlocks {
       overdueMinutes.get(openLoan.getLoanId()) == null) {
       log.warn("getLoanOverdueMinutes:: Failed to get loan overdue minutes because one of the" +
         " values is null; openLoan: {}, openLoan.loanId, overdueMinutes: {}, " +
-          "overdueMinutes.get(openLoan.loanId)", openLoan, overdueMinutes);
+          "overdueMinutes.get(openLoan.loanId)", () -> logAsJson(openLoan), () -> overdueMinutes);
       return 0;
     }
     int loanOverdueMinutes = overdueMinutes.get(openLoan.getLoanId());
@@ -199,7 +199,7 @@ public class ActionBlocks {
       () -> logAsJson(feeFine), () -> logAsJson(userSummary));
     if (feeFine.getLoanId() == null) {
       log.info("feeFineIsNotRelatedToItemClaimedReturned:: feeFine: {}, feeFine.getLoanId is null",
-        feeFine);
+        () -> logAsJson(feeFine));
       return true;
     }
 
