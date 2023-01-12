@@ -63,7 +63,8 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
       })
       .map(row -> row.getValue(0))
       .map(JsonObject.class::cast)
-      .map(jsonObject -> jsonObject.mapTo(SynchronizationJob.class));
+      .map(jsonObject -> jsonObject.mapTo(SynchronizationJob.class))
+      .onSuccess(r -> log.info("getTheOldestSyncRequest:: result: {}", () -> asJson(r)));
   }
 
   public Future<RowSet<Row>> select(String sql) {
