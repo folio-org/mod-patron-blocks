@@ -108,10 +108,7 @@ public class BaseRepository<T> {
       .onSuccess(rowCount -> log.info("delete:: Deleted {} record(s) from table {} using query: {}",
         rowCount, tableName, criterion))
       .map(rowCount -> rowCount > 0)
-      .map(result -> {
-        log.info("delete:: result: {}", result);
-        return result;
-      });
+      .onSuccess(result -> log.info("delete:: result: {}", result));
   }
 
   public Future<Void> removeAll(String tenantId) {
