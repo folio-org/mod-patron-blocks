@@ -76,12 +76,10 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
         log.warn("postAutomatedPatronBlocksSynchronizationJob:: Failed to create synchronization job",
           throwable);
         if (throwable instanceof UserIdNotFoundException) {
-          log.debug("postAutomatedPatronBlocksSynchronizationJob:: User ID not found");
           asyncResultHandler.handle(succeededFuture(
             PostAutomatedPatronBlocksSynchronizationJobResponse.respond422WithTextPlain(
               errorMessage)));
         } else {
-          log.debug("postAutomatedPatronBlocksSynchronizationJob:: unexpected error");
           asyncResultHandler.handle(succeededFuture(
             PostAutomatedPatronBlocksSynchronizationJobResponse
               .respond500WithTextPlain(errorMessage)));

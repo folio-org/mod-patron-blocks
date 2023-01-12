@@ -157,8 +157,7 @@ public class SynchronizationJobService {
       .map(userSummaryService::rebuild)
       .collect(Collectors.toList()))
       .map(job)
-      .onSuccess(result -> log.info("rebuildUserSummaries:: result: {}",
-        () -> logAsJson(result)));
+      .onSuccess(result -> log.info("rebuildUserSummaries:: result: {}", () -> logAsJson(result)));
 
   }
 
