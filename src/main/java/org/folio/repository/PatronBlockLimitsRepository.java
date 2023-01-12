@@ -1,5 +1,7 @@
 package org.folio.repository;
 
+import static org.folio.util.LogUtil.asJson;
+
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +31,8 @@ public class PatronBlockLimitsRepository extends BaseRepository<PatronBlockLimit
       .setVal(patronGroupId)
       .setJSONB(true));
 
-    return get(criterion);
+    return get(criterion)
+      .onSuccess(r -> log.info("findLimitsForPatronGroup:: result: {}", () -> asJson(r)));
   }
 
   public Future<String> save(PatronBlockLimit limit) {

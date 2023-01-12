@@ -42,7 +42,8 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
       .setVal(syncStatus.getValue())
       .setJSONB(true));
 
-    return get(criterion);
+    return get(criterion)
+      .onSuccess(r -> log.info("getJobsByStatus:: result: {}", () -> asJson(r)));
   }
 
   public Future<SynchronizationJob> getTheOldestSyncRequest(String tenantId) {
