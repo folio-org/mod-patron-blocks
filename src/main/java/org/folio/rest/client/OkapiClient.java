@@ -111,6 +111,8 @@ public class OkapiClient {
         log.warn("getMany:: Failed to fetch entities by path: {}. Response: {} {}",
           () -> path, () -> responseStatus, () -> bodyAsString(response));
       }
+      log.info("getMany:: Fetched from {}. Response body: {}", () -> path,
+        () -> bodyAsString(response));
       return succeededFuture(response.bodyAsJsonObject());
     });
   }
@@ -130,7 +132,7 @@ public class OkapiClient {
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-          log.info("fetchAll:: Fetched from {}. Response body: \r{}", () -> path,
+          log.info("fetchAll:: Fetched from {}. Response body: {}", () -> path,
             () -> bodyAsString(response));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {

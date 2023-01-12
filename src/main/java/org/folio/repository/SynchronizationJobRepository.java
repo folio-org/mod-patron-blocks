@@ -71,7 +71,8 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
     log.debug("select:: parameters sql: {}", sql);
     Promise<RowSet<Row>> promise = Promise.promise();
     pgClient.select(sql, promise);
-    return promise.future();
+    return promise.future()
+      .onSuccess(r -> log.info("select:: result: {}", () -> asJson(r)));
   }
 
   public Future<SynchronizationJob> update(SynchronizationJob job) {
