@@ -9,7 +9,7 @@ import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.okapi.common.XOkapiHeaders.TOKEN;
 import static org.folio.okapi.common.XOkapiHeaders.URL;
 import static org.folio.rest.client.WebClientProvider.getWebClient;
-import static org.folio.util.LogUtil.logResponseBody;
+import static org.folio.util.LogUtil.bodyAsString;
 
 import java.util.Map;
 
@@ -77,18 +77,18 @@ public class OkapiClient {
       if (responseStatus != 200) {
         String errorMessage = format("Failed to fetch %s by ID: %s. " +
             "Response: %d %s", responseType.getName(), id, responseStatus,
-          logResponseBody(response));
+          bodyAsString(response));
         log.warn("fetchById:: {}", errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
           log.info("fetchById:: Fetched by ID: {}. Response body: {}", () -> path,
-            () -> logResponseBody(response));
+            () -> bodyAsString(response));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
           int statusCode = response.statusCode();
-          String responseBody = logResponseBody(response);
+          String responseBody = bodyAsString(response);
           log.warn("fetchById:: Failed to parse response from {}. Status code: {}, " +
               "response body: {}", path, statusCode, responseBody, e);
           return failedFuture(e);
@@ -109,7 +109,7 @@ public class OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         log.warn("getMany:: Failed to fetch entities by path: {}. Response: {} {}",
-          () -> path, () -> responseStatus, () -> logResponseBody(response));
+          () -> path, () -> responseStatus, () -> bodyAsString(response));
       }
       return succeededFuture(response.bodyAsJsonObject());
     });
@@ -124,18 +124,18 @@ public class OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         String errorMessage = format("fetchAll:: Failed to fetch %s. Response: %d %s",
-          responseType.getName(), responseStatus, logResponseBody(response));
+          responseType.getName(), responseStatus, bodyAsString(response));
         log.warn(errorMessage);
         return failedFuture(new EntityNotFoundException(errorMessage));
       } else {
         try {
           T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
           log.info("fetchAll:: Fetched from {}. Response body: \r{}", () -> path,
-            () -> logResponseBody(response));
+            () -> bodyAsString(response));
           return succeededFuture(fetchedObject);
         } catch (JsonProcessingException e) {
           int statusCode = response.statusCode();
-          String responseBody = logResponseBody(response);
+          String responseBody = bodyAsString(response);
           log.warn("fetchAll:: Failed to parse response from {}. Status code: {}, " +
             "response body: {}", path, statusCode, responseBody, e);
           return failedFuture(e);

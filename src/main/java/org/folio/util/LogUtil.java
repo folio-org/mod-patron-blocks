@@ -33,7 +33,7 @@ public class LogUtil {
     throw new IllegalStateException("Utility class");
   }
 
-  public static String logAsJson(Object object) {
+  public static String asJson(Object object) {
     if (object == null) {
       return null;
     }
@@ -60,11 +60,11 @@ public class LogUtil {
     }
   }
 
-  public static String logList(List<?> list) {
-    return logList(list, DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG);
+  public static String asJson(List<?> list) {
+    return asJson(list, DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG);
   }
 
-  public static String logList(List<?> list, int maxNumberOfElementsToLog) {
+  public static String asJson(List<?> list, int maxNumberOfElementsToLog) {
     try {
       if (list == null) {
         return null;
@@ -74,7 +74,7 @@ public class LogUtil {
           numberOfElementsToLog == list.size() ? "elements"
             : format("first %d element%s", numberOfElementsToLog, plural(numberOfElementsToLog)),
           list.subList(0, numberOfElementsToLog).stream()
-            .map(LogUtil::logAsJson)
+            .map(LogUtil::asJson)
             .collect(Collectors.joining(", ")));
       }
     } catch (Exception ex) {
@@ -87,7 +87,7 @@ public class LogUtil {
     return number == 1 ? "" : "s";
   }
 
-  public static String logOkapiHeaders(Map<String, String> okapiHeaders) {
+  public static String headersAsString(Map<String, String> okapiHeaders) {
     try {
       Map<String, String> headersCopy= new CaseInsensitiveMap<>(okapiHeaders);
       headersCopy.remove("x-okapi-token");
@@ -98,7 +98,7 @@ public class LogUtil {
     }
   }
 
-  public static String logResponseBody(HttpResponse<Buffer> response) {
+  public static String bodyAsString(HttpResponse<Buffer> response) {
     try {
       return crop(response.bodyAsString().replaceAll(R_N_LINE_SEPARATOR, R_LINE_SEPARATOR));
     } catch (Exception ex) {
@@ -114,7 +114,7 @@ public class LogUtil {
       return responseAsyncResult -> {
         Response response = responseAsyncResult.result();
         logger.info("{}:: result: HTTP response (code: {}, body: {})", () -> methodName,
-          response::getStatus, () -> logAsJson(response.getEntity()));
+          response::getStatus, () -> asJson(response.getEntity()));
         asyncResultHandler.handle(responseAsyncResult);
       };
     } catch (Exception ex) {

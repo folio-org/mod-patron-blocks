@@ -2,8 +2,7 @@ package org.folio.service;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
-import static org.folio.util.LogUtil.logAsJson;
-import static org.folio.util.LogUtil.logList;
+import static org.folio.util.LogUtil.asJson;
 
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,7 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
 
   @Override
   protected Future<Loan> generateEvents(Loan loan) {
-    log.debug("generateEvents:: parameters loan: {}", () -> logAsJson(loan));
+    log.debug("generateEvents:: parameters loan: {}", () -> asJson(loan));
 
     final String loanId = loan.getId();
     userIds.add(loan.getUserId());
@@ -64,7 +63,7 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
   }
 
   private Future<String> generateItemCheckedOutEvent(Loan loan) {
-    log.debug("generateItemCheckedOutEvent:: parameters loan: {}", () -> logAsJson(loan));
+    log.debug("generateItemCheckedOutEvent:: parameters loan: {}", () -> asJson(loan));
     return checkedOutEventHandler.handleSkippingUserSummaryUpdate(new ItemCheckedOutEvent()
       .withLoanId(loan.getId())
       .withUserId(loan.getUserId())
@@ -73,7 +72,7 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
   }
 
   private Future<String> generateClaimedReturnedEvent(Loan loan) {
-    log.debug("generateClaimedReturnedEvent:: parameters loan: {}", () -> logAsJson(loan));
+    log.debug("generateClaimedReturnedEvent:: parameters loan: {}", () -> asJson(loan));
     if (CLAIMED_RETURNED_STATUS.equalsIgnoreCase(loan.getItemStatus())) {
       return claimedReturnedEventHandler.handleSkippingUserSummaryUpdate(new ItemClaimedReturnedEvent()
         .withLoanId(loan.getId())
@@ -84,7 +83,7 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
   }
 
   private Future<String> generateDeclaredLostEvent(Loan loan) {
-    log.debug("generateDeclaredLostEvent:: parameters loan: {}", () -> logAsJson(loan));
+    log.debug("generateDeclaredLostEvent:: parameters loan: {}", () -> asJson(loan));
     if (DECLARED_LOST_STATUS.equals(loan.getItemStatus())) {
       return declaredLostEventHandler.handleSkippingUserSummaryUpdate(new ItemDeclaredLostEvent()
           .withLoanId(loan.getId())
@@ -95,7 +94,7 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
   }
 
   private Future<Void> generateDueDateChangedEvent(Loan loan) {
-    log.debug("generateDueDateChangedEvent:: parameters loan: {}", () -> logAsJson(loan));
+    log.debug("generateDueDateChangedEvent:: parameters loan: {}", () -> asJson(loan));
     if (isTrue(loan.getDueDateChangedByRecall())) {
       dueDateChangedEventHandler.handleSkippingUserSummaryUpdate(new LoanDueDateChangedEvent()
           .withLoanId(loan.getId())
@@ -109,10 +108,10 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
 
   @Override
   protected Future<SynchronizationJob> updateStats(SynchronizationJob job, List<Loan> loans){
-    log.debug("updateStats:: parameters job: {}, loans: {}", () -> logAsJson(job),
-      () -> logList(loans));
+    log.debug("updateStats:: parameters job: {}, loans: {}", () -> asJson(job),
+      () -> asJson(loans));
     int processedLoansCount = job.getNumberOfProcessedLoans() + loans.size();
     return syncRepository.update(job.withNumberOfProcessedLoans(processedLoansCount))
-      .onSuccess(result -> log.info("updateStats:: result: {}", () -> logAsJson(job)));
+      .onSuccess(result -> log.info("updateStats:: result: {}", () -> asJson(job)));
   }
 }

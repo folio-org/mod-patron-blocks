@@ -3,7 +3,7 @@ package org.folio.rest.client;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
-import static org.folio.util.LogUtil.logResponseBody;
+import static org.folio.util.LogUtil.bodyAsString;
 
 import java.util.List;
 import java.util.Map;
@@ -57,7 +57,7 @@ public class BulkDownloadClient<T> extends OkapiClient {
       int responseStatus = response.statusCode();
       if (responseStatus != 200) {
         String errorMessage = String.format("fetchPage:: Failed to fetch %s. Response: %d %s",
-          arrayName, responseStatus, logResponseBody(response));
+          arrayName, responseStatus, bodyAsString(response));
         log.warn(errorMessage);
         return failedFuture(new HttpFailureException(errorMessage));
       } else {

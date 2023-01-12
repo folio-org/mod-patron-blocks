@@ -2,7 +2,7 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
-import static org.folio.util.LogUtil.logOkapiHeaders;
+import static org.folio.util.LogUtil.headersAsString;
 import static org.folio.util.LogUtil.loggingResponseHandler;
 import static org.folio.util.PostgresUtils.getPostgresClient;
 import static org.folio.util.UuidUtil.isUuid;
@@ -30,7 +30,7 @@ public class UserSummaryAPI implements UserSummaryUserId {
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     log.debug("getUserSummaryByUserId:: parameters userId: {}, okapiHeaders: {}",
-      () -> userId, () -> logOkapiHeaders(okapiHeaders));
+      () -> userId, () -> headersAsString(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler(
       "getUserSummaryByUserId", asyncResultHandler, log);

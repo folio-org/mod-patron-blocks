@@ -2,7 +2,7 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 import static org.folio.util.LogUtil.loggingResponseHandler;
 
 import java.util.Map;
@@ -27,7 +27,7 @@ public class TenantRefAPI extends TenantAPI {
     Handler<AsyncResult<Response>> handler, Context context) {
 
     log.debug("postTenant:: parameters tenantAttributes: {}, headers: {}",
-      () -> logAsJson(tenantAttributes), () -> logAsJson(headers));
+      () -> asJson(tenantAttributes), () -> asJson(headers));
 
     Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler(
       "postTenant", handler, log);

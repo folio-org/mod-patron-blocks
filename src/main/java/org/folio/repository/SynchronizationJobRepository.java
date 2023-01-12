@@ -1,7 +1,7 @@
 package org.folio.repository;
 
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 
 import java.util.List;
 
@@ -74,9 +74,9 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
   }
 
   public Future<SynchronizationJob> update(SynchronizationJob job) {
-    log.debug("update:: parameters job: {}", () -> logAsJson(job));
+    log.debug("update:: parameters job: {}", () -> asJson(job));
     return update(job, job.getId())
-      .onSuccess(r -> log.info("update:: Synchronization job updated: {}", () -> logAsJson(job)))
+      .onSuccess(r -> log.info("update:: Synchronization job updated: {}", () -> asJson(job)))
       .onFailure(t -> log.warn("update:: Synchronization job update failed", t))
       .map(job);
   }

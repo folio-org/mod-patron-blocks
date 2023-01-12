@@ -1,7 +1,7 @@
 package org.folio.service;
 
 import static java.util.Optional.ofNullable;
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 import static org.joda.time.Minutes.minutesBetween;
 
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +19,7 @@ public class OverduePeriodCalculator {
   }
 
   public static int calculateOverdueMinutes(OpenLoan openLoan) {
-    log.debug("calculateOverdueMinutes:: parameters openLoan: {}", () -> logAsJson(openLoan));
+    log.debug("calculateOverdueMinutes:: parameters openLoan: {}", () -> asJson(openLoan));
     final DateTime systemTime = DateTime.now();
 
     int result = loanIsOverdue(openLoan, systemTime)
@@ -31,7 +31,7 @@ public class OverduePeriodCalculator {
 
   private static boolean loanIsOverdue(OpenLoan openLoan, DateTime systemTime) {
     log.debug("loanIsOverdue:: parameters openLoan: {}, systemTime: {}",
-      () -> logAsJson(openLoan), () -> systemTime);
+      () -> asJson(openLoan), () -> systemTime);
     boolean result = openLoan.getDueDate().before(systemTime.toDate());
     log.info("loanIsOverdue:: result: {}", result);
     return result;
@@ -39,7 +39,7 @@ public class OverduePeriodCalculator {
 
   private static Integer calculateOverdueMinutes(OpenLoan openLoan, DateTime systemTime) {
     log.debug("calculateOverdueMinutes:: parameters openLoan: {}, systemTime: {}",
-      () -> logAsJson(openLoan), () -> systemTime);
+      () -> asJson(openLoan), () -> systemTime);
     DateTime dueDate = new DateTime(openLoan.getDueDate());
     int overdueMinutes = minutesBetween(dueDate, systemTime).getMinutes();
 

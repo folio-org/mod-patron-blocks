@@ -1,6 +1,6 @@
 package org.folio.rest.handlers;
 
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 import static org.folio.util.PostgresUtils.getPostgresClient;
 
 import java.util.Map;
@@ -39,7 +39,7 @@ public class EventHandler<E extends Event> {
   }
 
   public Future<String> handle(E event) {
-    log.debug("handle:: parameters event: {}", () -> logAsJson(event));
+    log.debug("handle:: parameters event: {}", () -> asJson(event));
     return eventService.save(event)
       .compose(eventId -> updateUserSummary(event))
       .onComplete(result -> logResult(result, event));
@@ -47,19 +47,19 @@ public class EventHandler<E extends Event> {
 
   public Future<String> handleSkippingUserSummaryUpdate(E event) {
     log.debug("handleSkippingUserSummaryUpdate:: parameters event: {}",
-      () -> logAsJson(event));
+      () -> asJson(event));
     return eventService.save(event)
       .onComplete(result -> logResult(result, event));
   }
 
   private Future<String> updateUserSummary(E event) {
-    log.debug("updateUserSummary:: parameters event: {}", () -> logAsJson(event));
+    log.debug("updateUserSummary:: parameters event: {}", () -> asJson(event));
     return getUserSummary(event)
       .compose(userSummary -> userSummaryService.updateUserSummaryWithEvent(userSummary, event));
   }
 
   protected Future<UserSummary> getUserSummary(E event) {
-    log.debug("getUserSummary:: parameters event: {}", () -> logAsJson(event));
+    log.debug("getUserSummary:: parameters event: {}", () -> asJson(event));
     return userSummaryRepository.findByUserIdOrBuildNew(event.getUserId());
   }
 
@@ -67,7 +67,7 @@ public class EventHandler<E extends Event> {
     String eventType = EventType.getNameByEvent(event);
     if (result.failed()) {
       log.warn("logResult: Failed to process event {} with payload: {}", () -> eventType,
-        () -> logAsJson(event));
+        () -> asJson(event));
     } else {
       String userSummaryId = result.result();
       log.info("logResult: Event {} processed successfully. Affected user summary: {}",

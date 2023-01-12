@@ -3,8 +3,8 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
-import static org.folio.util.LogUtil.logAsJson;
-import static org.folio.util.LogUtil.logOkapiHeaders;
+import static org.folio.util.LogUtil.asJson;
+import static org.folio.util.LogUtil.headersAsString;
 import static org.folio.util.LogUtil.loggingResponseHandler;
 
 import java.util.Map;
@@ -36,7 +36,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
     log.debug("getPatronBlockConditions:: parameters offset: {}, limit: {}, query: {}, lang: {}, " +
       "okapiHeaders: {}", () -> offset, () -> limit, () -> query, () -> lang,
-      () -> logOkapiHeaders(okapiHeaders));
+      () -> headersAsString(okapiHeaders));
 
     PgUtil.get(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class,
       org.folio.rest.jaxrs.model.PatronBlockConditions.class, query, offset, limit,
@@ -53,13 +53,13 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
     log.debug("putPatronBlockConditionsByPatronBlockConditionId:: parameters " +
         "patronBlockConditionId: {}, lang: {}, entity: {}, okapiHeaders: {}",
-      () -> patronBlockConditionId, () -> lang, () -> logAsJson(entity),
-      () -> logOkapiHeaders(okapiHeaders));
+      () -> patronBlockConditionId, () -> lang, () -> asJson(entity),
+      () -> headersAsString(okapiHeaders));
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
       log.info("putPatronBlockConditionsByPatronBlockConditionId:: entity is invalid. Errors: {}",
-        () -> logAsJson(errors));
+        () -> asJson(errors));
       asyncResultHandler.handle(succeededFuture(
         PutPatronBlockConditionsByPatronBlockConditionIdResponse
           .respond422WithApplicationJson(errors)));
@@ -79,7 +79,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
     log.debug("getPatronBlockConditionsByPatronBlockConditionId:: parameters " +
         "patronBlockConditionId: {}, lang: {}, okapiHeaders: {}", () -> patronBlockConditionId,
-      () -> lang, () -> logOkapiHeaders(okapiHeaders));
+      () -> lang, () -> headersAsString(okapiHeaders));
 
     PgUtil.getById(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class, patronBlockConditionId,
       okapiHeaders, vertxContext, GetPatronBlockConditionsByPatronBlockConditionIdResponse.class,

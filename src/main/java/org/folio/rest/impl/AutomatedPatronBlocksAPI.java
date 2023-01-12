@@ -2,8 +2,8 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
-import static org.folio.util.LogUtil.logAsJson;
-import static org.folio.util.LogUtil.logOkapiHeaders;
+import static org.folio.util.LogUtil.asJson;
+import static org.folio.util.LogUtil.headersAsString;
 import static org.folio.util.LogUtil.loggingResponseHandler;
 import static org.folio.util.UuidUtil.isUuid;
 
@@ -34,7 +34,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Context vertxContext) {
 
     log.debug("getAutomatedPatronBlocksByUserId:: parameters userId: {}, okapiHeaders: {}",
-      () -> userId, () -> logOkapiHeaders(okapiHeaders));
+      () -> userId, () -> headersAsString(okapiHeaders));
 
     if (!isUuid(userId)) {
       log.debug("getAutomatedPatronBlocksByUserId:: User ID {} is not a UUID", userId);
@@ -61,7 +61,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Context vertxContext) {
 
     log.debug("postAutomatedPatronBlocksSynchronizationJob:: parameters request: {}, okapiHeaders: {}",
-      () -> logAsJson(request), () -> logOkapiHeaders(okapiHeaders));
+      () -> asJson(request), () -> headersAsString(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
       loggingResponseHandler("postAutomatedPatronBlocksSynchronizationJob", asyncResultHandler, log);
@@ -94,7 +94,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
 
     log.debug("getAutomatedPatronBlocksSynchronizationJobBySyncJobId:: " +
         "parameters syncRequestId: {}, okapiHeaders: {}", () -> syncRequestId,
-      () -> logOkapiHeaders(okapiHeaders));
+      () -> headersAsString(okapiHeaders));
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
       loggingResponseHandler("getAutomatedPatronBlocksSynchronizationJobBySyncJobId",

@@ -1,6 +1,6 @@
 package org.folio.service;
 
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 
 import java.util.List;
 
@@ -70,7 +70,7 @@ public class EventService {
   }
 
   public Future<String> save(Event event) {
-    log.debug("save:: parameters event: {}", () -> logAsJson(event));
+    log.debug("save:: parameters event: {}", () -> asJson(event));
 
     EventType eventType = EventType.getByEvent(event);
 

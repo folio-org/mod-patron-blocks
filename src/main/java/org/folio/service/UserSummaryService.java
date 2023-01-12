@@ -6,7 +6,7 @@ import static java.lang.String.format;
 import static org.folio.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.domain.EventType.getByEvent;
 import static org.folio.domain.EventType.getNameByEvent;
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -75,12 +75,12 @@ public class UserSummaryService {
     return userSummaryRepository.getByUserId(userId)
       .map(optionalUserSummary -> optionalUserSummary.orElseThrow(() ->
         new EntityNotFoundInDbException(format("User summary for user ID %s not found", userId))))
-      .onSuccess(result -> log.info("getByUserId:: result: {}", () -> logAsJson(result)));
+      .onSuccess(result -> log.info("getByUserId:: result: {}", () -> asJson(result)));
   }
 
   public Future<String> updateUserSummaryWithEvent(UserSummary userSummary, Event event) {
     log.debug("updateUserSummaryWithEvent:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+      () -> asJson(userSummary), () -> asJson(event));
     return recursivelyUpdateUserSummaryWithEvent(new UpdateRetryContext(userSummary), event)
       .onSuccess(result -> log.info("updateUserSummaryWithEvent:: result: {}", result));
   }
@@ -89,7 +89,7 @@ public class UserSummaryService {
       Event event) {
 
     log.debug("recursivelyUpdateUserSummaryWithEvent:: parameters ctx: {}, event: {}",
-      () -> logAsJson(ctx), () -> logAsJson(event));
+      () -> asJson(ctx), () -> asJson(event));
     return updateAndStoreUserSummary(ctx.userSummary, event)
       .recover(throwable -> {
         log.warn("recursivelyUpdateUserSummaryWithEvent:: Failed to update user summary", throwable);
@@ -117,7 +117,7 @@ public class UserSummaryService {
 
   private Future<String> updateAndStoreUserSummary(UserSummary userSummary, Event event) {
     log.debug("updateAndStoreUserSummary:: parameters userSummary: {}, event: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event));
+      () -> asJson(userSummary), () -> asJson(event));
     RebuildContext rebuildContext = new RebuildContext().withUserSummary(userSummary);
     handleEvent(rebuildContext, event);
 
@@ -147,7 +147,7 @@ public class UserSummaryService {
   }
 
   private Future<RebuildContext> loadEventsToContext(RebuildContext ctx) {
-    log.debug("loadEventsToContext:: parameters ctx: {}", () -> logAsJson(ctx));
+    log.debug("loadEventsToContext:: parameters ctx: {}", () -> asJson(ctx));
     if (ctx.userSummary == null || ctx.userSummary.getUserId() == null) {
       ctx.logFailedValidationError("loadEventsToContext");
       return failedFuture(FAILED_TO_REBUILD_USER_SUMMARY_ERROR_MESSAGE);
@@ -177,11 +177,11 @@ public class UserSummaryService {
       .compose(eventService::getFeeFineBalanceChangedEvents)
       .map(ctx.events::addAll)
       .map(ctx)
-      .onSuccess(result -> log.info("loadEventsToContext:: result: {}", () -> logAsJson(result)));
+      .onSuccess(result -> log.info("loadEventsToContext:: result: {}", () -> asJson(result)));
   }
 
   private Future<RebuildContext> cleanUpUserSummary(RebuildContext ctx) {
-    log.debug("cleanUpUserSummary:: parameters ctx: {}", () -> logAsJson(ctx));
+    log.debug("cleanUpUserSummary:: parameters ctx: {}", () -> asJson(ctx));
     if (ctx.userSummary == null) {
       ctx.logFailedValidationError("cleanUpUserSummary");
       return failedFuture(FAILED_TO_REBUILD_USER_SUMMARY_ERROR_MESSAGE);
@@ -190,12 +190,12 @@ public class UserSummaryService {
     ctx.userSummary.setOpenLoans(new ArrayList<>());
     ctx.userSummary.setOpenFeesFines(new ArrayList<>());
 
-    log.info("cleanUpUserSummary:: result: {}", () -> logAsJson(ctx));
+    log.info("cleanUpUserSummary:: result: {}", () -> asJson(ctx));
     return succeededFuture(ctx);
   }
 
   private Future<String> handleEventsInChronologicalOrder(RebuildContext ctx) {
-    log.debug("handleEventsInChronologicalOrder:: parameters ctx: {}", () -> logAsJson(ctx));
+    log.debug("handleEventsInChronologicalOrder:: parameters ctx: {}", () -> asJson(ctx));
     if (ctx.userSummary == null || ctx.userSummary.getUserId() == null) {
       ctx.logFailedValidationError("loadEventsToContext");
       return failedFuture(FAILED_TO_REBUILD_USER_SUMMARY_ERROR_MESSAGE);
@@ -223,8 +223,8 @@ public class UserSummaryService {
   }
 
   private void handleEvent(RebuildContext ctx, Event event) {
-    log.debug("handleEvent:: parameters ctx: {}, event: {}", () -> logAsJson(ctx),
-      () -> logAsJson(event));
+    log.debug("handleEvent:: parameters ctx: {}, event: {}", () -> asJson(ctx),
+      () -> asJson(event));
     if (ctx.userSummary == null || event == null || getByEvent(event) == null ||
       event.getMetadata() == null) {
 
@@ -263,8 +263,8 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemCheckedOutEvent event) {
-    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
-      () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> asJson(userSummary),
+      () -> asJson(event));
     List<OpenLoan> openLoans = userSummary.getOpenLoans();
 
     if (openLoans.stream()
@@ -282,14 +282,14 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemCheckedInEvent event) {
-    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
-      () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> asJson(userSummary),
+      () -> asJson(event));
     removeLoanFromUserSummary(userSummary, event, event.getLoanId());
   }
 
   private void removeLoanFromUserSummary(UserSummary userSummary, Event event, String loanId) {
     log.debug("removeLoanFromUserSummary:: parameters userSummary: {}, event: {}, loanId: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event), () -> loanId);
+      () -> asJson(userSummary), () -> asJson(event), () -> loanId);
     boolean loanRemoved = userSummary.getOpenLoans()
       .removeIf(loan -> StringUtils.equals(loan.getLoanId(), loanId));
 
@@ -300,8 +300,8 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemClaimedReturnedEvent event) {
-    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
-      () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> asJson(userSummary),
+      () -> asJson(event));
     userSummary.getOpenLoans().stream()
       .filter(loan -> StringUtils.equals(loan.getLoanId(), event.getLoanId()))
       .findFirst()
@@ -312,20 +312,20 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemDeclaredLostEvent event) {
-    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
-      () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> asJson(userSummary),
+      () -> asJson(event));
     updateUserSummaryForLostItem(userSummary, event, event.getLoanId());
   }
 
   private void updateUserSummary(UserSummary userSummary, ItemAgedToLostEvent event) {
-    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary),
-      () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> asJson(userSummary),
+      () -> asJson(event));
     updateUserSummaryForLostItem(userSummary, event, event.getLoanId());
   }
 
   private void updateUserSummaryForLostItem(UserSummary userSummary, Event event, String loanId) {
     log.debug("updateUserSummaryForLostItem:: parameters userSummary: {}, event: {}, loanId: {}",
-      () -> logAsJson(userSummary), () -> logAsJson(event), () -> loanId);
+      () -> asJson(userSummary), () -> asJson(event), () -> loanId);
     userSummary.getOpenLoans().stream()
       .filter(loan -> StringUtils.equals(loan.getLoanId(), loanId))
       .findAny()
@@ -336,7 +336,7 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, LoanDueDateChangedEvent event) {
-    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> asJson(userSummary), () -> asJson(event));
     userSummary.getOpenLoans().stream()
       .filter(loan -> StringUtils.equals(loan.getLoanId(), event.getLoanId()))
       .findFirst()
@@ -355,7 +355,7 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, FeeFineBalanceChangedEvent event) {
-    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> asJson(userSummary), () -> asJson(event));
     List<OpenFeeFine> openFeesFines = userSummary.getOpenFeesFines();
 
     OpenFeeFine openFeeFine = openFeesFines.stream()
@@ -381,7 +381,7 @@ public class UserSummaryService {
   }
 
   private void updateUserSummary(UserSummary userSummary, LoanClosedEvent event) {
-    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> logAsJson(userSummary), () -> logAsJson(event));
+    log.debug(LOG_TEMPLATE_UPDATE_USER_SUMMARY, () -> asJson(userSummary), () -> asJson(event));
     removeLoanFromUserSummary(userSummary, event, event.getLoanId());
   }
 

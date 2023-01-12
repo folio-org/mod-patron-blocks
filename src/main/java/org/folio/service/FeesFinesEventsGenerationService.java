@@ -1,6 +1,6 @@
 package org.folio.service;
 
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,7 +31,7 @@ public class FeesFinesEventsGenerationService extends EventsGenerationService<Ac
 
   @Override
   protected Future<Account> generateEvents(Account account) {
-    log.debug("generateEvents:: parameters account: {}", () -> logAsJson(account));
+    log.debug("generateEvents:: parameters account: {}", () -> asJson(account));
 
     final String accountId = account.getId();
     userIds.add(account.getUserId());
@@ -52,11 +52,11 @@ public class FeesFinesEventsGenerationService extends EventsGenerationService<Ac
 
   @Override
   protected Future<SynchronizationJob> updateStats(SynchronizationJob job, List<Account> accounts) {
-    log.debug("updateStats:: parameters job: {}, accounts: list(size={})", () -> logAsJson(job),
+    log.debug("updateStats:: parameters job: {}, accounts: list(size={})", () -> asJson(job),
       accounts::size);
     int processedFeesFinesCount = job.getNumberOfProcessedFeesFines() + accounts.size();
     return syncRepository.update(job.withNumberOfProcessedFeesFines(processedFeesFinesCount))
-      .onSuccess(result -> log.info("updateStats:: result: {}", () -> logAsJson(result)));
+      .onSuccess(result -> log.info("updateStats:: result: {}", () -> asJson(result)));
   }
 
 }

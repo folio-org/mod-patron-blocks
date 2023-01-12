@@ -3,8 +3,8 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.repository.PatronBlockLimitsRepository.PATRON_BLOCK_LIMITS_TABLE_NAME;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
-import static org.folio.util.LogUtil.logAsJson;
-import static org.folio.util.LogUtil.logOkapiHeaders;
+import static org.folio.util.LogUtil.asJson;
+import static org.folio.util.LogUtil.headersAsString;
 import static org.folio.util.LogUtil.loggingResponseHandler;
 
 import java.util.List;
@@ -47,7 +47,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     log.debug("getPatronBlockLimits:: parameters offset: {}, limit: {}, query: {}, lang: {}, " +
         "okapiHeaders: {}", () -> offset, () -> limit, () -> query, () -> lang,
-      () -> logOkapiHeaders(okapiHeaders));
+      () -> headersAsString(okapiHeaders));
 
     PgUtil.get(PATRON_BLOCK_LIMITS_TABLE_NAME, PatronBlockLimit.class,
       org.folio.rest.jaxrs.model.PatronBlockLimits.class, query, offset, limit,
@@ -62,11 +62,11 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     Context vertxContext) {
 
     log.debug("postPatronBlockLimits:: parameters lang: {}, entity: {}, okapiHeaders: {}",
-      () -> lang, () -> logAsJson(entity), () -> logOkapiHeaders(okapiHeaders));
+      () -> lang, () -> asJson(entity), () -> headersAsString(okapiHeaders));
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
-      log.info("postPatronBlockLimits:: entity is invalid. Errors: {}", () -> logAsJson(errors));
+      log.info("postPatronBlockLimits:: entity is invalid. Errors: {}", () -> asJson(errors));
       asyncResultHandler.handle(succeededFuture(PostPatronBlockLimitsResponse
           .respond422WithApplicationJson(errors)));
       return;
@@ -85,12 +85,12 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     log.debug("putPatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
       "lang: {}, entity: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> lang,
-      () -> logAsJson(entity), () -> logOkapiHeaders(okapiHeaders));
+      () -> asJson(entity), () -> headersAsString(okapiHeaders));
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
       log.info("putPatronBlockLimitsByPatronBlockLimitId:: entity is invalid. Errors: {}",
-        () -> logAsJson(errors));
+        () -> asJson(errors));
       asyncResultHandler.handle(succeededFuture(PutPatronBlockLimitsByPatronBlockLimitIdResponse
           .respond422WithApplicationJson(errors)));
       return;
@@ -109,7 +109,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     log.debug("getPatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
         "lang: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> lang,
-      () -> logOkapiHeaders(okapiHeaders));
+      () -> headersAsString(okapiHeaders));
 
     PgUtil.getById(PATRON_BLOCK_LIMITS_TABLE_NAME, PatronBlockLimit.class, patronBlockLimitId,
       okapiHeaders, vertxContext, GetPatronBlockLimitsByPatronBlockLimitIdResponse.class,
@@ -124,7 +124,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     log.debug("deletePatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
       "lang: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> lang,
-      () -> logOkapiHeaders(okapiHeaders));
+      () -> headersAsString(okapiHeaders));
 
     PgUtil.deleteById(PATRON_BLOCK_LIMITS_TABLE_NAME, patronBlockLimitId, okapiHeaders,
       vertxContext, DeletePatronBlockLimitsByPatronBlockLimitIdResponse.class,

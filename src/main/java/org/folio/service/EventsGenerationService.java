@@ -2,7 +2,7 @@ package org.folio.service;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -39,7 +39,7 @@ public abstract class EventsGenerationService<T> {
   }
 
   public Future<SynchronizationJob> generateEvents(SynchronizationJob job) {
-    log.debug("generateEvents:: parameters job: {}", () -> logAsJson(job));
+    log.debug("generateEvents:: parameters job: {}", () -> asJson(job));
     return generateEventsRecursively(job, buildQuery(job), null);
   }
 
@@ -47,7 +47,7 @@ public abstract class EventsGenerationService<T> {
     String originalQuery, String lastFetchedId) {
 
     log.debug("generateEventsRecursively:: parameters job: {}, originalQuery: {}," +
-      " lastFetchedId: {}", () -> logAsJson(job), () -> originalQuery, () -> lastFetchedId);
+      " lastFetchedId: {}", () -> asJson(job), () -> originalQuery, () -> lastFetchedId);
 
     String query = lastFetchedId != null
       ? originalQuery + String.format(FILTER_BY_ID_QUERY_TEMPLATE, lastFetchedId)
@@ -63,7 +63,7 @@ public abstract class EventsGenerationService<T> {
       .recover(error -> handleError(job, error))
       .compose(syncJob -> fetchNextPage(syncJob, currentPage.get(), originalQuery))
       .onSuccess(result -> log.info("generateEventsRecursively:: result: {}",
-        () -> logAsJson(result)));
+        () -> asJson(result)));
   }
 
   private Future<List<T>> generateEventsForPage(List<T> page) {
@@ -78,7 +78,7 @@ public abstract class EventsGenerationService<T> {
   private Future<SynchronizationJob> fetchNextPage(SynchronizationJob job, List<T> lastPage,
     String query) {
     log.debug("fetchNextPage:: parameters job: {}, lastPage: list(size={}), query: {}",
-      () -> logAsJson(job), lastPage::size, () -> query);
+      () -> asJson(job), lastPage::size, () -> query);
 
     if (lastPage.size() < PAGE_SIZE) {
       log.info("fetchNextPage:: {} finished processing last page", getClass().getSimpleName());
@@ -90,7 +90,7 @@ public abstract class EventsGenerationService<T> {
     UuidHelper.validateUUID(lastElementId, true);
 
     return generateEventsRecursively(job, query, lastElementId)
-      .onSuccess(result -> log.info("fetchNextPage:: result: {}", () -> logAsJson(job)));
+      .onSuccess(result -> log.info("fetchNextPage:: result: {}", () -> asJson(job)));
   }
 
   private Future<SynchronizationJob> handleError(SynchronizationJob syncJob, Throwable error) {
@@ -111,7 +111,7 @@ public abstract class EventsGenerationService<T> {
   }
 
   private static String buildQuery(SynchronizationJob job) {
-    log.debug("buildQuery:: parameters job: {}", () -> logAsJson(job));
+    log.debug("buildQuery:: parameters job: {}", () -> asJson(job));
 
     StringBuilder query = new StringBuilder("status.name==Open");
     if (job.getScope() == USER) {

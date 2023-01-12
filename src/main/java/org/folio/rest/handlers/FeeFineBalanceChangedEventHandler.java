@@ -1,7 +1,7 @@
 package org.folio.rest.handlers;
 
 import static java.lang.String.format;
-import static org.folio.util.LogUtil.logAsJson;
+import static org.folio.util.LogUtil.asJson;
 
 import java.util.Map;
 
@@ -25,7 +25,7 @@ public class FeeFineBalanceChangedEventHandler extends EventHandler<FeeFineBalan
 
   @Override
   protected Future<UserSummary> getUserSummary(FeeFineBalanceChangedEvent event) {
-    log.debug("getUserSummary:: parameters event: {}", () -> logAsJson(event));
+    log.debug("getUserSummary:: parameters event: {}", () -> asJson(event));
     return event.getUserId() != null
       ? userSummaryRepository.findByUserIdOrBuildNew(event.getUserId())
       : findSummaryByFeeFineIdOrFail(event.getFeeFineId());
