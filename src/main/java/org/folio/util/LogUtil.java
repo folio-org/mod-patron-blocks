@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.persist.PostgresClient;
@@ -88,9 +89,9 @@ public class LogUtil {
 
   public static String logOkapiHeaders(Map<String, String> okapiHeaders) {
     try {
-      return logAsJson(new JsonObject(okapiHeaders.entrySet().stream()
-        .filter(entry -> !entry.getKey().equalsIgnoreCase("x-okapi-token"))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+      Map<String, String> headersCopy= new CaseInsensitiveMap<>(okapiHeaders);
+      headersCopy.remove("x-okapi-token");
+      return headersCopy.toString();
     } catch (Exception ex) {
       log.warn("logOkapiHeaders:: Failed to log Okapi headers", ex);
       return null;
