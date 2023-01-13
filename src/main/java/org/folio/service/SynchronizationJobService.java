@@ -61,7 +61,7 @@ public class SynchronizationJobService {
     log.debug("createSynchronizationJob:: parameters request: {}", () -> asJson(request));
     if (USER == request.getScope() && request.getUserId() == null) {
       String message = "UserId is required for synchronization job with scope: USER";
-      log.warn(message);
+      log.warn("createSynchronizationJob:: {}", message);
       return failedFuture(new UserIdNotFoundException(message));
     }
 
@@ -194,8 +194,9 @@ public class SynchronizationJobService {
     log.debug("updateJobStatus:: parameters job: {}, syncStatus: {}", () -> asJson(job),
       () -> syncStatus);
     return syncRepository.update(job.withStatus(syncStatus.getValue()))
-      .onSuccess(r -> log.info("Synchronization job status updated: {}", syncStatus::getValue))
-      .onFailure(t -> log.warn("Failed to update synchronization job status", t))
+      .onSuccess(r -> log.info("updateJobStatus:: Synchronization job status updated: {}",
+        syncStatus::getValue))
+      .onFailure(t -> log.warn("updateJobStatus:: Failed to update synchronization job status", t))
       .map(job)
       .onSuccess(result -> log.info("updateJobStatus:: result: {}", () -> asJson(result)));
   }
