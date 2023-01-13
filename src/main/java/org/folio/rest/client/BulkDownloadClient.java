@@ -70,7 +70,7 @@ public class BulkDownloadClient<T> extends OkapiClient {
             path);
           return succeededFuture(result);
         } catch (JsonProcessingException e) {
-          log.warn("fetchPage:: Failed to parse JSON response from: {}", path);
+          log.warn("fetchPage:: Failed to parse JSON response from: {}", path, e);
           return failedFuture(e);
         }
       }

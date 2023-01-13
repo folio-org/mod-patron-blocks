@@ -350,7 +350,7 @@ public class UserSummaryService {
   }
 
   private void logOpenLoanNotFound(Event event, String loanId){
-    log.error("Event {}:{} is ignored. Open loan {} was not found for user {}",
+    log.warn("logOpenLoanNotFound:: Event {}:{} is ignored. Open loan {} was not found for user {}",
       getNameByEvent(event), event.getId(), loanId, event.getUserId());
   }
 

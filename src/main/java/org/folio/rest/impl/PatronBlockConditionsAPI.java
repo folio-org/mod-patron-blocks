@@ -58,7 +58,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
-      log.info("putPatronBlockConditionsByPatronBlockConditionId:: entity is invalid. Errors: {}",
+      log.warn("putPatronBlockConditionsByPatronBlockConditionId:: entity is invalid. Errors: {}",
         () -> asJson(errors));
       asyncResultHandler.handle(succeededFuture(
         PutPatronBlockConditionsByPatronBlockConditionIdResponse

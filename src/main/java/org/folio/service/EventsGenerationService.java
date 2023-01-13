@@ -95,7 +95,7 @@ public abstract class EventsGenerationService<T> {
 
   private Future<SynchronizationJob> handleError(SynchronizationJob syncJob, Throwable error) {
     String className = getClass().getSimpleName();
-    log.warn("{} failed to generate events", className, error);
+    log.warn("handleError:: {} failed to generate events", className, error);
     syncJob.getErrors().add(error.getLocalizedMessage());
     return syncRepository.update(syncJob);
   }
@@ -104,9 +104,11 @@ public abstract class EventsGenerationService<T> {
     String className = getClass().getSimpleName();
 
     if (result.failed()) {
-      log.warn("{} failed to generate events", className, result.cause());
+      log.warn("logEventsGenerationResult:: {} failed to generate events", className,
+        result.cause());
     } else {
-      log.info("{} successfully generated events for {} entities", className, result.result().size());
+      log.info("logEventsGenerationResult:: {} successfully generated events for {} entities",
+        className, result.result().size());
     }
   }
 

@@ -60,8 +60,9 @@ public class SynchronizationJobService {
   public Future<SynchronizationJob> createSynchronizationJob(SynchronizationJob request) {
     log.debug("createSynchronizationJob:: parameters request: {}", () -> asJson(request));
     if (USER == request.getScope() && request.getUserId() == null) {
-      return failedFuture(new UserIdNotFoundException(
-        "UserId is required for synchronization job with scope: USER"));
+      String message = "UserId is required for synchronization job with scope: USER";
+      log.warn(message);
+      return failedFuture(new UserIdNotFoundException(message));
     }
 
     String syncRecordId = UUID.randomUUID().toString();
@@ -108,7 +109,7 @@ public class SynchronizationJobService {
       () -> asJson(inProgressSynchronizationJobs));
 
     if (!inProgressSynchronizationJobs.isEmpty()) {
-      log.debug("doSynchronization:: Synchronization is in-progress now");
+      log.info("doSynchronization:: Synchronization is in-progress now");
       return succeededFuture();
     }
 
@@ -135,17 +136,17 @@ public class SynchronizationJobService {
   private Future<SynchronizationJob> deleteUserSummaries(SynchronizationJob job) {
     log.debug("deleteUserSummaries:: parameters job: {}", () -> asJson(job));
     if (job.getScope() == FULL) {
-      log.debug("deleteUserSummaries:: scope: {}", FULL);
+      log.info("deleteUserSummaries:: scope: {}", FULL);
       return userSummaryRepository.removeAll(tenantId)
         .map(job);
     }
     else if (job.getScope() == USER) {
-      log.debug("deleteUserSummaries:: scope: {}", USER);
+      log.info("deleteUserSummaries:: scope: {}", USER);
       return userSummaryRepository.deleteByUserId(job.getUserId())
         .map(job);
     }
     else {
-      log.debug("deleteUserSummaries:: scope: unknown");
+      log.info("deleteUserSummaries:: scope: unknown");
       return succeededFuture(job);
     }
   }
@@ -194,7 +195,7 @@ public class SynchronizationJobService {
       () -> syncStatus);
     return syncRepository.update(job.withStatus(syncStatus.getValue()))
       .onSuccess(r -> log.info("Synchronization job status updated: {}", syncStatus::getValue))
-      .onFailure(t -> log.error("Failed to update synchronization job status", t))
+      .onFailure(t -> log.warn("Failed to update synchronization job status", t))
       .map(job)
       .onSuccess(result -> log.info("updateJobStatus:: result: {}", () -> asJson(result)));
   }

@@ -49,7 +49,7 @@ public class EventRepository<T> extends BaseRepository<T> {
       ModuleName.getModuleName(), tableName, userId);
     pgClient.execute(deleteByUserIdQuery, reply -> {
       if (reply.failed()) {
-        log.info("removeByUserId:: Failed to delete entries from table {}.{} by user ID {}",
+        log.warn("removeByUserId:: Failed to delete entries from table {}.{} by user ID {}",
           tenantId, tableName, userId);
         promise.future().failed();
       } else {

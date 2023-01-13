@@ -40,9 +40,6 @@ public class PatronBlocksService {
   private static final Logger log = LogManager.getLogger(PatronBlocksService.class);
 
   private static final String DEFAULT_ERROR_MESSAGE = "Failed to calculate automated patron blocks";
-  private static final String OVERDUE_MINUTES_CALCULATION_ERROR_TEMPLATE =
-    "Failed to calculate overdue minutes: {}";
-
   private static final BinaryOperator<Integer> OVERDUE_MINUTES_MERGE_FUNCTION = (oldValue, newValue) -> {
     log.info("Two open loans with the same loanId found. Overdue minutes of the newer loan" +
       " saved. Old value: {}, new value: {}", oldValue, newValue);
@@ -168,16 +165,16 @@ public class PatronBlocksService {
   private static boolean validateLoan(OpenLoan openLoan) {
     log.debug("validateLoan:: parameters openLoan: {}", () -> asJson(openLoan));
     if (openLoan == null) {
-      log.warn(OVERDUE_MINUTES_CALCULATION_ERROR_TEMPLATE, "openLoan is null");
+      log.warn("validateLoan:: Failed to calculate overdue minutes: openLoan is null");
       return false;
     }
 
     if (openLoan.getDueDate() == null) {
-      log.warn(OVERDUE_MINUTES_CALCULATION_ERROR_TEMPLATE, "due date is null");
+      log.warn("validateLoan:: Failed to calculate overdue minutes: due date is null");
       return false;
     }
 
-    log.info("addOverdueMinutesToContext:: result: true");
+    log.info("validateLoan:: result: true");
     return true;
   }
 
@@ -207,7 +204,7 @@ public class PatronBlocksService {
     }
 
     BlocksCalculationContext result = ctx.withCurrentPatronBlockCondition(patronBlockCondition);
-    log.info("addOverdueMinutesToContext:: result: {}", () -> asJson(result));
+    log.info("addCurrentConditionToContext:: result: {}", () -> asJson(result));
     return result;
   }
 

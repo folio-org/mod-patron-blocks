@@ -66,7 +66,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
-      log.info("postPatronBlockLimits:: entity is invalid. Errors: {}", () -> asJson(errors));
+      log.warn("postPatronBlockLimits:: entity is invalid. Errors: {}", () -> asJson(errors));
       asyncResultHandler.handle(succeededFuture(PostPatronBlockLimitsResponse
           .respond422WithApplicationJson(errors)));
       return;
@@ -89,7 +89,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
-      log.info("putPatronBlockLimitsByPatronBlockLimitId:: entity is invalid. Errors: {}",
+      log.warn("putPatronBlockLimitsByPatronBlockLimitId:: entity is invalid. Errors: {}",
         () -> asJson(errors));
       asyncResultHandler.handle(succeededFuture(PutPatronBlockLimitsByPatronBlockLimitIdResponse
           .respond422WithApplicationJson(errors)));

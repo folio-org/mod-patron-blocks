@@ -45,8 +45,10 @@ public class FeesFinesEventsGenerationService extends EventsGenerationService<Ac
       .withMetadata(account.getMetadata());
 
     return feeFineBalanceChangedEventHandler.handleSkippingUserSummaryUpdate(event)
-      .onSuccess(r -> log.info("generateEvents:: Successfully generated events for account {}", accountId))
-      .onFailure(t -> log.warn("generateEvents:: Failed to generate events for account {}", accountId, t))
+      .onSuccess(r -> log.info("generateEvents:: Successfully generated events for account {}",
+        accountId))
+      .onFailure(t -> log.warn("generateEvents:: Failed to generate events for account {}",
+        accountId, t))
       .map(account);
   }
 

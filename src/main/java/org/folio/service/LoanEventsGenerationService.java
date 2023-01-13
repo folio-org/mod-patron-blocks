@@ -56,9 +56,10 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
       .compose(v -> generateClaimedReturnedEvent(loan))
       .compose(v -> generateDeclaredLostEvent(loan))
       .compose(v -> generateDueDateChangedEvent(loan))
-      .onSuccess(r -> log.info("generateEvents:: Successfully generated events for loan {}", loanId))
-      .onFailure(t -> log.error("generateEvents:: Failed to generate events for loan {}: {}", loanId,
-        t.getLocalizedMessage()))
+      .onSuccess(r -> log.info("generateEvents:: Successfully generated events for loan {}",
+        loanId))
+      .onFailure(t -> log.warn("generateEvents:: Failed to generate events for loan {}: {}",
+        loanId, t))
       .map(loan);
   }
 
