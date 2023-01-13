@@ -1,7 +1,5 @@
 package org.folio.repository;
 
-import static org.folio.util.LogUtil.asJson;
-
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
