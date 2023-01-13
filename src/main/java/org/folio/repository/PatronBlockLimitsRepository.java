@@ -31,8 +31,7 @@ public class PatronBlockLimitsRepository extends BaseRepository<PatronBlockLimit
       .setVal(patronGroupId)
       .setJSONB(true));
 
-    return get(criterion)
-      .onSuccess(r -> log.info("findLimitsForPatronGroup:: result: {}", () -> asJson(r)));
+    return get(criterion);
   }
 
   public Future<String> save(PatronBlockLimit limit) {
