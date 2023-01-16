@@ -72,7 +72,7 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
     Promise<RowSet<Row>> promise = Promise.promise();
     pgClient.select(sql, promise);
     return promise.future()
-      .onSuccess(r -> log.info("select:: result: {}", () -> asJson(r)));
+      .onSuccess(r -> log.info("select:: result: RowSet with {} rows", r.rowCount()));
   }
 
   public Future<SynchronizationJob> update(SynchronizationJob job) {
