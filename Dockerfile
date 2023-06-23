@@ -3,7 +3,7 @@ FROM folioci/alpine-jre-openjdk17:latest
 # Install latest patch versions of packages: https://pythonspeed.com/articles/security-updates-in-docker/
 USER root
 RUN apk upgrade --no-cache
-USER
+USER folio
 
 ENV TRUST_ALL_CERTIFICATES false
 
