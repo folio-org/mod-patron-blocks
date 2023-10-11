@@ -1,3 +1,8 @@
+## 1.9.0 2023-10-11
+* Use GitHub Workflows api-lint and api-schema-lint and api-doc (MODPATBLK-159)
+* Migrate to Java 17 (MODPATBLK-166)
+* Check error in GET `/_/tenant/<tenantid>` in ApiIT (MODPATBLK-170)
+
 ## 1.8.0 2023-02-20
 * Logging improvement (MODPATBLK-122)
 * Upgrade testcontainers-bom to 1.17.6 and mockserver to 5.14.0 to get arm64 support (MODPATBLK-141)
