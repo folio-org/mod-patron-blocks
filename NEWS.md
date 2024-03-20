@@ -1,3 +1,7 @@
+## 1.10.0 2024-03-20
+* Upgrade RMB to 35.2.0 and Vertx 4.5.5 (MODPATBLK-174)
+* Eliminate using maven-model 3.3.9 (MODPATBLK-171)
+
 ## 1.9.0 2023-10-11
 * Use GitHub Workflows api-lint and api-schema-lint and api-doc (MODPATBLK-159)
 * Migrate to Java 17 (MODPATBLK-166)
