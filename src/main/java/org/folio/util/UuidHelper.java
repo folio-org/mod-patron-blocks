@@ -2,7 +2,7 @@ package org.folio.util;
 
 import java.util.UUID;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 public class UuidHelper {
   private UuidHelper() {

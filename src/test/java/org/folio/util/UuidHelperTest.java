@@ -1,6 +1,6 @@
 package org.folio.util;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
