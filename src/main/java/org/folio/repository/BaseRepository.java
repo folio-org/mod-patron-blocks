@@ -3,7 +3,10 @@ package org.folio.repository;
 import static org.folio.util.LogUtil.asJson;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,26 +27,31 @@ public class BaseRepository<T> {
   private static final Logger log = LogManager.getLogger(BaseRepository.class);
   private static final String OPERATION_EQUALS = "=";
   private static final int DEFAULT_LIMIT = 100;
+  private static final Map<String, CQL2PgJSON> cql2pgJsonMap = new ConcurrentHashMap<>();
 
   protected final PostgresClient pgClient;
   protected final String tableName;
   private final Class<T> entityType;
-  private final CQL2PgJSON cql2pgJson;
+  private final Supplier<CQL2PgJSON> cql2pgJson;
 
   public BaseRepository(PostgresClient pgClient, String tableName, Class<T> entityType) {
     this.pgClient = pgClient;
     this.tableName = tableName;
     this.entityType = entityType;
-    try {
-      this.cql2pgJson = new CQL2PgJSON(tableName + ".jsonb");
-    } catch (FieldException e) {
-      throw new RuntimeException(e);
-    }
+    cql2pgJsonMap.computeIfAbsent(tableName, (name) -> {
+      try {
+        return new CQL2PgJSON(name + ".jsonb");
+      } catch (FieldException e) {
+        log.error(e);
+        throw new RuntimeException(e);
+      }
+    });
+    this.cql2pgJson = () -> cql2pgJsonMap.get(tableName);
   }
 
   public Future<List<T>> get(String query, int offset, int limit) {
     log.debug("get:: parameters query: {}, offset: {}, limit: {}", query, offset, limit);
-    CQLWrapper cql = new CQLWrapper(cql2pgJson, query, limit, offset);
+    CQLWrapper cql = new CQLWrapper(cql2pgJson.get(), query, limit, offset);
     return pgClient.get(tableName, entityType, cql, true)
       .map(Results::getResults)
       .onSuccess(result -> log.info("get:: result: {}", () -> asJson(result)));
