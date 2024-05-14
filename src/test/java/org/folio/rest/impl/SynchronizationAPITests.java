@@ -220,6 +220,23 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
+  public void itemAgedToLostEventShouldBeCreatedAfterSynchronization() {
+    stubLoans(now().plusHours(1).toDate(), false, "Aged to lost");
+    stubAccountsWithEmptyResponse();
+    String syncJobId = createOpenSynchronizationJobByUser();
+    EventRepository<ItemAgedToLostEvent> itemAgedToLostEventRepository = new EventRepository<>(
+      postgresClient, ITEM_AGED_TO_LOST_EVENT_TABLE_NAME, ItemAgedToLostEvent.class);
+
+    runSynchronization();
+
+    Awaitility.await()
+      .atMost(5, SECONDS)
+      .until(() -> waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(1));
+
+    checkSyncJobUpdatedByLoanEvent(syncJobId);
+  }
+
+  @Test
   public void feeFineBalanceChangedEventShouldBeCreatedAfterSynchronization() {
     stubLoansWithEmptyResponse();
     stubAccounts();
