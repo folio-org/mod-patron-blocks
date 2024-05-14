@@ -207,8 +207,6 @@ public class SynchronizationAPITests extends TestBase {
     stubLoans(now().plusHours(1).toDate(), true, "Checked out");
     stubAccountsWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobByUser();
-    EventRepository<LoanDueDateChangedEvent> loanDueDateChangedEventRepository = new EventRepository<>(
-      postgresClient, LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME, LoanDueDateChangedEvent.class);
 
     runSynchronization();
 
@@ -224,8 +222,6 @@ public class SynchronizationAPITests extends TestBase {
     stubLoans(now().plusHours(1).toDate(), false, "Aged to lost");
     stubAccountsWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobByUser();
-    EventRepository<ItemAgedToLostEvent> itemAgedToLostEventRepository = new EventRepository<>(
-      postgresClient, ITEM_AGED_TO_LOST_EVENT_TABLE_NAME, ItemAgedToLostEvent.class);
 
     runSynchronization();
 
