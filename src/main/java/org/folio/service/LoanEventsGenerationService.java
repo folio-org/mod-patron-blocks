@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.repository.SynchronizationJobRepository;
 import org.folio.rest.client.BulkDownloadClient;
 import org.folio.rest.handlers.EventHandler;
+import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
@@ -26,11 +27,13 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
   protected static final Logger log = LogManager.getLogger(LoanEventsGenerationService.class);
   private static final String DECLARED_LOST_STATUS = "Declared lost";
   private static final String CLAIMED_RETURNED_STATUS = "Claimed returned";
+  private static final String AGED_TO_LOST_STATUS = "Aged to lost";
 
   private final EventHandler<ItemCheckedOutEvent> checkedOutEventHandler;
   private final EventHandler<ItemDeclaredLostEvent> declaredLostEventHandler;
   private final EventHandler<ItemClaimedReturnedEvent> claimedReturnedEventHandler;
   private final EventHandler<LoanDueDateChangedEvent> dueDateChangedEventHandler;
+  private final EventHandler<ItemAgedToLostEvent> agedToLostEventHandler;
 
   public LoanEventsGenerationService(Map<String, String> okapiHeaders, Vertx vertx,
     SynchronizationJobRepository syncRepository) {
@@ -42,6 +45,7 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
     this.declaredLostEventHandler = new EventHandler<>(okapiHeaders, vertx);
     this.claimedReturnedEventHandler = new EventHandler<>(okapiHeaders, vertx);
     this.dueDateChangedEventHandler = new EventHandler<>(okapiHeaders, vertx);
+    this.agedToLostEventHandler = new EventHandler<>(okapiHeaders, vertx);
   }
 
   @Override
@@ -56,6 +60,7 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
       .compose(v -> generateClaimedReturnedEvent(loan))
       .compose(v -> generateDeclaredLostEvent(loan))
       .compose(v -> generateDueDateChangedEvent(loan))
+      .compose(v -> generateItemAgedToLostEvent(loan))
       .onSuccess(r -> log.info("generateEvents:: Successfully generated events for loan {}",
         loanId))
       .onFailure(t -> log.warn("generateEvents:: Failed to generate events for loan {}: {}",
@@ -108,6 +113,18 @@ public class LoanEventsGenerationService extends EventsGenerationService<Loan> {
           .withDueDate(loan.getDueDate())
           .withDueDateChangedByRecall(loan.getDueDateChangedByRecall())
           .withMetadata(loan.getMetadata()));
+    }
+    return succeededFuture(null);
+  }
+
+  private Future<Void> generateItemAgedToLostEvent(Loan loan) {
+    log.debug("generateItemAgedToLostEvent:: parameters loan: {}", () -> asJson(loan));
+    if (AGED_TO_LOST_STATUS.equals(loan.getItemStatus())) {
+      log.info("generateItemAgedToLostEvent:: item status is {}, generating event", AGED_TO_LOST_STATUS);
+      agedToLostEventHandler.handleSkippingUserSummaryUpdate(new ItemAgedToLostEvent()
+        .withLoanId(loan.getId())
+        .withUserId(loan.getUserId())
+        .withMetadata(loan.getMetadata()));
     }
     return succeededFuture(null);
   }
