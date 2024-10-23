@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.repository.PatronBlockLimitsRepository.PATRON_BLOCK_LIMITS_TABLE_NAME;
+import static org.folio.rest.tools.messages.Messages.DEFAULT_LANGUAGE;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
 import static org.folio.util.LogUtil.asJson;
 import static org.folio.util.LogUtil.headersAsString;
@@ -41,12 +42,12 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
   @Validate
   @Override
-  public void getPatronBlockLimits(int offset, int limit, String query, String lang,
+  public void getPatronBlockLimits(String totalRecords, int offset, int limit, String query,
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
     log.debug("getPatronBlockLimits:: parameters offset: {}, limit: {}, query: {}, lang: {}, " +
-        "okapiHeaders: {}", () -> offset, () -> limit, () -> query, () -> lang,
+        "okapiHeaders: {}", () -> offset, () -> limit, () -> query, () -> DEFAULT_LANGUAGE,
       () -> headersAsString(okapiHeaders));
 
     PgUtil.get(PATRON_BLOCK_LIMITS_TABLE_NAME, PatronBlockLimit.class,
@@ -57,12 +58,12 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
   @Validate
   @Override
-  public void postPatronBlockLimits(String lang, PatronBlockLimit entity,
+  public void postPatronBlockLimits(PatronBlockLimit entity,
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
     log.debug("postPatronBlockLimits:: parameters lang: {}, entity: {}, okapiHeaders: {}",
-      () -> lang, () -> asJson(entity), () -> headersAsString(okapiHeaders));
+      () -> DEFAULT_LANGUAGE, () -> asJson(entity), () -> headersAsString(okapiHeaders));
 
     Errors errors = validateEntity(entity);
     if (errors != null) {
@@ -80,11 +81,11 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
   @Validate
   @Override
   public void putPatronBlockLimitsByPatronBlockLimitId(String patronBlockLimitId,
-    String lang, PatronBlockLimit entity, Map<String, String> okapiHeaders,
+    PatronBlockLimit entity, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     log.debug("putPatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
-      "lang: {}, entity: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> lang,
+      "lang: {}, entity: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> DEFAULT_LANGUAGE,
       () -> asJson(entity), () -> headersAsString(okapiHeaders));
 
     Errors errors = validateEntity(entity);
@@ -104,11 +105,11 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
   @Validate
   @Override
   public void getPatronBlockLimitsByPatronBlockLimitId(String patronBlockLimitId,
-    String lang, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
     log.debug("getPatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
-        "lang: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> lang,
+        "lang: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> DEFAULT_LANGUAGE,
       () -> headersAsString(okapiHeaders));
 
     PgUtil.getById(PATRON_BLOCK_LIMITS_TABLE_NAME, PatronBlockLimit.class, patronBlockLimitId,
@@ -119,11 +120,11 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
   @Validate
   @Override
   public void deletePatronBlockLimitsByPatronBlockLimitId(String patronBlockLimitId,
-    String lang, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
     log.debug("deletePatronBlockLimitsByPatronBlockLimitId:: parameters patronBlockLimitId: {}, " +
-      "lang: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> lang,
+      "lang: {}, okapiHeaders: {}", () -> patronBlockLimitId, () -> DEFAULT_LANGUAGE,
       () -> headersAsString(okapiHeaders));
 
     PgUtil.deleteById(PATRON_BLOCK_LIMITS_TABLE_NAME, patronBlockLimitId, okapiHeaders,

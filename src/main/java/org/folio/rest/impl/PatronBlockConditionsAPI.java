@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.folio.rest.tools.messages.Messages.DEFAULT_LANGUAGE;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
 import static org.folio.util.LogUtil.asJson;
 import static org.folio.util.LogUtil.headersAsString;
@@ -30,12 +31,12 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
   @Validate
   @Override
-  public void getPatronBlockConditions(int offset, int limit, String query,
-    String lang, Map<String, String> okapiHeaders,
+  public void getPatronBlockConditions(String totalRecords, int offset, int limit, String query,
+    Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     log.debug("getPatronBlockConditions:: parameters offset: {}, limit: {}, query: {}, lang: {}, " +
-      "okapiHeaders: {}", () -> offset, () -> limit, () -> query, () -> lang,
+      "okapiHeaders: {}", () -> offset, () -> limit, () -> query, () -> DEFAULT_LANGUAGE,
       () -> headersAsString(okapiHeaders));
 
     PgUtil.get(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class,
@@ -47,13 +48,13 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
   @Validate
   @Override
   public void putPatronBlockConditionsByPatronBlockConditionId(
-    String patronBlockConditionId, String lang, PatronBlockCondition entity,
+    String patronBlockConditionId, PatronBlockCondition entity,
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
     log.debug("putPatronBlockConditionsByPatronBlockConditionId:: parameters " +
         "patronBlockConditionId: {}, lang: {}, entity: {}, okapiHeaders: {}",
-      () -> patronBlockConditionId, () -> lang, () -> asJson(entity),
+      () -> patronBlockConditionId, () -> DEFAULT_LANGUAGE, () -> asJson(entity),
       () -> headersAsString(okapiHeaders));
 
     Errors errors = validateEntity(entity);
@@ -74,12 +75,12 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
   @Validate
   @Override
   public void getPatronBlockConditionsByPatronBlockConditionId(
-    String patronBlockConditionId, String lang, Map<String, String> okapiHeaders,
+    String patronBlockConditionId, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     log.debug("getPatronBlockConditionsByPatronBlockConditionId:: parameters " +
         "patronBlockConditionId: {}, lang: {}, okapiHeaders: {}", () -> patronBlockConditionId,
-      () -> lang, () -> headersAsString(okapiHeaders));
+      () -> DEFAULT_LANGUAGE, () -> headersAsString(okapiHeaders));
 
     PgUtil.getById(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class, patronBlockConditionId,
       okapiHeaders, vertxContext, GetPatronBlockConditionsByPatronBlockConditionIdResponse.class,
