@@ -15,7 +15,6 @@ types:
 traits:
   pageable: !include raml-util/traits/pageable.raml
   searchable: !include raml-util/traits/searchable.raml
-  language: !include raml-util/traits/language.raml
   validate: !include raml-util/traits/validation.raml
 
 resourceTypes:
@@ -40,7 +39,7 @@ resourceTypes:
         schema: patron-block-condition
         exampleItem: !include examples/patron-block-condition.sample
     put:
-      is: [language, validate]
+      is: [validate]
       description: |
         Update <<resourcePathName|!singularize>> item with given {<<resourcePathName|!singularize>>Id}
       body:

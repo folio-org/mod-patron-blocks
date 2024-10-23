@@ -86,7 +86,7 @@ public class TestBase {
     new WireMockConfiguration().dynamicPort());
 
   @BeforeClass
-  public static void beforeAll(final TestContext context) throws Exception {
+  public static void beforeAll(TestContext context) {
     Async async = context.async();
 
     vertx = Vertx.vertx();
@@ -108,7 +108,7 @@ public class TestBase {
             return;
           }
 
-          final HttpResponse<Buffer> postResponse = postResult.result();
+          HttpResponse<Buffer> postResponse = postResult.result();
           assertThat(postResponse.statusCode(), is(HttpStatus.HTTP_CREATED.toInt()));
 
           jobId = postResponse.bodyAsJson(TenantJob.class).getId();
@@ -121,7 +121,7 @@ public class TestBase {
               return;
             }
 
-            final HttpResponse<Buffer> getResponse = getResult.result();
+            HttpResponse<Buffer> getResponse = getResult.result();
             assertThat(getResponse.statusCode(), is(HttpStatus.HTTP_OK.toInt()));
             assertThat(getResponse.bodyAsJson(TenantJob.class).getComplete(), is(true));
 
@@ -136,13 +136,15 @@ public class TestBase {
   }
 
   @AfterClass
-  public static void afterAll(final TestContext context) {
+  public static void afterAll(TestContext context) {
     deleteTenant(tenantClient);
-    Async async = context.async();
-    vertx.close(context.asyncAssertSuccess(res -> {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    vertx.close(notUsed -> {
       PostgresClient.stopPostgresTester();
-      async.complete();
-    }));
+      future.complete(null);
+    });
+
+    waitForCompletion(future);
   }
 
   static void deleteTenant(TenantClient tenantClient) {
@@ -183,7 +185,7 @@ public class TestBase {
   }
 
   protected static TenantAttributes getTenantAttributes() {
-    final Parameter loadReferenceParameter = new Parameter()
+    Parameter loadReferenceParameter = new Parameter()
       .withKey("loadReference").withValue("true");
 
     return new TenantAttributes()
@@ -193,7 +195,7 @@ public class TestBase {
   }
 
   protected void deleteAllFromTable(String tableName) {
-    final CompletableFuture<Void> future = new CompletableFuture<>();
+    CompletableFuture<Void> future = new CompletableFuture<>();
     postgresClient.delete(tableName, new Criterion(), result -> future.complete(null));
     try {
       future.get(5, TimeUnit.SECONDS);
@@ -203,7 +205,7 @@ public class TestBase {
   }
 
   private static String generateOkapiToken() {
-    final String payload = new JsonObject()
+    String payload = new JsonObject()
       .put("user_id", randomId())
       .put("tenant", OKAPI_TENANT)
       .put("sub", "admin")
@@ -304,4 +306,13 @@ public class TestBase {
       .statusCode(expectedStatus)
       .extract();
   }
+
+  protected static <T> T waitForCompletion(CompletableFuture<T> future) {
+    try {
+      return future.get(120, TimeUnit.SECONDS);
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
 }
