@@ -136,15 +136,13 @@ public class TestBase {
   }
 
   @AfterClass
-  public static void afterAll(TestContext context) {
+  public static void afterAll(final TestContext context) {
     deleteTenant(tenantClient);
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    vertx.close(notUsed -> {
+    Async async = context.async();
+    vertx.close(context.asyncAssertSuccess(res -> {
       PostgresClient.stopPostgresTester();
-      future.complete(null);
-    });
-
-    waitForCompletion(future);
+      async.complete();
+    }));
   }
 
   static void deleteTenant(TenantClient tenantClient) {
@@ -305,14 +303,6 @@ public class TestBase {
       .ifValidationFails()
       .statusCode(expectedStatus)
       .extract();
-  }
-
-  protected static <T> T waitForCompletion(CompletableFuture<T> future) {
-    try {
-      return future.get(120, TimeUnit.SECONDS);
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
   }
 
 }
