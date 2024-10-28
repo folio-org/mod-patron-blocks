@@ -86,7 +86,7 @@ public class TestBase {
     new WireMockConfiguration().dynamicPort());
 
   @BeforeClass
-  public static void beforeAll(TestContext context) {
+  public static void beforeAll(final TestContext context) throws Exception {
     Async async = context.async();
 
     vertx = Vertx.vertx();
