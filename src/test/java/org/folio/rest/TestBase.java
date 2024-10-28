@@ -108,7 +108,7 @@ public class TestBase {
             return;
           }
 
-          final HttpResponse<Buffer> postResponse = postResult.result();
+          HttpResponse<Buffer> postResponse = postResult.result();
           assertThat(postResponse.statusCode(), is(HttpStatus.HTTP_CREATED.toInt()));
 
           jobId = postResponse.bodyAsJson(TenantJob.class).getId();
@@ -121,7 +121,7 @@ public class TestBase {
               return;
             }
 
-            final HttpResponse<Buffer> getResponse = getResult.result();
+            HttpResponse<Buffer> getResponse = getResult.result();
             assertThat(getResponse.statusCode(), is(HttpStatus.HTTP_OK.toInt()));
             assertThat(getResponse.bodyAsJson(TenantJob.class).getComplete(), is(true));
 
@@ -183,7 +183,7 @@ public class TestBase {
   }
 
   protected static TenantAttributes getTenantAttributes() {
-    final Parameter loadReferenceParameter = new Parameter()
+    Parameter loadReferenceParameter = new Parameter()
       .withKey("loadReference").withValue("true");
 
     return new TenantAttributes()
@@ -193,7 +193,7 @@ public class TestBase {
   }
 
   protected void deleteAllFromTable(String tableName) {
-    final CompletableFuture<Void> future = new CompletableFuture<>();
+    CompletableFuture<Void> future = new CompletableFuture<>();
     postgresClient.delete(tableName, new Criterion(), result -> future.complete(null));
     try {
       future.get(5, TimeUnit.SECONDS);
@@ -203,7 +203,7 @@ public class TestBase {
   }
 
   private static String generateOkapiToken() {
-    final String payload = new JsonObject()
+    String payload = new JsonObject()
       .put("user_id", randomId())
       .put("tenant", OKAPI_TENANT)
       .put("sub", "admin")
@@ -304,4 +304,5 @@ public class TestBase {
       .statusCode(expectedStatus)
       .extract();
   }
+
 }

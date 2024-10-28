@@ -14,7 +14,7 @@
   </licenses>
 
   <properties>
-    <raml-module-builder.version>35.2.0</raml-module-builder.version>
+    <raml-module-builder.version>35.3.0</raml-module-builder.version>
     <vertx.version>4.5.5</vertx.version>
     <junit.version>4.13.2</junit.version>
     <rest-assured.version>4.3.0</rest-assured.version>
@@ -170,7 +170,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.12.0</version>
+      <version>3.17.0</version>
     </dependency>
   </dependencies>
 
@@ -190,7 +190,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M5</version>
+        <version>3.5.1</version>
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
@@ -199,7 +199,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.0.0-M5</version>
+        <version>3.5.1</version>
         <executions>
           <execution>
             <goals>
