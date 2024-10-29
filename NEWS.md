@@ -1,3 +1,7 @@
+## 1.11.0 2024-10-29
+* Upgrade to RMB 35.3.0 (MODPATBLK-186)
+* Generate `Item aged to lost` events during synchronization (MODPATBLK-179)
+
 ## 1.10.0 2024-03-20
 * Upgrade RMB to 35.2.0 and Vertx 4.5.5 (MODPATBLK-174)
 * Eliminate using maven-model 3.3.9 (MODPATBLK-171)
