@@ -34,7 +34,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/{userId}",
           "permissionsRequired": [
-            "automated-patron-blocks.collection.get"
+            "patron-blocks.automated-patron-blocks.item.get"
           ],
           "modulePermissions": [
             "pubsub.event-types.post",
@@ -55,7 +55,7 @@
           ],
           "pathPattern":"/user-summary/{userId}",
           "permissionsRequired": [
-            "user-summary.item.get"
+            "patron-blocks.user-summary.item.get"
           ]
         }
       ]
@@ -70,7 +70,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/fee-fine-balance-changed",
           "permissionsRequired": [
-            "pubsub.events.post"
+            "patron-blocks.handlers.fee-fine-balance-changed.post"
           ]
         },
         {
@@ -79,7 +79,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-checked-out",
           "permissionsRequired": [
-            "pubsub.events.post"
+            "patron-blocks.handlers.item-checked-out.post"
           ]
         },
         {
@@ -88,7 +88,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-checked-in",
           "permissionsRequired": [
-            "pubsub.events.post"
+            "patron-blocks.handlers.item-checked-in.post"
           ]
         },
         {
@@ -97,7 +97,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-declared-lost",
           "permissionsRequired": [
-            "pubsub.events.post"
+            "patron-blocks.handlers.item-declared-lost.post"
           ]
         },
         {
@@ -106,7 +106,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-aged-to-lost",
           "permissionsRequired": [
-            "pubsub.events.post"
+            "patron-blocks.handlers.item-aged-to-lost.post"
           ]
         },
         {
@@ -115,7 +115,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/item-claimed-returned",
           "permissionsRequired": [
-            "pubsub.events.post"
+            "patron-blocks.handlers.item-claimed-returned.post"
           ]
         },
         {
@@ -124,7 +124,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/loan-due-date-changed",
           "permissionsRequired": [
-            "pubsub.events.post"
+            "patron-blocks.handlers.loan-due-date-changed.post"
           ]
         },
         {
@@ -133,7 +133,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/handlers/loan-closed",
           "permissionsRequired": [
-            "pubsub.events.post"
+            "patron-blocks.handlers.loan-closed.post"
           ]
         },
         {
@@ -188,15 +188,17 @@
         {
           "methods": ["GET"],
           "pathPattern": "/patron-block-conditions",
-          "permissionsRequired": ["patron-block-conditions.collection.get"]
-        }, {
+          "permissionsRequired": ["patron-blocks.patron-block-conditions.collection.get"]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/patron-block-conditions/{id}",
-          "permissionsRequired": ["patron-block-conditions.item.get"]
-        }, {
+          "permissionsRequired": ["patron-blocks.patron-block-conditions.item.get"]
+        },
+        {
           "methods": ["PUT"],
           "pathPattern": "/patron-block-conditions/{id}",
-          "permissionsRequired": ["patron-block-conditions.item.put"]
+          "permissionsRequired": ["patron-blocks.patron-block-conditions.item.put"]
         }
       ]
     },
@@ -207,23 +209,27 @@
         {
           "methods": ["GET"],
           "pathPattern": "/patron-block-limits",
-          "permissionsRequired": ["patron-block-limits.collection.get"]
-        }, {
+          "permissionsRequired": ["patron-blocks.patron-block-limits.collection.get"]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/patron-block-limits/{id}",
-          "permissionsRequired": ["patron-block-limits.item.get"]
-        }, {
+          "permissionsRequired": ["patron-blocks.patron-block-limits.item.get"]
+        },
+        {
           "methods": ["POST"],
           "pathPattern": "/patron-block-limits",
-          "permissionsRequired": ["patron-block-limits.item.post"]
-        }, {
+          "permissionsRequired": ["patron-blocks.patron-block-limits.item.post"]
+        },
+        {
           "methods": ["PUT"],
           "pathPattern": "/patron-block-limits/{id}",
-          "permissionsRequired": ["patron-block-limits.item.put"]
-        }, {
+          "permissionsRequired": ["patron-blocks.patron-block-limits.item.put"]
+        },
+        {
           "methods": ["DELETE"],
           "pathPattern": "/patron-block-limits/{id}",
-          "permissionsRequired": ["patron-block-limits.item.delete"]
+          "permissionsRequired": ["patron-blocks.patron-block-limits.item.delete"]
         }
       ]
     },
@@ -252,64 +258,116 @@
   ],
   "permissionSets": [
     {
-      "permissionName": "patron-block-conditions.collection.get",
+      "permissionName": "patron-blocks.patron-block-conditions.collection.get",
       "displayName": "Patron block conditions - get patron block condition collection",
-      "description": "Get patron block condition collection"
+      "description": "Get patron block condition collection",
+      "replaces": ["patron-block-conditions.collection.get"]
     },
     {
-      "permissionName": "patron-block-conditions.item.get",
+      "permissionName": "patron-blocks.patron-block-conditions.item.get",
       "displayName": "Patron block conditions - get patron block condition",
-      "description": "Get patron block condition by id"
+      "description": "Get patron block condition by id",
+      "replaces": ["patron-block-conditions.item.get"]
     },
     {
-      "permissionName": "patron-block-conditions.item.put",
+      "permissionName": "patron-blocks.patron-block-conditions.item.put",
       "displayName": "Patron block conditions - put patron block condition",
-      "description": "Put patron block condition by id"
+      "description": "Put patron block condition by id",
+      "replaces": ["patron-block-conditions.item.put"]
     },
     {
-      "permissionName": "patron-block-limits.collection.get",
+      "permissionName": "patron-blocks.patron-block-limits.collection.get",
       "displayName": "Patron block limits - get patron block limit collection",
-      "description": "Get patron block limit collection"
+      "description": "Get patron block limit collection",
+      "replaces": ["patron-block-limits.collection.get"]
     },
     {
-      "permissionName": "patron-block-limits.item.get",
+      "permissionName": "patron-blocks.patron-block-limits.item.get",
       "displayName": "Patron block limits - get patron block limit",
-      "description": "Get patron block limit by id"
+      "description": "Get patron block limit by id",
+      "replaces": ["patron-block-limits.item.get"]
     },
     {
-      "permissionName": "patron-block-limits.item.post",
+      "permissionName": "patron-blocks.patron-block-limits.item.post",
       "displayName": "Patron block limits - post patron block limit",
-      "description": "Create patron block limit"
+      "description": "Create patron block limit",
+      "replaces": ["patron-block-limits.item.post"]
     },
     {
-      "permissionName": "patron-block-limits.item.put",
+      "permissionName": "patron-blocks.patron-block-limits.item.put",
       "displayName": "Patron block limits - put patron block limit",
-      "description": "Put patron block limit by id"
+      "description": "Put patron block limit by id",
+      "replaces": ["patron-block-limits.item.put"]
     },
     {
-      "permissionName": "patron-block-limits.item.delete",
+      "permissionName": "patron-blocks.patron-block-limits.item.delete",
       "displayName": "Patron block limits - delete patron block limit",
-      "description": "Delete patron block limit by id"
+      "description": "Delete patron block limit by id",
+      "replaces": ["patron-block-limits.item.delete"]
     },
     {
-      "permissionName": "automated-patron-blocks.collection.get",
+      "permissionName": "patron-blocks.automated-patron-blocks.item.get",
       "displayName": "Patron blocks - get blocks for patron",
-      "description": "Get automated patron blocks by user ID"
+      "description": "Get automated patron blocks by user ID",
+      "replaces": ["automated-patron-blocks.collection.get"]
     },
     {
-      "permissionName": "user-summary.item.get",
+      "permissionName": "patron-blocks.user-summary.item.get",
       "displayName": "User summary - get UserSummary object",
-      "description": "Get UserSummary object by user ID"
+      "description": "Get UserSummary object by user ID",
+      "replaces": ["user-summary.item.get"]
     },
     {
       "permissionName": "patron-blocks.synchronization.job.post",
       "displayName": "Synchronization job - post Synchronization job",
-      "description": "Post Synchronization job"
+      "description": "Post Synchronization job",
+      "replaces": ["patron-blocks.synchronization.job.post"]
     },
     {
       "permissionName": "patron-blocks.synchronization.job.get",
       "displayName": "Synchronization job - get Synchronization job by ID",
-      "description": "Get Synchronization job"
+      "description": "Get Synchronization job",
+      "replaces": ["patron-blocks.synchronization.job.get"]
+    },
+    {
+      "permissionName": "patron-blocks.handlers.fee-fine-balance-changed.post",
+      "displayName": "Patron blocks - post fee fine balance changed event",
+      "description": "Post fee fine balance changed event"
+    },
+    {
+      "permissionName": "patron-blocks.handlers.item-checked-out.post",
+      "displayName": "Patron blocks - post item checked out event",
+      "description": "Post item checked out event"
+    },
+    {
+      "permissionName": "patron-blocks.handlers.item-checked-in.post",
+      "displayName": "Patron blocks - post item checked in event",
+      "description": "Post item checked in event"
+    },
+    {
+      "permissionName": "patron-blocks.handlers.item-declared-lost.post",
+      "displayName": "Patron blocks - post item declared lost event",
+      "description": "Post item declared lost event"
+    },
+    {
+      "permissionName": "patron-blocks.handlers.item-aged-to-lost.post",
+      "displayName": "Patron blocks - post item aged to lost event",
+      "description": "Post item aged to lost event"
+    },
+    {
+      "permissionName": "patron-blocks.handlers.item-claimed-returned.post",
+      "displayName": "Patron blocks - post item claimed returned event",
+      "description": "Post item claimed returned event"
+    },
+    {
+      "permissionName": "patron-blocks.handlers.loan-due-date-changed.post",
+      "displayName": "Patron blocks - post loan due date changed event",
+      "description": "Post loan due date changed event"
+    },
+    {
+      "permissionName": "patron-blocks.handlers.loan-closed.post",
+      "displayName": "Patron blocks - post loan closed event",
+      "description": "Post loan closed event"
     }
   ],
   "launchDescriptor": {
