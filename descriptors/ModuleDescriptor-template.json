@@ -320,8 +320,7 @@
     {
       "permissionName": "patron-blocks.synchronization.job.post",
       "displayName": "Synchronization job - post Synchronization job",
-      "description": "Post Synchronization job",
-      "replaces": ["patron-blocks.synchronization.job.post"]
+      "description": "Post Synchronization job"
     },
     {
       "permissionName": "patron-blocks.synchronization.job.get",
