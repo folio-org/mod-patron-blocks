@@ -34,7 +34,7 @@
           ],
           "pathPattern":"/automated-patron-blocks/{userId}",
           "permissionsRequired": [
-            "patron-blocks.automated-patron-blocks.item.get"
+            "patron-blocks.automated-patron-blocks.collection.get"
           ],
           "modulePermissions": [
             "pubsub.event-types.post",
@@ -306,7 +306,7 @@
       "replaces": ["patron-block-limits.item.delete"]
     },
     {
-      "permissionName": "patron-blocks.automated-patron-blocks.item.get",
+      "permissionName": "patron-blocks.automated-patron-blocks.collection.get",
       "displayName": "Patron blocks - get blocks for patron",
       "description": "Get automated patron blocks by user ID",
       "replaces": ["automated-patron-blocks.collection.get"]
