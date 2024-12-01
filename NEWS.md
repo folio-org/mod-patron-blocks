@@ -1,3 +1,6 @@
+## 1.11.1 2024-12-01
+* Review and cleanup Module Descriptor (MODPATBLK-182)
+
 ## 1.11.0 2024-10-29
 * Upgrade to RMB 35.3.0 (MODPATBLK-186)
 * Generate `Item aged to lost` events during synchronization (MODPATBLK-179)
