@@ -260,14 +260,6 @@
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
-        <!--org.apache.maven.surefire.junitplatform.JUnitPlatformProvider configured to run Junit5 and Junit4 tests-->
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.surefire</groupId>
-            <artifactId>surefire-junit-platform</artifactId>
-            <version>${maven-surefire-plugin.version}</version>
-          </dependency>
-        </dependencies>
       </plugin>
 
       <plugin>
