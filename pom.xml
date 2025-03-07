@@ -28,6 +28,7 @@
     <aspectj.version>1.9.22.1</aspectj.version>
     <log4j.version>2.24.3</log4j.version>
     <lombok.version>1.18.36</lombok.version>
+    <jaxb-api.version>2.3.1</jaxb-api.version>
 
     <!--Test dependencies-->
     <awaitility.version>4.3.0</awaitility.version>
@@ -36,6 +37,7 @@
     <mockserver-client-java.version>5.15.0</mockserver-client-java.version>
     <hamcrest-junit.version>2.0.0.0</hamcrest-junit.version>
     <junit-jupiter.version>5.12.0</junit-jupiter.version>
+    <junit-platform.version>1.12.0</junit-platform.version>
     <mockito.version>5.15.2</mockito.version>
 
     <!--Folio dependencies properties-->
@@ -82,6 +84,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>${jaxb-api.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.folio</groupId>
       <artifactId>domain-models-runtime</artifactId>
       <version>${raml-module-builder.version}</version>
@@ -106,18 +113,12 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>3.11.2</version>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit-jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
       <version>${junit-jupiter.version}</version>
       <scope>test</scope>
     </dependency>
@@ -128,15 +129,21 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <version>${junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-runner</artifactId>
-      <version>1.12.0</version>
+      <version>${junit-platform.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-suite</artifactId>
-      <version>1.12.0</version>
+      <version>${junit-platform.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
