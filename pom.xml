@@ -51,8 +51,8 @@
     <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
     <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
-    <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
+    <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>3.5.2</maven-failsafe-plugin.version>
   </properties>
 
@@ -114,36 +114,6 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit-jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-junit-jupiter</artifactId>
-      <version>${mockito.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <version>${junit-jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-runner</artifactId>
-      <version>${junit-platform.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-suite</artifactId>
-      <version>${junit-platform.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -260,14 +230,6 @@
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
-        <!--org.apache.maven.surefire.junitplatform.JUnitPlatformProvider configured to run Junit5 and Junit4 tests-->
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.surefire</groupId>
-            <artifactId>surefire-junit-platform</artifactId>
-            <version>${maven-surefire-plugin.version}</version>
-          </dependency>
-        </dependencies>
       </plugin>
 
       <plugin>
