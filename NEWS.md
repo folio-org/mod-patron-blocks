@@ -1,3 +1,7 @@
+## 1.12.0 2025-03-13
+* Update to java 21 (MODPATBLK-193)
+* Review and cleanup Module Descriptors (MODPATBLK-182)
+
 ## 1.11.0 2024-10-29
 * Upgrade to RMB 35.3.0 (MODPATBLK-186)
 * Generate `Item aged to lost` events during synchronization (MODPATBLK-179)
