@@ -441,6 +441,9 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <failOnInvalidDescriptor>false</failOnInvalidDescriptor>
+        </configuration>
       </plugin>
     </plugins>
   </build>
