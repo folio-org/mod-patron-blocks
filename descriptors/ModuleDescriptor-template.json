@@ -327,46 +327,6 @@
       "displayName": "Synchronization job - get Synchronization job by ID",
       "description": "Get Synchronization job",
       "replaces": ["patron-blocks.synchronization.job.get"]
-    },
-    {
-      "permissionName": "patron-blocks.handlers.fee-fine-balance-changed.post",
-      "displayName": "Patron blocks - post fee fine balance changed event",
-      "description": "Post fee fine balance changed event"
-    },
-    {
-      "permissionName": "patron-blocks.handlers.item-checked-out.post",
-      "displayName": "Patron blocks - post item checked out event",
-      "description": "Post item checked out event"
-    },
-    {
-      "permissionName": "patron-blocks.handlers.item-checked-in.post",
-      "displayName": "Patron blocks - post item checked in event",
-      "description": "Post item checked in event"
-    },
-    {
-      "permissionName": "patron-blocks.handlers.item-declared-lost.post",
-      "displayName": "Patron blocks - post item declared lost event",
-      "description": "Post item declared lost event"
-    },
-    {
-      "permissionName": "patron-blocks.handlers.item-aged-to-lost.post",
-      "displayName": "Patron blocks - post item aged to lost event",
-      "description": "Post item aged to lost event"
-    },
-    {
-      "permissionName": "patron-blocks.handlers.item-claimed-returned.post",
-      "displayName": "Patron blocks - post item claimed returned event",
-      "description": "Post item claimed returned event"
-    },
-    {
-      "permissionName": "patron-blocks.handlers.loan-due-date-changed.post",
-      "displayName": "Patron blocks - post loan due date changed event",
-      "description": "Post loan due date changed event"
-    },
-    {
-      "permissionName": "patron-blocks.handlers.loan-closed.post",
-      "displayName": "Patron blocks - post loan closed event",
-      "description": "Post loan closed event"
     }
   ],
   "launchDescriptor": {
