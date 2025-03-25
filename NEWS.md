@@ -1,3 +1,6 @@
+## 1.11.2 2025-03-25
+* Remove permissions for event handlers (MODPATBLK-195)
+
 ## 1.11.1 2024-12-01
 * Review and cleanup Module Descriptor (MODPATBLK-182)
 
