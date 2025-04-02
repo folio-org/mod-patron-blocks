@@ -36,7 +36,7 @@
           "type": "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "loanDate": {
       "description": "Date time when the loan began (typically represented according to rfc3339 section-5.6. Has not had the date-time format validation applied as was not supported at point of introduction and would now be a breaking change)",
@@ -94,6 +94,10 @@
       "description": "Indicates whether or not this loan had its due date modified by a recall on the loaned item",
       "type": "boolean"
     },
+    "isDcb": {
+      "description": "Indicates whether or not this loan is associated for DCB use case",
+      "type": "boolean"
+    },
     "declaredLostDate" : {
       "description": "Date and time the item was declared lost during this loan",
       "type": "string",
@@ -131,11 +135,40 @@
           "description": "Indicates when the aged to lost fee should be billed (for use where delayed billing is set up)",
           "type": "string",
           "format": "date-time"
+        },
+        "agedToLostDate": {
+          "description": "Date and time the item was aged to lost for this loan",
+          "type": "string",
+          "format": "date-time"
         }
-      }
+      },
+      "additionalProperties": true
+    },
+    "reminders" : {
+      "description": "Information about reminders for overdue loan",
+      "type": "object",
+      "properties": {
+        "lastFeeBilled": {
+          "description": "Information about the most recent reminder fee billing",
+          "type": "object",
+          "properties": {
+            "number": {
+              "description": "Last reminder fee billed, sequence number",
+              "type": "integer"
+            },
+            "date": {
+              "description": "Last reminder fee billed, date",
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
     }
   },
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "itemId",
     "loanDate",
