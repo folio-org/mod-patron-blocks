@@ -37,7 +37,7 @@
       "$ref": "../period.json"
     }
   },
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "userId",
     "loanId",
