@@ -1,3 +1,6 @@
+## 1.11.3 2025-04-03
+* Update loan schema, allow additional properties (MODPATBLK-198)
+
 ## 1.11.2 2025-03-25
 * Remove permissions for event handlers (MODPATBLK-195)
 
