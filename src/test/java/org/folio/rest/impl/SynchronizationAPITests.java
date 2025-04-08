@@ -457,7 +457,9 @@ public class SynchronizationAPITests extends TestBase {
         .put("dueDateChangedByRecall", recall)
         .put("itemId", itemId)
         .put("userId", USER_ID)
-        .put("itemStatus", itemStatus);
+        .put("itemStatus", itemStatus)
+        .put("isDcb", false)
+        .put("randomProperty", "please don't crash");
 
       return new JsonObject()
           .put("loans", new JsonArray()

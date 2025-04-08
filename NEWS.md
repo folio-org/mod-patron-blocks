@@ -1,3 +1,6 @@
+## 1.12.1 2025-04-08
+* Fix synchronization issue by updating loan schema (MODPATBLK-198)
+
 ## 1.12.0 2025-03-13
 * Update to java 21 (MODPATBLK-193)
 * Review and cleanup Module Descriptors (MODPATBLK-182)
