@@ -1,0 +1,26 @@
+[metadata]
+team = "vega"
+domain = "circulation"
+module = "mod-patron-blocks"
+
+[[sources]]
+name = "user_summary"
+table = "user_summary"
+
+[[entityTypes]]
+name = "user_summary"
+private = true
+schema = "./ramls/userSummary.json"
+permissions = ["patron-blocks.user-summary.item.get"]
+source = "user_summary"
+sort = ["id", "ASC"]
+useRmbIndexStyle = true
+# none of these were populated
+fieldExclusions = [
+  "metadata_created_date",
+  "metadata_created_by_user_id",
+  "metadata_created_by_username",
+  "metadata_updated_date",
+  "metadata_updated_by_user_id",
+  "metadata_updated_by_username",
+]

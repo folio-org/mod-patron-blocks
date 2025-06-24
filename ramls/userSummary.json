@@ -15,7 +15,21 @@
     "userId": {
       "description": "Unique ID of the user",
       "type": "string",
-      "$ref": "raml-util/schemas/uuid.schema"
+      "$ref": "raml-util/schemas/uuid.schema",
+      "x-fqm-joins-to-raw": [
+        {
+          "targetId": "bb058933-cd06-4539-bd3a-6f248ff98ee2",
+          "targetField": "id",
+          "type": "equality-cast-uuid",
+          "direction": "left"
+        },
+        {
+          "targetId": "f2615ea6-450b-425d-804d-6a495afd9308",
+          "targetField": "id",
+          "type": "equality-cast-uuid",
+          "direction": "left"
+        }
+      ]
     },
     "openLoans": {
       "description": "User's open loans",
@@ -114,4 +128,3 @@
     "openFeesFines"
   ]
 }
-
