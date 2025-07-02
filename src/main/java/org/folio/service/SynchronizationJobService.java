@@ -156,14 +156,18 @@ public class SynchronizationJobService {
     Set<String> userIds = new HashSet<>();
     userIds.addAll(loanEventsGenerationService.getUserIds());
     userIds.addAll(feesFinesEventsGenerationService.getUserIds());
+    log.info("rebuildUserSummaries:: number of userIds to process: {}", userIds.size());
 
-    return CompositeFuture.all(userIds.stream()
-      .filter(Objects::nonNull)
-      .map(userSummaryService::rebuild)
-      .collect(Collectors.toList()))
+    Future<String> userSummaryChain = succeededFuture();
+    for (String userId : userIds) {
+      if (userId != null) {
+        userSummaryChain = userSummaryChain.compose(v -> userSummaryService.rebuild(userId));
+      }
+    }
+
+    return userSummaryChain
       .map(job)
       .onSuccess(result -> log.debug("rebuildUserSummaries:: result: {}", () -> asJson(result)));
-
   }
 
   private Future<SynchronizationJob> cleanExistingEvents(SynchronizationJob syncJob,
