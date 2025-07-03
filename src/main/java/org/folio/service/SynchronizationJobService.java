@@ -164,7 +164,7 @@ public class SynchronizationJobService {
     log.info("rebuildUserSummaries:: total batches to process: {}", batches.size());
 
     Future<CompositeFuture> userSummaryBatchChain = succeededFuture();
-    for (List<String> batch : createBatches(new ArrayList<>(userIds), USER_SUMMARY_BATCH_SIZE)) {
+    for (List<String> batch : batches) {
       userSummaryBatchChain = userSummaryBatchChain.compose(v ->
         Future.all(batch.stream()
           .map(userSummaryService::rebuild)
