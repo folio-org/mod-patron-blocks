@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -158,9 +159,13 @@ public class SynchronizationJobService {
     userIds.addAll(loanEventsGenerationService.getUserIds());
     userIds.addAll(feesFinesEventsGenerationService.getUserIds());
 
+    if (job.getScope() == USER && job.getUserId() != null) {
+      userIds.add(job.getUserId());
+    }
+
     log.info("rebuildUserSummaries:: number of userIds to process: {}", userIds.size());
 
-    List<List<String>> batches = createBatches(new ArrayList<>(userIds), USER_SUMMARY_BATCH_SIZE);
+    List<List<String>> batches = createBatches(new ArrayList<>(userIds));
     log.info("rebuildUserSummaries:: total batches to process: {}", batches.size());
 
     Future<CompositeFuture> userSummaryBatchChain = succeededFuture();
@@ -177,15 +182,14 @@ public class SynchronizationJobService {
       .onSuccess(result -> log.info("rebuildUserSummaries:: result: {}", () -> asJson(result)));
   }
 
-  private List<List<String>> createBatches(List<String> items, int batchSize) {
-    List<List<String>> batches = new ArrayList<>();
-
-    for (int i = 0; i < items.size(); i += batchSize) {
-      int end = Math.min(i + batchSize, items.size());
-      batches.add(items.subList(i, end));
+  private List<List<String>> createBatches(List<String> items) {
+    if (items == null || items.isEmpty() || USER_SUMMARY_BATCH_SIZE <= 0) {
+      return new ArrayList<>();
     }
-
-    return batches;
+    int numBatches = (items.size() + USER_SUMMARY_BATCH_SIZE - 1) / SynchronizationJobService.USER_SUMMARY_BATCH_SIZE;
+    return IntStream.range(0, numBatches)
+      .mapToObj(i -> items.subList(i * USER_SUMMARY_BATCH_SIZE, Math.min((i + 1) * SynchronizationJobService.USER_SUMMARY_BATCH_SIZE, items.size())))
+      .collect(Collectors.toList());
   }
 
   private Future<SynchronizationJob> cleanExistingEvents(SynchronizationJob syncJob,
