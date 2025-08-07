@@ -2,12 +2,9 @@ package org.folio.service;
 
 import static org.apache.commons.lang3.reflect.FieldUtils.writeField;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,30 +13,38 @@ import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.folio.domain.SynchronizationStatus;
+import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.SneakyThrows;
 
-public class SynchronizationJobServiceTest {
+@RunWith(VertxUnitRunner.class)
+class SynchronizationJobServiceTest extends TestBase {
   private static final int BATCH_SIZE = 20;
+
+  @Mock
   private UserSummaryService userSummaryService;
+  @Mock
   private LoanEventsGenerationService loanEventsGenerationService;
+  @Mock
   private FeesFinesEventsGenerationService feesFinesEventsGenerationService;
-  private SynchronizationJobService service;
+  @Spy
+  private SynchronizationJobService service = new SynchronizationJobService(new HashMap<>(), Mockito.mock(Vertx.class));
 
   @SneakyThrows
-  @Before
-  public void setUp() {
-    userSummaryService = mock(UserSummaryService.class);
-    loanEventsGenerationService = mock(LoanEventsGenerationService.class);
-    feesFinesEventsGenerationService = mock(FeesFinesEventsGenerationService.class);
-    service = Mockito.spy(new SynchronizationJobService(new HashMap<>(), mock(Vertx.class)));
+  @BeforeEach
+  void setUp() {
+    openMocks(this);
     writeField(service, "userSummaryService", userSummaryService, true);
     writeField(service, "loanEventsGenerationService", loanEventsGenerationService, true);
     writeField(service, "feesFinesEventsGenerationService", feesFinesEventsGenerationService, true);
@@ -53,7 +58,7 @@ public class SynchronizationJobServiceTest {
       .toList();
     when(loanEventsGenerationService.getUserIds()).thenReturn(new HashSet<>(userIds));
     when(feesFinesEventsGenerationService.getUserIds()).thenReturn(new HashSet<>());
-    when(userSummaryService.rebuild(anyString())).thenReturn(Future.succeededFuture("ok"));
+    when(userSummaryService.rebuild(Mockito.anyString())).thenReturn(Future.succeededFuture("ok"));
 
     SynchronizationJob job = new SynchronizationJob()
       .withId("job-1")
@@ -65,7 +70,7 @@ public class SynchronizationJobServiceTest {
 
     // Then
     ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-    verify(userSummaryService, times(userCount)).rebuild(captor.capture());
+    Mockito.verify(userSummaryService, Mockito.times(userCount)).rebuild(captor.capture());
     Set<String> calledUserIds = new HashSet<>(captor.getAllValues());
     assertEquals(new HashSet<>(userIds), calledUserIds);
   }
