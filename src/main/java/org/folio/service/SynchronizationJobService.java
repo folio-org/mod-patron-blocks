@@ -189,7 +189,7 @@ public class SynchronizationJobService {
     int numBatches = (items.size() + USER_SUMMARY_BATCH_SIZE - 1) / SynchronizationJobService.USER_SUMMARY_BATCH_SIZE;
     return IntStream.range(0, numBatches)
       .mapToObj(i -> items.subList(i * USER_SUMMARY_BATCH_SIZE, Math.min((i + 1) * SynchronizationJobService.USER_SUMMARY_BATCH_SIZE, items.size())))
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private Future<SynchronizationJob> cleanExistingEvents(SynchronizationJob syncJob,
