@@ -153,7 +153,7 @@ public class SynchronizationJobService {
     }
   }
 
-  private Future<SynchronizationJob> rebuildUserSummaries(SynchronizationJob job) {
+  protected Future<SynchronizationJob> rebuildUserSummaries(SynchronizationJob job) {
     log.debug("rebuildUserSummaries:: parameters job: {}", () -> asJson(job));
     Set<String> userIds = new HashSet<>();
     userIds.addAll(loanEventsGenerationService.getUserIds());
