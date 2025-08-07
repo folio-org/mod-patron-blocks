@@ -17,7 +17,6 @@ import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -25,10 +24,8 @@ import org.mockito.Spy;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.SneakyThrows;
 
-@RunWith(VertxUnitRunner.class)
 public class SynchronizationJobServiceTest extends TestBase {
   private static final int BATCH_SIZE = 20;
 
@@ -51,7 +48,7 @@ public class SynchronizationJobServiceTest extends TestBase {
   }
 
   @Test
-  public void shouldProcessUserSummariesInBatches() {
+  void shouldProcessUserSummariesInBatches() {
     int userCount = BATCH_SIZE + 5;
     List<String> userIds = IntStream.range(0, userCount)
       .mapToObj(i -> "user-" + i)
