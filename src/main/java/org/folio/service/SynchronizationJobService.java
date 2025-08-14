@@ -186,9 +186,10 @@ public class SynchronizationJobService {
     if (items == null || items.isEmpty() || USER_SUMMARY_BATCH_SIZE <= 0) {
       return new ArrayList<>();
     }
-    int numBatches = (items.size() + USER_SUMMARY_BATCH_SIZE - 1) / SynchronizationJobService.USER_SUMMARY_BATCH_SIZE;
+    int numBatches = (items.size() + USER_SUMMARY_BATCH_SIZE - 1) / USER_SUMMARY_BATCH_SIZE;
+
     return IntStream.range(0, numBatches)
-      .mapToObj(i -> items.subList(i * USER_SUMMARY_BATCH_SIZE, Math.min((i + 1) * SynchronizationJobService.USER_SUMMARY_BATCH_SIZE, items.size())))
+      .mapToObj(i -> items.subList(i * USER_SUMMARY_BATCH_SIZE, Math.min((i + 1) * USER_SUMMARY_BATCH_SIZE, items.size())))
       .toList();
   }
 
