@@ -70,5 +70,17 @@ public class SynchronizationJobServiceTest extends TestBase {
     Mockito.verify(userSummaryService, Mockito.times(userCount)).rebuild(captor.capture());
     Set<String> calledUserIds = new HashSet<>(captor.getAllValues());
     assertEquals(new HashSet<>(userIds), calledUserIds);
+
+    // Batching assertion
+    int expectedBatchCount = (userCount + BATCH_SIZE - 1) / BATCH_SIZE;
+    List<List<String>> batches = IntStream.range(0, expectedBatchCount)
+      .mapToObj(i -> captor.getAllValues().subList(i * BATCH_SIZE, Math.min((i + 1) * BATCH_SIZE, userCount)))
+      .toList();
+    // Each batch except last should have BATCH_SIZE elements
+    for (int i = 0; i < batches.size() - 1; i++) {
+      assertEquals(BATCH_SIZE, batches.get(i).size(), "Batch " + i + " size should be " + BATCH_SIZE);
+    }
+    // Last batch size
+    assertEquals(userCount % BATCH_SIZE, batches.get(batches.size() - 1).size(), "Last batch size should be " + (userCount % BATCH_SIZE));
   }
 }
