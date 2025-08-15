@@ -170,16 +170,18 @@ public class SynchronizationJobService {
 
     Future<CompositeFuture> userSummaryBatchChain = succeededFuture();
     for (List<String> batch : batches) {
-      userSummaryBatchChain = userSummaryBatchChain.compose(v ->
-        Future.all(batch.stream()
-          .map(userSummaryService::rebuild)
-          .collect(Collectors.toList()))
-      );
+      userSummaryBatchChain = userSummaryBatchChain.compose(v -> Future.all(processBatch(batch)) );
     }
 
     return userSummaryBatchChain
       .map(job)
       .onSuccess(result -> log.info("rebuildUserSummaries:: result: {}", () -> asJson(result)));
+  }
+
+  List<Future<String>> processBatch(List<String> batch) {
+    return batch.stream()
+      .map(userSummaryService::rebuild)
+      .collect(Collectors.toList());
   }
 
   private List<List<String>> createBatches(List<String> items) {
