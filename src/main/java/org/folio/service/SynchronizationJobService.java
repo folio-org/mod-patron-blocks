@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
@@ -170,7 +169,7 @@ public class SynchronizationJobService {
 
     Future<CompositeFuture> userSummaryBatchChain = succeededFuture();
     for (List<String> batch : batches) {
-      userSummaryBatchChain = userSummaryBatchChain.compose(v -> Future.all(processBatch(batch)) );
+      userSummaryBatchChain = userSummaryBatchChain.compose(v -> Future.all(processBatch(batch)));
     }
 
     return userSummaryBatchChain
@@ -181,7 +180,7 @@ public class SynchronizationJobService {
   List<Future<String>> processBatch(List<String> batch) {
     return batch.stream()
       .map(userSummaryService::rebuild)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private List<List<String>> createBatches(List<String> items) {
