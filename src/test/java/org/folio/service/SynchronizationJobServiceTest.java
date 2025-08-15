@@ -27,7 +27,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
 
-public class SynchronizationJobServiceTest extends TestBase {
+class SynchronizationJobServiceTest extends TestBase {
   private static final int BATCH_SIZE = 20;
 
   @Mock
