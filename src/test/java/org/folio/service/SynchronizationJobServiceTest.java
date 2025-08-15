@@ -49,7 +49,7 @@ public class SynchronizationJobServiceTest extends TestBase {
 
   @Test
   void shouldProcessUserSummariesInBatches() {
-    int userCount = BATCH_SIZE + 5;
+    int userCount = BATCH_SIZE + 5; // 20 (batch size) + 5 (last batch)
     List<String> userIds = IntStream.range(0, userCount)
       .mapToObj(i -> "user-" + i)
       .toList();
@@ -71,16 +71,12 @@ public class SynchronizationJobServiceTest extends TestBase {
     Set<String> calledUserIds = new HashSet<>(captor.getAllValues());
     assertEquals(new HashSet<>(userIds), calledUserIds);
 
-    // Batching assertion
-    int expectedBatchCount = (userCount + BATCH_SIZE - 1) / BATCH_SIZE;
-    List<List<String>> batches = IntStream.range(0, expectedBatchCount)
-      .mapToObj(i -> captor.getAllValues().subList(i * BATCH_SIZE, Math.min((i + 1) * BATCH_SIZE, userCount)))
-      .toList();
-    // Each batch except last should have BATCH_SIZE elements
-    for (int i = 0; i < batches.size() - 1; i++) {
-      assertEquals(BATCH_SIZE, batches.get(i).size(), "Batch " + i + " size should be " + BATCH_SIZE);
-    }
-    // Last batch size
-    assertEquals(userCount % BATCH_SIZE, batches.get(batches.size() - 1).size(), "Last batch size should be " + (userCount % BATCH_SIZE));
+    // Explicit batching assertion
+    List<List<String>> batches = List.of(
+      captor.getAllValues().subList(0, BATCH_SIZE), // first batch
+      captor.getAllValues().subList(BATCH_SIZE, 25) // last batch
+    );
+    assertEquals(BATCH_SIZE, batches.get(0).size(), "First batch size should be 20");
+    assertEquals(5, batches.get(1).size(), "Last batch size should be 5");
   }
 }
