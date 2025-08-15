@@ -26,7 +26,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.pgclient.PgException;
 
 @RunWith(VertxUnitRunner.class)
-public class UserSummaryServiceUnitTest extends TestBase {
+class UserSummaryServiceUnitTest extends TestBase {
 
   @Mock
   private PostgresClient postgresClient;

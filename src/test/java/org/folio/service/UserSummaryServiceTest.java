@@ -26,7 +26,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
-public class UserSummaryServiceTest extends TestBase {
+class UserSummaryServiceTest extends TestBase {
   private final UserSummaryService userSummaryService =
     new UserSummaryService(postgresClient);
 
