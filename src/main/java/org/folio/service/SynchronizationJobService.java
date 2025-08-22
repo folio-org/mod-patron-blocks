@@ -9,13 +9,13 @@ import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
 import static org.folio.util.LogUtil.asJson;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,6 +34,7 @@ import io.vertx.core.Vertx;
 
 public class SynchronizationJobService {
 
+  private static final int USER_SUMMARY_BATCH_SIZE = 20;
   private static final Logger log = LogManager.getLogger(SynchronizationJobService.class);
 
   private final UserSummaryRepository userSummaryRepository;
@@ -151,19 +152,46 @@ public class SynchronizationJobService {
     }
   }
 
-  private Future<SynchronizationJob> rebuildUserSummaries(SynchronizationJob job) {
+  Future<SynchronizationJob> rebuildUserSummaries(SynchronizationJob job) {
     log.debug("rebuildUserSummaries:: parameters job: {}", () -> asJson(job));
     Set<String> userIds = new HashSet<>();
     userIds.addAll(loanEventsGenerationService.getUserIds());
     userIds.addAll(feesFinesEventsGenerationService.getUserIds());
 
-    return CompositeFuture.all(userIds.stream()
-      .filter(Objects::nonNull)
-      .map(userSummaryService::rebuild)
-      .collect(Collectors.toList()))
+    if (job.getScope() == USER && job.getUserId() != null) {
+      userIds.add(job.getUserId());
+    }
+
+    log.info("rebuildUserSummaries:: number of userIds to process: {}", userIds.size());
+
+    List<List<String>> batches = createBatches(new ArrayList<>(userIds));
+    log.info("rebuildUserSummaries:: total batches to process: {}", batches.size());
+
+    Future<CompositeFuture> userSummaryBatchChain = succeededFuture();
+    for (List<String> batch : batches) {
+      userSummaryBatchChain = userSummaryBatchChain.compose(v -> Future.all(processBatch(batch)));
+    }
+
+    return userSummaryBatchChain
       .map(job)
       .onSuccess(result -> log.info("rebuildUserSummaries:: result: {}", () -> asJson(result)));
+  }
 
+  List<Future<String>> processBatch(List<String> batch) {
+    return batch.stream()
+      .map(userSummaryService::rebuild)
+      .toList();
+  }
+
+  private List<List<String>> createBatches(List<String> items) {
+    if (items == null || items.isEmpty() || USER_SUMMARY_BATCH_SIZE <= 0) {
+      return new ArrayList<>();
+    }
+    int numBatches = (items.size() + USER_SUMMARY_BATCH_SIZE - 1) / USER_SUMMARY_BATCH_SIZE;
+
+    return IntStream.range(0, numBatches)
+      .mapToObj(i -> items.subList(i * USER_SUMMARY_BATCH_SIZE, Math.min((i + 1) * USER_SUMMARY_BATCH_SIZE, items.size())))
+      .toList();
   }
 
   private Future<SynchronizationJob> cleanExistingEvents(SynchronizationJob syncJob,
