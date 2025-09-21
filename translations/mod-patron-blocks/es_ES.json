@@ -24,6 +24,6 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id._qualified": "Open fees/fines fee fine type UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id": "Fee fine type UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Open fees/fines fee fine UUID",
-    "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Fee fine UUID",
+    "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Tarifa/multa",
     "fqm.entityType.user_summary.jsonb": "JSONB"
 }
