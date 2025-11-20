@@ -25,5 +25,6 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id": "费用罚款类型 UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "未结 费用/罚款 费用罚款 UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "罚款UUID",
-    "fqm.entityType.user_summary.jsonb": "JSONB"
+    "fqm.entityType.user_summary.jsonb": "JSONB",
+    "fqm.entityType.user_summary._description": "Simple entity type for user blocks summary data."
 }
