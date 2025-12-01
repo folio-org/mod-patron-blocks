@@ -25,5 +25,6 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id": "手数料/罰金タイプ UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Open fees/fines fee fine UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "手数料/罰金 UUID",
-    "fqm.entityType.user_summary.jsonb": "JSONB"
+    "fqm.entityType.user_summary.jsonb": "JSONB",
+    "fqm.entityType.user_summary._description": "Simple entity type for user blocks summary data."
 }
