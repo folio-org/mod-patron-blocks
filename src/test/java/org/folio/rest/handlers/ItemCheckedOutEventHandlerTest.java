@@ -1,8 +1,8 @@
 package org.folio.rest.handlers;
 
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildDefaultMetadata;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -11,26 +11,27 @@ import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
 public class ItemCheckedOutEventHandlerTest extends EventHandlerTestBase {
-  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
-    new EventHandler<>(postgresClient);
+  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
-  @Before
-  public void beforeEach(TestContext context) {
+  @BeforeEach
+  public void beforeEach() {
     super.resetMocks();
+
+    initUserSummaryRepository();
+
+    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
   }
 
   @Test
-  public void userSummaryShouldBeCreatedWhenDoesNotExist(TestContext context) {
+  public void userSummaryShouldBeCreatedWhenDoesNotExist(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     DateTime dueDate = DateTime.now();
@@ -51,11 +52,13 @@ public class ItemCheckedOutEventHandlerTest extends EventHandlerTestBase {
         .withItemLost(false)
         .withDueDate(dueDate.toDate())));
 
-    checkUserSummary(summaryId, userSummaryToCompare, context);
+    checkUserSummary(summaryId, userSummaryToCompare);
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldAddOpenLoanWhenUserSummaryExists(TestContext context) {
+  public void shouldAddOpenLoanWhenUserSummaryExists(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     DateTime dueDate = DateTime.now();
@@ -75,11 +78,13 @@ public class ItemCheckedOutEventHandlerTest extends EventHandlerTestBase {
       .withItemLost(false)
       .withDueDate(dueDate.toDate()));
 
-    checkUserSummary(summaryId, expectedUserSummary, context);
+    checkUserSummary(summaryId, expectedUserSummary);
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldNotChangeWhenOpenLoanWithTheSameLoanIdExists(TestContext context) {
+  public void shouldNotChangeWhenOpenLoanWithTheSameLoanIdExists(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     DateTime dueDate = DateTime.now();
@@ -96,8 +101,10 @@ public class ItemCheckedOutEventHandlerTest extends EventHandlerTestBase {
     UserSummary updatedUserSummary = waitFor(userSummaryRepository.getByUserId(userId)
       .map(Optional::get));
 
-    context.assertEquals(initialUserSummary.getId(), updatedUserSummary.getId());
+    assertEquals(initialUserSummary.getId(), updatedUserSummary.getId());
 
-    checkUserSummary(updatedUserSummary.getId(), initialUserSummary, context);
+    checkUserSummary(updatedUserSummary.getId(), initialUserSummary);
+
+    context.completeNow();
   }
 }

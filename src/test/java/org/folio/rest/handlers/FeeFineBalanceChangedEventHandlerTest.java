@@ -3,12 +3,13 @@ package org.folio.rest.handlers;
 import static java.math.BigDecimal.ZERO;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildDefaultMetadata;
-import static org.folio.rest.utils.EntityBuilder.buildFeeFine;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -18,41 +19,40 @@ import java.util.Optional;
 
 import org.folio.domain.FeeFineType;
 import org.folio.exception.EntityNotFoundException;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.core.Future;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
 public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase {
-  private static final FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler =
-    new FeeFineBalanceChangedEventHandler(postgresClient);
+  private FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler;
+  private EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler;
+  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
-  private static final EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler =
-    new EventHandler<>(postgresClient);
-
-  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
-    new EventHandler<>(postgresClient);
-
-  @Before
+  @BeforeEach
   public void beforeEach() {
     super.resetMocks();
+
+    initUserSummaryRepository();
+
+    feeFineBalanceChangedEventHandler = new FeeFineBalanceChangedEventHandler(postgresClient);
+    itemDeclaredLostEventHandler = new EventHandler<>(postgresClient);
+    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+    deleteAllFromTable(FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME);
+    deleteAllFromTable(ITEM_DECLARED_LOST_EVENT_TABLE_NAME);
+    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
   }
 
   @Test
-  public void createNewUserSummary(TestContext context) {
-    Async async = context.async();
-
+  public void createNewUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
     final String feeFineId = randomId();
@@ -71,17 +71,15 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
         .withMetadata(buildDefaultMetadata());
 
     feeFineBalanceChangedEventHandler.handle(event)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(summaryId -> {
         checkResult(summaryId, userId, expectedFeeFines, context);
-        async.complete();
+        context.completeNow();
       });
   }
 
   @Test
-  public void addNewFeeFineToExistingUserSummary(TestContext context) {
-    Async async = context.async();
-
+  public void addNewFeeFineToExistingUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
 
@@ -98,7 +96,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
     initialUserSummary.getOpenFeesFines().add(existingFeeFine);
 
     userSummaryRepository.save(initialUserSummary)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(summaryId -> {
         final String eventFeeFineId = randomId();
         final String eventFeeFineTypeId = randomId();
@@ -109,7 +107,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
             .withMetadata(buildDefaultMetadata());
 
         feeFineBalanceChangedEventHandler.handle(event)
-          .onFailure(context::fail)
+          .onFailure(context::failNow)
           .onSuccess(id -> {
             List<OpenFeeFine> expectedFeeFines = Arrays.asList(existingFeeFine,
               new OpenFeeFine()
@@ -119,15 +117,13 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
                 .withBalance(eventBalance));
 
             checkResult(id, userId, expectedFeeFines, context);
-            async.complete();
+            context.completeNow();
           });
       });
   }
 
   @Test
-  public void updateFeeFineBalanceInExistingUserSummary(TestContext context) {
-    Async async = context.async();
-
+  public void updateFeeFineBalanceInExistingUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
     final String feeFineId = randomId();
@@ -147,7 +143,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
     existingUserSummary.getOpenFeesFines().add(existingFeeFine);
 
     userSummaryRepository.save(existingUserSummary)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(summaryId -> {
         final BigDecimal eventBalance = new BigDecimal("2.75");
         FeeFineBalanceChangedEvent event =
@@ -155,7 +151,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
             .withMetadata(buildDefaultMetadata());
 
         feeFineBalanceChangedEventHandler.handle(event)
-          .onFailure(context::fail)
+          .onFailure(context::failNow)
           .onSuccess(id -> {
             List<OpenFeeFine> expectedFeeFines = singletonList(
               new OpenFeeFine()
@@ -165,15 +161,13 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
                 .withBalance(eventBalance));
 
             checkResult(id, userId, expectedFeeFines, context);
-            async.complete();
+            context.completeNow();
           });
       });
   }
 
   @Test
-  public void deleteClosedFeeFineFromExistingUserSummary(TestContext context) {
-    Async async = context.async();
-
+  public void deleteClosedFeeFineFromExistingUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
 
@@ -203,25 +197,23 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
       .withOpenFeesFines(Arrays.asList(existingFeeFine1, existingFeeFine2));
 
     userSummaryRepository.save(existingUserSummary)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(summaryId -> {
         FeeFineBalanceChangedEvent event =
           createEvent(userId, loanId, feeFineId2, feeFineTypeId1, ZERO)
             .withMetadata(buildDefaultMetadata());
 
         feeFineBalanceChangedEventHandler.handle(event)
-          .onFailure(context::fail)
+          .onFailure(context::failNow)
           .onSuccess(id -> {
             checkResult(id, userId, emptyList(), context);
-            async.complete();
+            context.completeNow();
           });
       });
   }
 
   @Test
-  public void removeDeletedFeeFineFromExistingUserSummary(TestContext context) {
-    Async async = context.async();
-
+  public void removeDeletedFeeFineFromExistingUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
 
@@ -251,40 +243,36 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
       .withOpenFeesFines(Arrays.asList(existingFeeFine1, existingFeeFine2));
 
     userSummaryRepository.save(existingUserSummary)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(summaryId -> {
         FeeFineBalanceChangedEvent event =
           createEvent(null, null, feeFineId2, null, ZERO);
 
         feeFineBalanceChangedEventHandler.handle(event)
-          .onFailure(context::fail)
+          .onFailure(context::failNow)
           .onSuccess(id -> {
             checkResult(id, userId, emptyList(), context);
-            async.complete();
+            context.completeNow();
           });
       });
   }
 
   @Test
-  public void eventForDeletedFeeFineAndNonExistingSummaryShouldBeIgnored(TestContext context) {
-    Async async = context.async();
-
+  public void eventForDeletedFeeFineAndNonExistingSummaryShouldBeIgnored(VertxTestContext context) {
     FeeFineBalanceChangedEvent event =
       createEvent(null, null, randomId(), null, ZERO);
 
     feeFineBalanceChangedEventHandler.handle(event)
-      .onSuccess(context::fail)
+      .onSuccess(context::failNow)
       .onFailure(throwable -> {
-        context.assertTrue(throwable instanceof EntityNotFoundException);
-        context.assertTrue(throwable.getMessage().contains("event is ignored"));
-        async.complete();
+        assertInstanceOf(EntityNotFoundException.class, throwable);
+        assertTrue(throwable.getMessage().contains("event is ignored"));
+        context.completeNow();
       });
   }
 
   @Test
-  public void closedFeeFineEventForNonExistingSummaryCreatesAnEmptySummary(TestContext context) {
-    Async async = context.async();
-
+  public void closedFeeFineEventForNonExistingSummaryCreatesAnEmptySummary(VertxTestContext context) {
     String userId = randomId();
 
     FeeFineBalanceChangedEvent event =
@@ -292,15 +280,15 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
         .withMetadata(buildDefaultMetadata());
 
     feeFineBalanceChangedEventHandler.handle(event)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(summaryId -> {
         checkResult(summaryId, userId, emptyList(), context);
-        async.complete();
+        context.completeNow();
       });
   }
 
   @Test
-  public void bothFeesShouldBeProcessedWhenAddedSimultaneously(TestContext context) {
+  public void bothFeesShouldBeProcessedWhenAddedSimultaneously(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
 
@@ -316,7 +304,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
 
     waitFor(itemDeclaredLostEventHandler.handle(
       buildItemDeclaredLostEvent(userId, loanId)));
-    waitFor(GenericCompositeFuture.all(List.of(
+    waitFor(Future.all(List.of(
       feeFineBalanceChangedEventHandler.handle(buildFeeFineBalanceChangedEvent(
         userId, loanId, feeFineId1, feeFineTypeId1, feeFineBalance1)),
       feeFineBalanceChangedEventHandler.handle(buildFeeFineBalanceChangedEvent(
@@ -325,11 +313,13 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
     UserSummary userSummary = waitFor(userSummaryRepository.getByUserId(userId)
       .map(Optional::get));
 
-    context.assertEquals(0, new BigDecimal("3.80").compareTo(
+    assertEquals(0, new BigDecimal("3.80").compareTo(
       userSummary.getOpenFeesFines().stream()
       .map(OpenFeeFine::getBalance)
       .reduce(BigDecimal::add)
       .orElse(ZERO)));
+
+    context.completeNow();
   }
 
   private static FeeFineBalanceChangedEvent createEvent(String userId, String loanId,
@@ -344,16 +334,16 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   private void checkResult(String summaryId, String userId, List<OpenFeeFine> expectedFeeFines,
-    TestContext context) {
+    VertxTestContext context) {
 
     userSummaryRepository.get(summaryId)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(optionalSummary -> {
         UserSummary userSummary = optionalSummary.orElseThrow(() ->
           new AssertionError("User summary was not found: " + summaryId));
 
-        context.assertEquals(userId, userSummary.getUserId());
-        context.assertEquals(expectedFeeFines.size(), userSummary.getOpenFeesFines().size());
+        assertEquals(userId, userSummary.getUserId());
+        assertEquals(expectedFeeFines.size(), userSummary.getOpenFeesFines().size());
 
         for (OpenFeeFine expectedFeeFine : expectedFeeFines) {
           OpenFeeFine existingFeeFine = userSummary.getOpenFeesFines().stream()
@@ -362,11 +352,13 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
             .orElseThrow(() ->
               new AssertionError("Fee/fine was not found: " + expectedFeeFine.getFeeFineId()));
 
-          context.assertEquals(expectedFeeFine.getLoanId(), existingFeeFine.getLoanId());
-          context.assertEquals(expectedFeeFine.getFeeFineId(), existingFeeFine.getFeeFineId());
-          context.assertEquals(expectedFeeFine.getFeeFineTypeId(), existingFeeFine.getFeeFineTypeId());
-          context.assertEquals(0, expectedFeeFine.getBalance().compareTo(existingFeeFine.getBalance()));
+          assertEquals(expectedFeeFine.getLoanId(), existingFeeFine.getLoanId());
+          assertEquals(expectedFeeFine.getFeeFineId(), existingFeeFine.getFeeFineId());
+          assertEquals(expectedFeeFine.getFeeFineTypeId(), existingFeeFine.getFeeFineTypeId());
+          assertEquals(0, expectedFeeFine.getBalance().compareTo(existingFeeFine.getBalance()));
         }
+
+        context.completeNow();
       });
   }
 

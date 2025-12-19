@@ -17,11 +17,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.type.CollectionType;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.web.client.HttpResponse;
 
 public class BulkDownloadClient<T> extends OkapiClient {
   private static final Logger log = LogManager.getLogger(BulkDownloadClient.class);
@@ -50,31 +47,29 @@ public class BulkDownloadClient<T> extends OkapiClient {
 
     log.info("fetchPage:: Attempting to fetch a page of {} {}...", pageSize, arrayName);
 
-    Promise<HttpResponse<Buffer>> promise = Promise.promise();
-    getAbs(fullPath).send(promise);
-
-    return promise.future().compose(response -> {
-      int responseStatus = response.statusCode();
-      if (responseStatus != 200) {
-        String errorMessage = String.format("fetchPage:: Failed to fetch %s. Response: %d %s",
-          arrayName, responseStatus, bodyAsString(response));
-        log.warn(errorMessage);
-        return failedFuture(new HttpFailureException(errorMessage));
-      } else {
-        try {
-          CollectionType javaType = objectMapper.getTypeFactory()
-            .constructCollectionType(List.class, valueType);
-          JsonArray jsonArray = response.bodyAsJsonObject().getJsonArray(arrayName);
-          List<T> result = objectMapper.readValue(jsonArray.encode(), javaType);
-          log.info("fetchPage:: Successfully fetched {} {} from: {}", result.size(), arrayName,
-            path);
-          return succeededFuture(result);
-        } catch (JsonProcessingException e) {
-          log.warn("fetchPage:: Failed to parse JSON response from: {}", path, e);
-          return failedFuture(e);
+    return getAbs(fullPath).send()
+      .compose(response -> {
+        int responseStatus = response.statusCode();
+        if (responseStatus != 200) {
+          String errorMessage = String.format("fetchPage:: Failed to fetch %s. Response: %d %s",
+            arrayName, responseStatus, bodyAsString(response));
+          log.warn(errorMessage);
+          return failedFuture(new HttpFailureException(errorMessage));
+        } else {
+          try {
+            CollectionType javaType = objectMapper.getTypeFactory()
+              .constructCollectionType(List.class, valueType);
+            JsonArray jsonArray = response.bodyAsJsonObject().getJsonArray(arrayName);
+            List<T> result = objectMapper.readValue(jsonArray.encode(), javaType);
+            log.info("fetchPage:: Successfully fetched {} {} from: {}", result.size(), arrayName,
+              path);
+            return succeededFuture(result);
+          } catch (JsonProcessingException e) {
+            log.warn("fetchPage:: Failed to parse JSON response from: {}", path, e);
+            return failedFuture(e);
+          }
         }
-      }
-    });
+      });
   }
 
 }

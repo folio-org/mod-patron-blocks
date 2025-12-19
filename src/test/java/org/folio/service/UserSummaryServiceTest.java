@@ -1,12 +1,13 @@
 package org.folio.service;
 
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
+import static org.awaitility.Awaitility.await;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
 import static org.joda.time.DateTime.now;
-import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -18,14 +19,11 @@ import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
 public class UserSummaryServiceTest extends TestBase {
   private final UserSummaryService userSummaryService =
     new UserSummaryService(postgresClient);
@@ -33,14 +31,14 @@ public class UserSummaryServiceTest extends TestBase {
   protected final UserSummaryRepository userSummaryRepository =
     new UserSummaryRepository(postgresClient);
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     super.resetMocks();
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
   }
 
   @Test
-  public void shouldAddEvent(TestContext context) {
+  public void shouldAddEvent(VertxTestContext context) {
     final String userId = randomId();
     waitFor(userSummaryRepository.save(createUserSummary(randomId(), userId)));
 
@@ -56,10 +54,12 @@ public class UserSummaryServiceTest extends TestBase {
         waitFor(userSummaryService.getByUserId(userId))
         .getOpenFeesFines().stream()
         .anyMatch(openFeeFine -> openFeeFine.getFeeFineId().equals(feeFineId)));
+
+    context.completeNow();
   }
 
   @Test
-  public void loanDueDateChangedEventShouldSetItemLostToFalse(TestContext context) {
+  public void loanDueDateChangedEventShouldSetItemLostToFalse(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     Date dueDate = now().plusHours(1).toDate();
@@ -74,20 +74,21 @@ public class UserSummaryServiceTest extends TestBase {
     waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, itemAgedToLostEvent));
 
     UserSummary updatedUserSummary = waitFor(userSummaryService.getByUserId(userId));
-    context.assertTrue(updatedUserSummary.getOpenLoans().stream()
+    assertTrue(updatedUserSummary.getOpenLoans().stream()
       .anyMatch(openLoan -> openLoan.getItemLost().equals(true)));
 
     LoanDueDateChangedEvent loanDueDateChangedEvent = buildLoanDueDateChangedEvent(userId, loanId, now().plusHours(2).toDate(), false);
     waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, loanDueDateChangedEvent));
     updatedUserSummary = waitFor(userSummaryService.getByUserId(userId));
 
-    context.assertTrue(updatedUserSummary.getOpenLoans().stream()
+    assertTrue(updatedUserSummary.getOpenLoans().stream()
       .anyMatch(loan -> loan.getLoanId().equals(loanId) && loan.getItemLost().equals(false)));
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldDeleteFeeFineAfterRetryingInCaseOfOptimisticLockingError(
-    TestContext context) {
+  public void shouldDeleteFeeFineAfterRetryingInCaseOfOptimisticLockingError(VertxTestContext context) {
     final String userId = randomId();
 
     String summaryId = randomId();
@@ -109,14 +110,16 @@ public class UserSummaryServiceTest extends TestBase {
         waitFor(
           userSummaryService.updateUserSummaryWithEvent(userSummaryAfterFirstUpdate, feeFineBalanceChangedEvent));
         waitFor(userSummaryRepository.get(summaryId)).ifPresent(
-          userSummaryAfterSecondUpdate -> context.assertTrue(
-            userSummaryAfterSecondUpdate.getOpenFeesFines().get(0).getBalance().equals(newBalance)));
+          userSummaryAfterSecondUpdate -> assertEquals(
+            userSummaryAfterSecondUpdate.getOpenFeesFines().get(0).getBalance(), newBalance));
+
+        context.completeNow();
       });
     });
   }
 
   @Test
-  public void shouldUpdateNewUserSummaryIfUserSummaryDidNotExist(TestContext context) {
+  public void shouldUpdateNewUserSummaryIfUserSummaryDidNotExist(VertxTestContext context) {
     final String userId = randomId();
     final String summaryId = randomId();
     FeeFineBalanceChangedEvent feeFineBalanceChangedEvent1 = buildFeeFineBalanceChangedEvent(
@@ -128,11 +131,13 @@ public class UserSummaryServiceTest extends TestBase {
     waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, feeFineBalanceChangedEvent1));
     waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, feeFineBalanceChangedEvent2));
     waitFor(userSummaryRepository.get(summaryId)).ifPresent(userSummaryAfterBothUpdates ->
-      context.assertTrue(userSummaryAfterBothUpdates.getOpenFeesFines().stream()
+      assertTrue(userSummaryAfterBothUpdates.getOpenFeesFines().stream()
         .allMatch(openFeeFine -> openFeeFine.getFeeFineId()
           .equals(feeFineBalanceChangedEvent1.getFeeFineId()) || openFeeFine.getFeeFineId()
           .equals(feeFineBalanceChangedEvent2.getFeeFineId()))
       ));
+
+    context.completeNow();
   }
 
   private UserSummary createUserSummary(String id, String userId) {

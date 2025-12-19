@@ -17,6 +17,7 @@ import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.synchroniz
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.joda.time.LocalDateTime.now;
+
 import java.util.Date;
 import java.util.List;
 
@@ -24,7 +25,6 @@ import org.awaitility.Awaitility;
 import org.folio.domain.SynchronizationStatus;
 import org.folio.repository.EventRepository;
 import org.folio.repository.SynchronizationJobRepository;
-import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
@@ -35,26 +35,15 @@ import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 
-@RunWith(VertxUnitRunner.class)
 public class SynchronizationAPITests extends TestBase {
-  private static final String SYNCHRONIZATION_JOBS_TABLE_NAME = "synchronization_jobs";
-  private static final String ITEM_CHECKED_OUT_EVENT_TABLE_NAME = "item_checked_out_event";
-  private static final String ITEM_DECLARED_LOST_EVENT_TABLE_NAME = "item_declared_lost_event";
-  private static final String ITEM_CLAIMED_RETURNED_EVENT_TABLE_NAME = "item_claimed_returned_event";
-  private static final String ITEM_AGED_TO_LOST_EVENT_TABLE_NAME = "item_aged_to_lost_event";
-  private static final String LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME = "loan_due_date_changed_event";
-  private static final String FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME = "fee_fine_balance_changed_event";
-
   private static final String USER_ID = randomId();
   private static final String ACCOUNT_ID = randomId();
   private static final String FEE_FINE_TYPE_ID = randomId();
@@ -62,30 +51,33 @@ public class SynchronizationAPITests extends TestBase {
   private static final String JOB_STATUS_DONE = "done";
   private static final String JOB_STATUS_FAILED = "failed";
 
-  private EventRepository<ItemCheckedOutEvent> checkOutEventRepository = new EventRepository<>(
-    postgresClient, ITEM_CHECKED_OUT_EVENT_TABLE_NAME, ItemCheckedOutEvent.class);
-  private EventRepository<ItemClaimedReturnedEvent> itemClaimedReturnedEventRepository =
-    new EventRepository<>(postgresClient, ITEM_CLAIMED_RETURNED_EVENT_TABLE_NAME,
-      ItemClaimedReturnedEvent.class);
-  private EventRepository<ItemDeclaredLostEvent> itemDeclaredLostEventRepository =
-    new EventRepository<>(postgresClient, ITEM_DECLARED_LOST_EVENT_TABLE_NAME,
-      ItemDeclaredLostEvent.class);
-  private EventRepository<ItemAgedToLostEvent> itemAgedToLostEventRepository =
-    new EventRepository<>(postgresClient, ITEM_AGED_TO_LOST_EVENT_TABLE_NAME,
-      ItemAgedToLostEvent.class);
-  private EventRepository<LoanDueDateChangedEvent> loanDueDateChangedEventRepository = new EventRepository<>(
-    postgresClient, LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME, LoanDueDateChangedEvent.class);
-  private EventRepository<FeeFineBalanceChangedEvent> feeFineBalanceChangedEventRepository = new EventRepository<>(
-    postgresClient, FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME, FeeFineBalanceChangedEvent.class);
+  private EventRepository<ItemCheckedOutEvent> checkOutEventRepository;
+  private EventRepository<ItemClaimedReturnedEvent> itemClaimedReturnedEventRepository;
+  private EventRepository<ItemDeclaredLostEvent> itemDeclaredLostEventRepository;
+  private EventRepository<ItemAgedToLostEvent> itemAgedToLostEventRepository;
+  private EventRepository<LoanDueDateChangedEvent> loanDueDateChangedEventRepository;
+  private EventRepository<FeeFineBalanceChangedEvent> feeFineBalanceChangedEventRepository;
 
-  private final SynchronizationJobRepository synchronizationJobRepository =
-    new SynchronizationJobRepository(postgresClient);
+  private SynchronizationJobRepository synchronizationJobRepository;
 
-  private final UserSummaryRepository userSummaryRepository = new UserSummaryRepository(postgresClient);
-
-  @Before
+  @BeforeEach
   public void beforeEach() {
     super.resetMocks();
+
+    checkOutEventRepository = new EventRepository<>(postgresClient,
+      ITEM_CHECKED_OUT_EVENT_TABLE_NAME, ItemCheckedOutEvent.class);
+    itemClaimedReturnedEventRepository = new EventRepository<>(postgresClient,
+      ITEM_CLAIMED_RETURNED_EVENT_TABLE_NAME, ItemClaimedReturnedEvent.class);
+    itemDeclaredLostEventRepository = new EventRepository<>(postgresClient,
+      ITEM_DECLARED_LOST_EVENT_TABLE_NAME, ItemDeclaredLostEvent.class);
+    itemAgedToLostEventRepository = new EventRepository<>(postgresClient,
+      ITEM_AGED_TO_LOST_EVENT_TABLE_NAME, ItemAgedToLostEvent.class);
+    loanDueDateChangedEventRepository = new EventRepository<>(postgresClient,
+      LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME, LoanDueDateChangedEvent.class);
+    feeFineBalanceChangedEventRepository = new EventRepository<>(postgresClient,
+      FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME, FeeFineBalanceChangedEvent.class);
+    synchronizationJobRepository = new SynchronizationJobRepository(postgresClient);
+
     deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
     deleteAllFromTable(ITEM_DECLARED_LOST_EVENT_TABLE_NAME);
     deleteAllFromTable(ITEM_CLAIMED_RETURNED_EVENT_TABLE_NAME);

@@ -1,14 +1,12 @@
 package org.folio.rest.impl;
 
 import static org.apache.http.HttpStatus.SC_CREATED;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.test.util.TestUtil.readFile;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -20,14 +18,11 @@ import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.model.PatronBlockLimits;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import io.restassured.http.Header;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 
-@RunWith(VertxUnitRunner.class)
 public class PatronBlockLimitsAPITest extends TestBase {
 
   private static final String PATRON_BLOCK_LIMITS_URL = "/patron-block-limits/";
@@ -35,7 +30,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   private static final Header USER_ID = new Header(XOkapiHeaders.USER_ID, "111111111");
   private static final String LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID = "1de95200-72e4-4967-bdf8-257fb7559539";
 
-  @After
+  @AfterEach
   public void tearDown() {
     PatronBlockLimits response = getWithStatus(PATRON_BLOCK_LIMITS_URL, SC_OK)
       .as(PatronBlockLimits.class);
@@ -51,7 +46,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
     postAllLimits();
     PatronBlockLimits response = getWithStatus(PATRON_BLOCK_LIMITS_URL, SC_OK)
       .as(PatronBlockLimits.class);
-    assertThat(response.getTotalRecords(), is(6));
+    assertEquals(6, response.getTotalRecords());
   }
 
   @Test
@@ -61,9 +56,9 @@ public class PatronBlockLimitsAPITest extends TestBase {
       + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, SC_OK)
       .as(PatronBlockLimit.class);
 
-    assertThat(response.getPatronGroupId(), equalTo("e5b45031-a202-4abb-917b-e1df9346fe2c"));
-    assertThat(response.getConditionId(), equalTo("cf7a0d5f-a327-4ca1-aa9e-dc55ec006b8a"));
-    assertThat(response.getValue(), equalTo(10.4));
+    assertEquals("e5b45031-a202-4abb-917b-e1df9346fe2c", response.getPatronGroupId());
+    assertEquals("cf7a0d5f-a327-4ca1-aa9e-dc55ec006b8a", response.getConditionId());
+    assertEquals(10.4, response.getValue());
   }
 
   @Test
@@ -77,7 +72,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
       .as(PatronBlockLimit.class);
 
     String message = getErrorMessage(actualLimit);
-    assertThat(message, is("Must be blank or an integer from 0 to 999999"));
+    assertEquals("Must be blank or an integer from 0 to 999999", message);
   }
 
   @Test
@@ -90,7 +85,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
       patronBlockLimit, SC_CREATED, USER_ID)
       .as(PatronBlockLimit.class);
 
-    assertThat(actualLimit.getAdditionalProperties().get("errors"), nullValue());
+    assertNull(actualLimit.getAdditionalProperties().get("errors"));
   }
 
   @Test
@@ -104,7 +99,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
       .as(PatronBlockLimit.class);
 
     String message = getErrorMessage(actualLimit);
-    assertThat(message, is("Must be blank or a number from 0.00 to 999999.99"));
+    assertEquals("Must be blank or a number from 0.00 to 999999.99", message);
   }
 
   @Test
@@ -119,7 +114,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
       + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, SC_OK)
       .as(PatronBlockLimit.class);
 
-    assertThat(response.getValue(), equalTo(20.4));
+    assertEquals(20.4, response.getValue());
   }
 
   @Test

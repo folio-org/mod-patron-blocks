@@ -6,43 +6,43 @@ import static org.folio.domain.ActionBlocks.byLimit;
 import static org.folio.domain.Condition.MAX_NUMBER_OF_LOST_ITEMS;
 import static org.folio.domain.Condition.MAX_OUTSTANDING_FEE_FINE_BALANCE;
 import static org.folio.util.UuidHelper.randomId;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.stream.Stream;
 
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-
-@RunWith(JUnitParamsRunner.class)
 public class ActionBlocksTest {
 
-  @Test
-  @Parameters
-  public void byLimitShouldReturnNoBlocks(UserSummary summary, PatronBlockLimit limit) {
-    ActionBlocks actionBlocks = byLimit(summary, limit);
-    assertAllBlocksAreFalse(actionBlocks);
-  }
-
-  public Object[] parametersForByLimitShouldReturnNoBlocks() {
+  static Stream<Arguments> byLimitShouldReturnNoBlocks() {
     final UserSummary userSummary = new UserSummary();
     final PatronBlockLimit limit = new PatronBlockLimit();
 
-    return new Object[] {
-      new Object[] { null, null },
-      new Object[] { null, limit.withValue(1.23).withConditionId(MAX_NUMBER_OF_LOST_ITEMS.getId()) },
-      new Object[] { userSummary, null },
-      new Object[] { userSummary, limit },
-      new Object[] { userSummary, limit.withValue(1.23) }
-    };
+    return Stream.of(
+      Arguments.of(null, null),
+      Arguments.of(null, limit.withValue(1.23).withConditionId(MAX_NUMBER_OF_LOST_ITEMS.getId())),
+      Arguments.of(userSummary, null),
+      Arguments.of(userSummary, limit),
+      Arguments.of(userSummary, limit.withValue(1.23))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  public void byLimitShouldReturnNoBlocks(UserSummary summary, PatronBlockLimit limit) {
+    ActionBlocks actionBlocks = byLimit(summary, limit);
+    assertAllBlocksAreFalse(actionBlocks);
   }
 
   @Test
@@ -61,16 +61,16 @@ public class ActionBlocksTest {
     assertAllBlocksAreFalse(actionBlocks);
   }
 
-  @Test
-  @Parameters({
-    "false | false | false | false",
-    "true  | true  | true  | true",
-    "true  | false | false | true",
-    "false | true  | false | true",
-    "false | false | true  | true",
-    "true  | true  | false | true",
-    "false | true  | true  | true",
-    "true  | false | true  | true"
+  @ParameterizedTest
+  @CsvSource({
+    "false, false, false, false",
+    "true, true, true, true",
+    "true, false, false, true",
+    "false, true, false, true",
+    "false, false, true, true",
+    "true, true, false, true",
+    "false, true, true, true",
+    "true, false, true, true"
   })
   public void isNotEmptyTest(boolean blockBorrowing, boolean blockRenewals, boolean blockRequests,
     boolean expectedResult) {

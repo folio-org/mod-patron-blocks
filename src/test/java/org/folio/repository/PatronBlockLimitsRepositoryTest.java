@@ -1,35 +1,32 @@
 package org.folio.repository;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.folio.domain.Condition;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.core.Future;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
 public class PatronBlockLimitsRepositoryTest extends TestBase {
 
-  private static final PatronBlockLimitsRepository repository =
-    new PatronBlockLimitsRepository(postgresClient);
+  private PatronBlockLimitsRepository repository;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
+    repository = new PatronBlockLimitsRepository(postgresClient);
     deleteAllFromTable(PatronBlockLimitsRepository.PATRON_BLOCK_LIMITS_TABLE_NAME);
   }
 
   @Test
-  public void findLimitsForPatronGroup(TestContext context) {
-    Async async = context.async();
-
+  public void findLimitsForPatronGroup(VertxTestContext context) {
     String id1 = randomId();
     String id2 = randomId();
     String id3 = randomId();
@@ -55,21 +52,21 @@ public class PatronBlockLimitsRepositoryTest extends TestBase {
       .withPatronGroupId(groupId1)
       .withValue(3.00);
 
-    GenericCompositeFuture.all(List.of(repository.save(limit1), repository.save(limit2), repository.save(limit3)))
-      .onFailure(context::fail)
+    Future.all(List.of(repository.save(limit1), repository.save(limit2), repository.save(limit3)))
       .onSuccess(result -> repository.findLimitsForPatronGroup(groupId1)
-        .onFailure(context::fail)
         .onSuccess(limits -> {
-          context.assertEquals(2, limits.size());
+          assertEquals(2, limits.size());
 
           List<String> retrievedLimitIds = limits.stream()
             .map(PatronBlockLimit::getId)
             .collect(Collectors.toList());
 
-          context.assertTrue(retrievedLimitIds.contains(id1));
-          context.assertTrue(retrievedLimitIds.contains(id3));
-          async.complete();
-        }));
+          assertTrue(retrievedLimitIds.contains(id1));
+          assertTrue(retrievedLimitIds.contains(id3));
+
+          context.completeNow();
+        }))
+      .onComplete(r -> context.completeNow());
   }
 
 }

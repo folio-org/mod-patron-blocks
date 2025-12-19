@@ -16,16 +16,13 @@ import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.PostgresClient;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.pgclient.PgException;
 
-@RunWith(VertxUnitRunner.class)
 public class UserSummaryServiceUnitTest extends TestBase {
 
   @Mock
@@ -36,7 +33,7 @@ public class UserSummaryServiceUnitTest extends TestBase {
 
   private final UserSummaryService userSummaryService = new UserSummaryService(postgresClient);
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     MockitoAnnotations.openMocks(this);
   }

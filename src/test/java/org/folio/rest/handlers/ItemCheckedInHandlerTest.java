@@ -1,8 +1,10 @@
 package org.folio.rest.handlers;
 
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedInEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Date;
 import java.util.Optional;
@@ -11,28 +13,31 @@ import org.folio.rest.jaxrs.model.ItemCheckedInEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
 public class ItemCheckedInHandlerTest extends EventHandlerTestBase {
-  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
-    new EventHandler<>(postgresClient);
-  private static final EventHandler<ItemCheckedInEvent> itemCheckedInEventHandler =
-    new EventHandler<>(postgresClient);
+  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
+  private EventHandler<ItemCheckedInEvent> itemCheckedInEventHandler;
 
-  @Before
-  public void beforeEach(TestContext context) {
+  @BeforeEach
+  public void beforeEach() {
     super.resetMocks();
+
+    initUserSummaryRepository();
+
+    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+    itemCheckedInEventHandler = new EventHandler<>(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
+    deleteAllFromTable(ITEM_CHECKED_IN_EVENT_TABLE_NAME);
   }
 
   @Test
-  public void existingLoanIsRemovedFromSummary(TestContext context) {
+  public void existingLoanIsRemovedFromSummary(VertxTestContext context) {
     String userId = randomId();
     String loan1Id = randomId();
     String loan2Id = randomId();
@@ -47,20 +52,22 @@ public class ItemCheckedInHandlerTest extends EventHandlerTestBase {
     UserSummary initialUserSummary = waitFor(userSummaryRepository.getByUserId(userId)
       .map(Optional::get));
 
-    context.assertNotNull(initialUserSummary);
+    assertNotNull(initialUserSummary);
 
     String handledSummaryId = waitFor(itemCheckedInEventHandler.handle(
       buildItemCheckedInEvent(userId, loan2Id, new Date())));
 
-    context.assertEquals(initialUserSummary.getId(), handledSummaryId);
+    assertEquals(initialUserSummary.getId(), handledSummaryId);
 
     initialUserSummary.getOpenLoans().removeIf(openLoan -> openLoan.getLoanId().equals(loan2Id));
 
-    checkUserSummary(handledSummaryId, initialUserSummary, context);
+    checkUserSummary(handledSummaryId, initialUserSummary);
+
+    context.completeNow();
   }
 
   @Test
-  public void existingSummaryRemainsIntactWhenWhenLoanDoesNotExist(TestContext context) {
+  public void existingSummaryRemainsIntactWhenWhenLoanDoesNotExist(VertxTestContext context) {
     final String userId = randomId();
     String loanId = randomId();
     DateTime dueDate = DateTime.now();
@@ -74,18 +81,22 @@ public class ItemCheckedInHandlerTest extends EventHandlerTestBase {
     waitFor(itemCheckedInEventHandler.handle(
       buildItemCheckedInEvent(userId, randomId(), new Date())));
 
-    checkUserSummary(savedSummaryId, initialUserSummary, context);
+    checkUserSummary(savedSummaryId, initialUserSummary);
+
+    context.completeNow();
   }
 
   @Test
-  public void eventIsIgnoredWhenSummaryForUserDoesNotExist(TestContext context) {
+  public void eventIsIgnoredWhenSummaryForUserDoesNotExist(VertxTestContext context) {
     String userId = randomId();
     ItemCheckedInEvent event = buildItemCheckedInEvent(userId, randomId(), new Date());
 
     waitFor(itemCheckedInEventHandler.handle(event));
 
     Optional<UserSummary> optionalSummary = waitFor(userSummaryRepository.getByUserId(userId));
-    context.assertFalse(optionalSummary.isPresent());
+    assertFalse(optionalSummary.isPresent());
+
+    context.completeNow();
   }
 
 }

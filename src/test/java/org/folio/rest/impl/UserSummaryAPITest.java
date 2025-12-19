@@ -1,7 +1,6 @@
 package org.folio.rest.impl;
 
 import static java.lang.String.format;
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.hamcrest.core.IsEqual.equalTo;
 
@@ -10,26 +9,25 @@ import org.folio.rest.TestBase;
 import org.folio.rest.handlers.EventHandler;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 
-@RunWith(VertxUnitRunner.class)
 public class UserSummaryAPITest extends TestBase {
-  private final UserSummaryRepository userSummaryRepository =
-    new UserSummaryRepository(postgresClient);
+  private UserSummaryRepository userSummaryRepository;
+  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
-  private final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
-    new EventHandler<>(postgresClient);
-
-  @Before
+  @BeforeEach
   public void beforeEach() {
     super.resetMocks();
+
+    userSummaryRepository = new UserSummaryRepository(postgresClient);
+    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
   }
 
   @Test

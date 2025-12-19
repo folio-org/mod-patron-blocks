@@ -6,9 +6,7 @@ import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.test.util.TestUtil.readFile;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -19,13 +17,10 @@ import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
 import org.folio.rest.jaxrs.model.PatronBlockConditions;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 
 import io.restassured.http.Header;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 
-@RunWith(VertxUnitRunner.class)
 public class PatronBlockConditionsAPITest extends TestBase {
 
   private static final String MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID = "72b67965-5b73-4840-bc0b-be8f3f6e047e";
@@ -39,7 +34,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
   public void shouldReturnAllConditions() {
     PatronBlockConditions conditions = getWithStatus(PATRON_BLOCK_CONDITIONS_URL, SC_OK)
       .as(PatronBlockConditions.class);
-    assertThat(conditions.getTotalRecords(), equalTo(NUMBER_OF_PREDEFINED_CONDITIONS));
+    assertEquals(NUMBER_OF_PREDEFINED_CONDITIONS, conditions.getTotalRecords());
   }
 
   @Test
@@ -47,7 +42,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
     PatronBlockCondition patronBlockCondition = getWithStatus(PATRON_BLOCK_CONDITIONS_URL
       + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, SC_OK)
       .as(PatronBlockCondition.class);
-    assertThat(patronBlockCondition.getName(), equalTo("Maximum number of lost items"));
+    assertEquals("Maximum number of lost items", patronBlockCondition.getName());
   }
 
   @Test
@@ -62,11 +57,10 @@ public class PatronBlockConditionsAPITest extends TestBase {
     PatronBlockCondition updatedCondition = getWithStatus(PATRON_BLOCK_CONDITIONS_URL
       + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, SC_OK).as(PatronBlockCondition.class);
 
-    assertThat(updatedCondition.getBlockBorrowing(), equalTo(true));
-    assertThat(updatedCondition.getBlockRenewals(), equalTo(true));
-    assertThat(updatedCondition.getBlockRequests(), equalTo(true));
-    assertThat(updatedCondition.getMessage(),
-      equalTo("Maximum number of lost items has been reached"));
+    assertEquals(true, updatedCondition.getBlockBorrowing());
+    assertEquals(true, updatedCondition.getBlockRenewals());
+    assertEquals(true, updatedCondition.getBlockRequests());
+    assertEquals("Maximum number of lost items has been reached", updatedCondition.getMessage());
   }
 
   @Test
@@ -81,7 +75,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
       SC_NOT_FOUND, USER_ID);
     PatronBlockConditions conditions = getWithStatus(PATRON_BLOCK_CONDITIONS_URL, SC_OK)
       .as(PatronBlockConditions.class);
-    assertThat(conditions.getTotalRecords(), equalTo(NUMBER_OF_PREDEFINED_CONDITIONS));
+    assertEquals(NUMBER_OF_PREDEFINED_CONDITIONS, conditions.getTotalRecords());
   }
 
   @Test
@@ -95,7 +89,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
       .as(PatronBlockCondition.class);
     List<Map<String, Object>> errors = (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
     String message = (String) errors.get(0).get("message");
-    assertThat(message, is("Message to be displayed is a required field if one or more blocked actions selected"));
+    assertEquals("Message to be displayed is a required field if one or more blocked actions selected", message);
   }
 
   @Test
@@ -109,7 +103,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
       .as(PatronBlockCondition.class);
     List<Map<String, Object>> errors = (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
     String message = (String) errors.get(0).get("message");
-    assertThat(message, is("One or more blocked actions must be selected for message to be displayed to be used"));
+    assertEquals(message, "One or more blocked actions must be selected for message to be displayed to be used");
   }
 
   @Test

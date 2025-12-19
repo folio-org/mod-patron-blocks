@@ -2,10 +2,10 @@ package org.folio.repository;
 
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.folio.cql2pgjson.exception.FieldException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BaseRepositoryTest {
 

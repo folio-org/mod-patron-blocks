@@ -2,7 +2,6 @@ package org.folio.rest.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedInEvent;
@@ -10,7 +9,7 @@ import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemClaimedReturnedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -28,23 +27,21 @@ import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-
-@RunWith(VertxUnitRunner.class)
 public class EventHandlersAPITest extends TestBase {
   public static final String USER_ID = randomId();
   public static final String INVALID_USER_ID = USER_ID + "xyz";
 
-  private final UserSummaryRepository userSummaryRepository =
-    new UserSummaryRepository(postgresClient);
+  private UserSummaryRepository userSummaryRepository;
 
-  @After
+  @AfterEach
   public void afterEach() {
     super.resetMocks();
+
+    userSummaryRepository = new UserSummaryRepository(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
   }
 

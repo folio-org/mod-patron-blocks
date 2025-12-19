@@ -68,6 +68,7 @@ public class EventHandler<E extends Event> {
     if (result.failed()) {
       log.warn("logResult: Failed to process event {} with payload: {}", () -> eventType,
         () -> asJson(event));
+      log.error(result.cause());
     } else {
       String userSummaryId = result.result();
       log.info("logResult: Event {} processed successfully. Affected user summary: {}",

@@ -23,6 +23,7 @@ import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.joda.time.DateTime.now;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -55,18 +56,18 @@ import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class AutomatedPatronBlocksAPITest extends TestBase {
   private static final String PATRON_GROUP_ID = randomId();
   private static final boolean SINGLE_LIMIT = true;
@@ -109,7 +110,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   private boolean expectBlockRenewals;
   private boolean expectBlockRequests;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     super.resetMocks();
     mockUsersResponse();
@@ -604,7 +605,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void updatedValuesFromConditionArePassedToResponse(TestContext context) {
+  public void updatedValuesFromConditionArePassedToResponse(VertxTestContext context) {
     final Condition condition = MAX_NUMBER_OF_ITEMS_CHARGED_OUT;
     int limitValue = LIMIT_VALUES.get(condition);
 
@@ -622,7 +623,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
     Optional<PatronBlockCondition> optionalResult =
       waitFor(conditionsRepository.get(condition.getId()));
 
-    context.assertTrue(optionalResult.isPresent());
+    assertTrue(optionalResult.isPresent());
 
     final PatronBlockCondition originalCondition = optionalResult.get();
 
@@ -645,7 +646,9 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
 
     sendRequestAndCheckResult(expectedResponse);
 
-    context.assertTrue(waitFor(conditionsRepository.update(originalCondition)));
+    assertTrue(waitFor(conditionsRepository.update(originalCondition)));
+
+    context.completeNow();
   }
 
   @Test

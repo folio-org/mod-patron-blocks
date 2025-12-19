@@ -9,8 +9,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -36,13 +36,14 @@ import org.folio.rest.utils.EventClient;
 import org.folio.rest.utils.OkapiClient;
 import org.folio.rest.utils.PomUtils;
 import org.hamcrest.Matcher;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -57,10 +58,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 
+@ExtendWith(VertxExtension.class)
 public class TestBase {
   protected static final Logger log = LogManager.getLogger(TestBase.class);
 
@@ -73,6 +75,16 @@ public class TestBase {
     new Header("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
   private static final int GET_TENANT_TIMEOUT_MS = 10000;
 
+  protected static final String USER_SUMMARY_TABLE_NAME = "user_summary";
+  protected static final String SYNCHRONIZATION_JOBS_TABLE_NAME = "synchronization_jobs";
+  protected static final String ITEM_CHECKED_OUT_EVENT_TABLE_NAME = "item_checked_out_event";
+  protected static final String ITEM_CHECKED_IN_EVENT_TABLE_NAME = "item_checked_in_event";
+  protected static final String ITEM_DECLARED_LOST_EVENT_TABLE_NAME = "item_declared_lost_event";
+  protected static final String ITEM_CLAIMED_RETURNED_EVENT_TABLE_NAME = "item_claimed_returned_event";
+  protected static final String ITEM_AGED_TO_LOST_EVENT_TABLE_NAME = "item_aged_to_lost_event";
+  protected static final String LOAN_DUE_DATE_CHANGED_EVENT_TABLE_NAME = "loan_due_date_changed_event";
+  protected static final String FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME = "fee_fine_balance_changed_event";
+
   protected static Vertx vertx;
   protected static OkapiClient okapiClient;
   protected static TenantClient tenantClient;
@@ -81,18 +93,22 @@ public class TestBase {
 
   protected static String jobId;
 
-  @ClassRule
-  public static WireMockRule wireMock = new WireMockRule(
-    new WireMockConfiguration().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMock = WireMockExtension.newInstance()
+    .options(new WireMockConfiguration().dynamicPort().dynamicHttpsPort())
+    .build();
 
-  @BeforeClass
-  public static void beforeAll(final TestContext context) throws Exception {
-    Async async = context.async();
-
+  @BeforeAll
+  public static void beforeAll(final VertxTestContext context) {
     vertx = Vertx.vertx();
     okapiClient = new OkapiClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
     tenantClient = new TenantClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
-    PostgresClient.setPostgresTester(new PostgresTesterContainer());
+
+    var postgresContainer = new PostgresTesterContainer();
+    postgresContainer.start("database", "username", "password");
+    PostgresClient.setPostgresTester(postgresContainer);
+    //PostgresClient.setPostgresTester(new PostgresTesterContainer());
+
     eventClient = new EventClient(okapiClient);
 
     mockEndpoints();
@@ -100,49 +116,49 @@ public class TestBase {
     DeploymentOptions deploymentOptions = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", OKAPI_PORT));
 
-    vertx.deployVerticle(RestVerticle.class.getName(), deploymentOptions, deployment -> {
-      try {
-        tenantClient.postTenant(getTenantAttributes(), postResult -> {
-          if (postResult.failed()) {
-            log.error(postResult.cause());
-            return;
-          }
-
-          HttpResponse<Buffer> postResponse = postResult.result();
-          assertThat(postResponse.statusCode(), is(HttpStatus.HTTP_CREATED.toInt()));
-
-          jobId = postResponse.bodyAsJson(TenantJob.class).getId();
-
-          postgresClient = PostgresClient.getInstance(vertx, OKAPI_TENANT);
-
-          tenantClient.getTenantByOperationId(jobId, GET_TENANT_TIMEOUT_MS, getResult -> {
-            if (getResult.failed()) {
-              log.error(getResult.cause());
+    vertx.deployVerticle(RestVerticle.class.getName(), deploymentOptions)
+      .onSuccess(deployment -> {
+        try {
+          tenantClient.postTenant(getTenantAttributes(), postResult -> {
+            if (postResult.failed()) {
+              log.error(postResult.cause());
               return;
             }
 
-            HttpResponse<Buffer> getResponse = getResult.result();
-            assertThat(getResponse.statusCode(), is(HttpStatus.HTTP_OK.toInt()));
-            assertThat(getResponse.bodyAsJson(TenantJob.class).getComplete(), is(true));
+            HttpResponse<Buffer> postResponse = postResult.result();
+            assertEquals(HttpStatus.HTTP_CREATED.toInt(), postResponse.statusCode());
 
-            async.complete();
+            jobId = postResponse.bodyAsJson(TenantJob.class).getId();
+
+            postgresClient = PostgresClient.getInstance(vertx, OKAPI_TENANT);
+
+            tenantClient.getTenantByOperationId(jobId, GET_TENANT_TIMEOUT_MS, getResult -> {
+              if (getResult.failed()) {
+                log.error(getResult.cause());
+                return;
+              }
+
+              HttpResponse<Buffer> getResponse = getResult.result();
+              assertEquals(HttpStatus.HTTP_OK.toInt(), getResponse.statusCode());
+              assertTrue(getResponse.bodyAsJson(TenantJob.class).getComplete());
+
+              context.completeNow();
+            });
+
           });
-
-        });
-      } catch (Exception e) {
-        context.fail(e);
-      }
-    });
+        } catch (Exception e) {
+          context.failNow(e);
+        }
+      });
   }
 
-  @AfterClass
-  public static void afterAll(final TestContext context) {
+  @AfterAll
+  public static void afterAll(VertxTestContext context) {
     deleteTenant(tenantClient);
-    Async async = context.async();
-    vertx.close(context.asyncAssertSuccess(res -> {
+    vertx.close().onComplete(res -> {
       PostgresClient.stopPostgresTester();
-      async.complete();
-    }));
+      context.completeNow();
+    });
   }
 
   static void deleteTenant(TenantClient tenantClient) {
@@ -156,7 +172,7 @@ public class TestBase {
     });
   }
 
-  @Before
+  @BeforeEach
   public void resetMocks() {
     mockEndpoints();
   }
@@ -214,7 +230,7 @@ public class TestBase {
   }
 
   protected static String getMockedOkapiUrl() {
-    return "http://localhost:" + wireMock.port();
+    return "http://localhost:" + wireMock.getPort();
   }
 
   protected static String randomId() {
