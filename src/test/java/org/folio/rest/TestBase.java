@@ -11,6 +11,7 @@ import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -18,6 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.LogManager;
@@ -107,7 +109,7 @@ public class TestBase {
     var postgresContainer = new PostgresTesterContainer();
     postgresContainer.start("database", "username", "password");
     PostgresClient.setPostgresTester(postgresContainer);
-    //PostgresClient.setPostgresTester(new PostgresTesterContainer());
+    waitForPostgres();
 
     eventClient = new EventClient(okapiClient);
 
@@ -126,7 +128,11 @@ public class TestBase {
             }
 
             HttpResponse<Buffer> postResponse = postResult.result();
-            assertEquals(HttpStatus.HTTP_CREATED.toInt(), postResponse.statusCode());
+            //assertEquals(HttpStatus.HTTP_CREATED.toInt(), postResponse.statusCode());
+            if (postResponse.statusCode() != HttpStatus.HTTP_CREATED.toInt()) {
+              context.failNow("Tenant API failed with status: " + postResponse.statusCode());
+              return;
+            }
 
             jobId = postResponse.bodyAsJson(TenantJob.class).getId();
 
@@ -247,6 +253,26 @@ public class TestBase {
       .until(future::isComplete);
 
     return future.result();
+  }
+
+  private static void waitForPostgres() {
+    PostgresClient pgClient = PostgresClient.getInstance(vertx);
+    String query = "SELECT 1";
+    AtomicBoolean isReady = new AtomicBoolean();
+    await()
+      .atMost(120, TimeUnit.SECONDS)
+      .pollInterval(3, TimeUnit.SECONDS)
+      .alias("Is Postgres Up?")
+      .until(() -> {
+        System.out.println("checking to see if postgres is up");
+
+        vertx.runOnContext((at) -> pgClient.select(query)
+          .onSuccess(ar -> isReady.set(true)));
+
+        return isReady.get();
+      });
+
+    if (!isReady.get()) throw new RuntimeException("Could not connect to postgres");
   }
 
   protected static <T> void awaitUntil(Callable<T> supplier, Matcher<? super T> matcher) {

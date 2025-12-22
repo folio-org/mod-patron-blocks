@@ -28,6 +28,7 @@ import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EventHandlersAPITest extends TestBase {
@@ -36,8 +37,8 @@ public class EventHandlersAPITest extends TestBase {
 
   private UserSummaryRepository userSummaryRepository;
 
-  @AfterEach
-  public void afterEach() {
+  @BeforeEach
+  public void beforeEach() {
     super.resetMocks();
 
     userSummaryRepository = new UserSummaryRepository(postgresClient);
