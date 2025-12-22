@@ -25,5 +25,6 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id": "UUID do tipo de taxa/multa",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "UUID de taxa/multa - taxas/multas em aberto",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "UUID de taxa/multa",
-    "fqm.entityType.user_summary.jsonb": "JSONB"
+    "fqm.entityType.user_summary.jsonb": "JSONB",
+    "fqm.entityType.user_summary._description": "Tipo de entidade simples para dados resumidos de blocos de usuário."
 }
