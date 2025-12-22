@@ -32,14 +32,11 @@ public class TenantRefAPI extends TenantAPI {
     Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler(
       "postTenant", handler, log);
 
-//    loggingHandler.handle(succeededFuture(Response.created(null).build()));
-
     super.postTenant(tenantAttributes, headers, res -> {
       if (res.failed()) {
         loggingHandler.handle(res);
         return;
       }
-//      loggingHandler.handle(res);
       PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, context.owner()))
         .whenComplete((result, throwable) -> {
           if (isTrue(result) && throwable == null) {
