@@ -61,7 +61,7 @@ public class SynchronizationAPITests extends TestBase {
   private SynchronizationJobRepository synchronizationJobRepository;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
 
     checkOutEventRepository = new EventRepository<>(postgresClient,
@@ -88,7 +88,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void shouldRespondWithSynchronizationJobFull() {
+  void shouldRespondWithSynchronizationJobFull() {
     String synchronizationJobId = createOpenSynchronizationJobFull();
 
     sendGetSynchronizationJob(synchronizationJobId)
@@ -99,7 +99,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void shouldRespondWithSynchronizationJobByUser() {
+  void shouldRespondWithSynchronizationJobByUser() {
     String synchronizationJobId = createOpenSynchronizationJobByUser();
 
     sendGetSynchronizationJob(synchronizationJobId)
@@ -110,14 +110,14 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void shouldRespond404WithNonExistingSynchronizationJobId() {
+  void shouldRespond404WithNonExistingSynchronizationJobId() {
     sendGetSynchronizationJob(randomId())
       .then()
       .statusCode(404);
   }
 
   @Test
-  public void checkOutEventShouldBeCreatedAfterSynchronization() {
+  void checkOutEventShouldBeCreatedAfterSynchronization() {
     stubLoans(now().plusHours(1).toDate(), false, "Checked out");
     stubAccountsWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobByUser();
@@ -132,7 +132,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void claimedReturnedEventShouldBeCreatedAfterSynchronization() {
+  void claimedReturnedEventShouldBeCreatedAfterSynchronization() {
     stubLoans(now().plusHours(1).toDate(), false, "Claimed returned");
     stubAccountsWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobByUser();
@@ -147,7 +147,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void declaredLostEventShouldBeCreatedAfterSynchronization() {
+  void declaredLostEventShouldBeCreatedAfterSynchronization() {
     stubLoans(now().plusHours(1).toDate(), false, "Declared lost");
     stubAccountsWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobByUser();
@@ -162,7 +162,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
+  void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
     eventClient.sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()));
     awaitUntil(() -> waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(1));
     String syncJobId = createOpenSynchronizationJobByUser();
@@ -175,7 +175,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
+  void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
     eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()));
     eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()));
 
@@ -195,7 +195,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void dueDateChangedEventShouldBeCreatedAfterSynchronization() {
+  void dueDateChangedEventShouldBeCreatedAfterSynchronization() {
     stubLoans(now().plusHours(1).toDate(), true, "Checked out");
     stubAccountsWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobByUser();
@@ -210,7 +210,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void itemAgedToLostEventShouldBeCreatedAfterSynchronization() {
+  void itemAgedToLostEventShouldBeCreatedAfterSynchronization() {
     stubLoans(now().plusHours(1).toDate(), false, "Aged to lost");
     stubAccountsWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobByUser();
@@ -225,7 +225,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void feeFineBalanceChangedEventShouldBeCreatedAfterSynchronization() {
+  void feeFineBalanceChangedEventShouldBeCreatedAfterSynchronization() {
     stubLoansWithEmptyResponse();
     stubAccounts();
     String syncJobId = createOpenSynchronizationJobFull();
@@ -251,7 +251,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void feeFineBalanceChangedEventShouldNotBeCreatedIfFeesFinesNotFound() {
+  void feeFineBalanceChangedEventShouldNotBeCreatedIfFeesFinesNotFound() {
     stubLoansWithEmptyResponse();
     stubAccounts();
     stubFeeFinesWith404();
@@ -263,7 +263,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void shouldNotCreateAnyEvents() {
+  void shouldNotCreateAnyEvents() {
     stubLoansWithEmptyResponse();
     stubAccountsWithEmptyResponse();
 
@@ -277,7 +277,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void shouldNotDoAnythingIfSynchronizationIsInProgress() {
+  void shouldNotDoAnythingIfSynchronizationIsInProgress() {
     stubLoans(now().plusHours(1).toDate(), true, "Checked out");
     stubAccountsWithEmptyResponse();
     SynchronizationJob synchronizationJob = buildSynchronizationJob(FULL, null,
@@ -289,7 +289,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void syncJobShouldFailIfLoanStorageIsNotResponding() {
+  void syncJobShouldFailIfLoanStorageIsNotResponding() {
     stubAccountsWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobFull();
 
@@ -302,7 +302,7 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void syncJobShouldFailIfFeesFinesIsNotResponding() {
+  void syncJobShouldFailIfFeesFinesIsNotResponding() {
     stubLoansWithEmptyResponse();
     String syncJobId = createOpenSynchronizationJobFull();
 
@@ -315,14 +315,14 @@ public class SynchronizationAPITests extends TestBase {
   }
 
   @Test
-  public void shouldReturn422IfSyncJobIsNotValid() {
+  void shouldReturn422IfSyncJobIsNotValid() {
     createNotValidSynchronizationJobByUser()
       .then()
       .statusCode(422);
   }
 
   @Test
-  public void summaryShouldBeDeletedWhenNoEventsWereGeneratedDuringUserSynchronization() {
+  void summaryShouldBeDeletedWhenNoEventsWereGeneratedDuringUserSynchronization() {
     stubLoansWithEmptyResponse();
     stubAccounts();
     String firstJobId = createOpenSynchronizationJobByUser();

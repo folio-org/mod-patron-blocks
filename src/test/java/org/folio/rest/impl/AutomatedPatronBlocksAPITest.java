@@ -111,7 +111,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   private boolean expectBlockRequests;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
     mockUsersResponse();
     deleteAllFromTable(PATRON_BLOCK_LIMITS_TABLE_NAME);
@@ -128,7 +128,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void shouldReturnBadRequestErrorWhenCalledWithInvalidUserId() {
+  void shouldReturnBadRequestErrorWhenCalledWithInvalidUserId() {
     sendRequest("invalid")
       .then()
       .statusCode(400)
@@ -137,13 +137,13 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void shouldReturnNoBlocksWhenUserSummaryDoesNotExist() {
+  void shouldReturnNoBlocksWhenUserSummaryDoesNotExist() {
     String emptyBlocksResponse = toJson(new AutomatedPatronBlocks());
     sendRequestAndCheckResult(randomId(), emptyBlocksResponse);
   }
 
   @Test
-  public void shouldReturnNoBlocksWhenNoLimitsExistForPatronGroup() {
+  void shouldReturnNoBlocksWhenNoLimitsExistForPatronGroup() {
     final String userId = randomId();
     UserSummary userSummary = new UserSummary()
       .withId(randomId())
@@ -175,19 +175,19 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfItemsChargedOutLimitIsNotReached() {
+  void noBlockWhenMaxNumberOfItemsChargedOutLimitIsNotReached() {
     expectNoBlocks();
     validateMaxNumberOfItemsChargedOutBlockResponse(-1, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfItemsChargedOutLimitIsNotReachedAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfItemsChargedOutLimitIsNotReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxNumberOfItemsChargedOutBlockResponse(-1, ALL_LIMITS);
   }
 
   @Test
-  public void blockWhenMaxNumberOfItemsChargedOutLimitIsReached() {
+  void blockWhenMaxNumberOfItemsChargedOutLimitIsReached() {
     expectBlockBorrowing = true;
     expectBlockRenewals = false;
     expectBlockRequests = false;
@@ -195,7 +195,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void blockWhenMaxNumberOfItemsChargedOutLimitIsReachedAndAllLimitsExist() {
+  void blockWhenMaxNumberOfItemsChargedOutLimitIsReachedAndAllLimitsExist() {
     expectBlockBorrowing = true;
     expectBlockRenewals = false;
     expectBlockRequests = false;
@@ -203,13 +203,13 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void blockWhenMaxNumberOfItemsChargedOutLimitIsExceeded() {
+  void blockWhenMaxNumberOfItemsChargedOutLimitIsExceeded() {
     expectAllBlocks();
     validateMaxNumberOfItemsChargedOutBlockResponse(1, SINGLE_LIMIT);
   }
 
   @Test
-  public void blockWhenMaxNumberOfItemsChargedOutLimitIsExceededAndAllLimitsExist() {
+  void blockWhenMaxNumberOfItemsChargedOutLimitIsExceededAndAllLimitsExist() {
     expectAllBlocks();
     validateMaxNumberOfItemsChargedOutBlockResponse(1, ALL_LIMITS);
   }
@@ -237,37 +237,37 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLost() {
+  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLost() {
     expectNoBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(-1, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLostAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLostAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(-1, ALL_LIMITS);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLost() {
+  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLost() {
     expectNoBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(0, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLostAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLostAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(0, ALL_LIMITS);
   }
 
   @Test
-  public void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLost() {
+  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLost() {
     expectAllBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(1, SINGLE_LIMIT);
   }
 
   @Test
-  public void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLostAndAllLimitsExist() {
+  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLostAndAllLimitsExist() {
     expectAllBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(1, ALL_LIMITS);
   }
@@ -295,37 +295,37 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLost() {
+  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLost() {
     expectNoBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(-1, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLostAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLostAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(-1, ALL_LIMITS);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLost() {
+  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLost() {
     expectNoBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(0, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLostAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLostAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(0, ALL_LIMITS);
   }
 
   @Test
-  public void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLost() {
+  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLost() {
     expectAllBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(1, SINGLE_LIMIT);
   }
 
   @Test
-  public void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLostAndAllLimitsExist() {
+  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLostAndAllLimitsExist() {
     expectAllBlocks();
     validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(1, ALL_LIMITS);
   }
@@ -349,37 +349,37 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfOverdueItemsLimitIsNotReached() {
+  void noBlockWhenMaxNumberOfOverdueItemsLimitIsNotReached() {
     expectNoBlocks();
     validateMaxOverdueItemsBlockResponse(-1, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfOverdueItemsLimitIsNotReachedAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfOverdueItemsLimitIsNotReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxOverdueItemsBlockResponse(-1, ALL_LIMITS);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfOverdueItemsLimitIsReached() {
+  void noBlockWhenMaxNumberOfOverdueItemsLimitIsReached() {
     expectNoBlocks();
     validateMaxOverdueItemsBlockResponse(0, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfOverdueItemsLimitReachedAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfOverdueItemsLimitReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxOverdueItemsBlockResponse(0, ALL_LIMITS);
   }
 
   @Test
-  public void blockWhenMaxNumberOfOverdueItemsLimitIsExceeded() {
+  void blockWhenMaxNumberOfOverdueItemsLimitIsExceeded() {
     expectAllBlocks();
     validateMaxOverdueItemsBlockResponse(1, SINGLE_LIMIT);
   }
 
   @Test
-  public void blockWhenMaxNumberOfOverdueItemsLimitIsExceededAndAllLimitsExist() {
+  void blockWhenMaxNumberOfOverdueItemsLimitIsExceededAndAllLimitsExist() {
     expectAllBlocks();
     validateMaxOverdueItemsBlockResponse(1, ALL_LIMITS);
   }
@@ -406,37 +406,37 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfOverdueRecallsLimitIsNotReached() {
+  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsNotReached() {
     expectNoBlocks();
     validateMaxOverdueRecallsBlockResponse(-1, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfOverdueRecallsLimitIsNotReachedAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsNotReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxOverdueRecallsBlockResponse(-1, ALL_LIMITS);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfOverdueRecallsLimitIsReached() {
+  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsReached() {
     expectNoBlocks();
     validateMaxOverdueRecallsBlockResponse(0, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxNumberOfOverdueRecallsLimitIsReachedAndAllLimitsExist() {
+  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxOverdueRecallsBlockResponse(0, ALL_LIMITS);
   }
 
   @Test
-  public void blockWhenMaxNumberOfOverdueRecallsLimitIsExceeded() {
+  void blockWhenMaxNumberOfOverdueRecallsLimitIsExceeded() {
     expectAllBlocks();
     validateMaxOverdueRecallsBlockResponse(1, SINGLE_LIMIT);
   }
 
   @Test
-  public void blockWhenMaxNumberOfOverdueRecallsLimitIsExceededAllLimitsExist() {
+  void blockWhenMaxNumberOfOverdueRecallsLimitIsExceededAllLimitsExist() {
     expectAllBlocks();
     validateMaxOverdueRecallsBlockResponse(1, ALL_LIMITS);
   }
@@ -462,37 +462,37 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsNotReached() {
+  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsNotReached() {
     expectNoBlocks();
     validateRecallOverdueByMaximumNumberOfDaysBlockResponse(-1, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsNotReachedAndAllLimitsExist() {
+  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsNotReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateRecallOverdueByMaximumNumberOfDaysBlockResponse(-1, ALL_LIMITS);
   }
 
   @Test
-  public void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsReached() {
+  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsReached() {
     expectNoBlocks();
     validateRecallOverdueByMaximumNumberOfDaysBlockResponse(0, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsReachedAndAllLimitsExist() {
+  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateRecallOverdueByMaximumNumberOfDaysBlockResponse(0, ALL_LIMITS);
   }
 
   @Test
-  public void blockWhenRecallOverdueByMaximumNumberOfDaysLimitIsExceeded() {
+  void blockWhenRecallOverdueByMaximumNumberOfDaysLimitIsExceeded() {
     expectAllBlocks();
     validateRecallOverdueByMaximumNumberOfDaysBlockResponse(1, SINGLE_LIMIT);
   }
 
   @Test
-  public void blockWhenRecallOverdueByMaximumNumberOfDaysLimitIsExceededAllLimitsExist() {
+  void blockWhenRecallOverdueByMaximumNumberOfDaysLimitIsExceededAllLimitsExist() {
     expectAllBlocks();
     validateRecallOverdueByMaximumNumberOfDaysBlockResponse(1, ALL_LIMITS);
   }
@@ -517,43 +517,43 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsNotReached() {
+  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsNotReached() {
     expectNoBlocks();
     validateMaxOutstandingFeeFineBalanceBlockResponse(-1, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsNotReachedAndAllLimitsExist() {
+  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsNotReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxOutstandingFeeFineBalanceBlockResponse(-1, ALL_LIMITS);
   }
 
   @Test
-  public void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsReached() {
+  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsReached() {
     expectNoBlocks();
     validateMaxOutstandingFeeFineBalanceBlockResponse(0, SINGLE_LIMIT);
   }
 
   @Test
-  public void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsReachedAndAllLimitsExist() {
+  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsReachedAndAllLimitsExist() {
     expectNoBlocks();
     validateMaxOutstandingFeeFineBalanceBlockResponse(0, ALL_LIMITS);
   }
 
   @Test
-  public void blockWhenMaxOutstandingFeeFineBalanceLimitIsExceeded() {
+  void blockWhenMaxOutstandingFeeFineBalanceLimitIsExceeded() {
     expectAllBlocks();
     validateMaxOutstandingFeeFineBalanceBlockResponse(1, SINGLE_LIMIT);
   }
 
   @Test
-  public void blockWhenMaxOutstandingFeeFineBalanceLimitIsExceededAllLimitsExist() {
+  void blockWhenMaxOutstandingFeeFineBalanceLimitIsExceededAllLimitsExist() {
     expectAllBlocks();
     validateMaxOutstandingFeeFineBalanceBlockResponse(1, ALL_LIMITS);
   }
 
   @Test
-  public void everythingIsBlockedWhenAllLimitsAreExceeded() {
+  void everythingIsBlockedWhenAllLimitsAreExceeded() {
     expectAllBlocks();
     exceedAllLimits(false);
     String expectedResponse = buildDefaultResponseFor(Condition.values());
@@ -561,7 +561,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void nothingIsBlockedWhenAllLimitsAreExceededForItemsClaimedReturned() {
+  void nothingIsBlockedWhenAllLimitsAreExceededForItemsClaimedReturned() {
     expectNoBlocks();
     exceedAllLimits(true);
     sendRequestAndCheckResult(toJson(new AutomatedPatronBlocks()));
@@ -605,7 +605,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void updatedValuesFromConditionArePassedToResponse(VertxTestContext context) {
+  void updatedValuesFromConditionArePassedToResponse(VertxTestContext context) {
     final Condition condition = MAX_NUMBER_OF_ITEMS_CHARGED_OUT;
     int limitValue = LIMIT_VALUES.get(condition);
 
@@ -652,7 +652,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenLoanIsNotOverdue() {
+  void noBlockWhenLoanIsNotOverdue() {
     expectNoBlocks();
 
     final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
@@ -676,7 +676,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void noBlockWhenLoanIsNotOverdueBecauseOfGracePeriod() {
+  void noBlockWhenLoanIsNotOverdueBecauseOfGracePeriod() {
     expectNoBlocks();
 
     final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
@@ -702,7 +702,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void blockWhenLoanIsOverdue() {
+  void blockWhenLoanIsOverdue() {
     expectAllBlocks();
 
     final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
@@ -727,7 +727,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void blockWhenLoanIsOverdueAndGracePeriodIsNull() {
+  void blockWhenLoanIsOverdueAndGracePeriodIsNull() {
     expectAllBlocks();
     final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
     int limitValue = LIMIT_VALUES.get(condition);
@@ -751,7 +751,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void blockWhenLoanIsOverdueAndGracePeriodExists() {
+  void blockWhenLoanIsOverdueAndGracePeriodExists() {
     expectAllBlocks();
 
     final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
@@ -777,7 +777,7 @@ public class AutomatedPatronBlocksAPITest extends TestBase {
   }
 
   @Test
-  public void itemsDeclaredLostAndAgedToLostAreCombinedForMaxNumberOfLostItemsBlock() {
+  void itemsDeclaredLostAndAgedToLostAreCombinedForMaxNumberOfLostItemsBlock() {
     expectAllBlocks();
 
     final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;

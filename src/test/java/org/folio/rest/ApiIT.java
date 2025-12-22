@@ -17,7 +17,7 @@ import io.vertx.core.json.JsonObject;
 public class ApiIT extends TestBase {
 
   @Test
-  public void health() {
+  void health() {
     okapiClient.get("/admin/health")
       .then()
       .statusCode(200)
@@ -40,7 +40,7 @@ public class ApiIT extends TestBase {
   }
 
   @Test
-  public void installAndUpgrade() {
+  void installAndUpgrade() {
     postTenant(new JsonObject().put("module_to", "mod_patron_blocks-999999.0.0"));
     // migrate from 0.0.0, migration should be idempotent
     postTenant(new JsonObject().put("module_to", "mod_patron_blocks-999999.0.0").put("module_from", "mod_patron_blocks-0.0.0"));

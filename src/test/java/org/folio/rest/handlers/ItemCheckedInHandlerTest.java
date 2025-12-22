@@ -23,7 +23,7 @@ public class ItemCheckedInHandlerTest extends EventHandlerTestBase {
   private EventHandler<ItemCheckedInEvent> itemCheckedInEventHandler;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
 
     initUserSummaryRepository();
@@ -37,7 +37,7 @@ public class ItemCheckedInHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void existingLoanIsRemovedFromSummary(VertxTestContext context) {
+  void existingLoanIsRemovedFromSummary(VertxTestContext context) {
     String userId = randomId();
     String loan1Id = randomId();
     String loan2Id = randomId();
@@ -67,7 +67,7 @@ public class ItemCheckedInHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void existingSummaryRemainsIntactWhenWhenLoanDoesNotExist(VertxTestContext context) {
+  void existingSummaryRemainsIntactWhenWhenLoanDoesNotExist(VertxTestContext context) {
     final String userId = randomId();
     String loanId = randomId();
     DateTime dueDate = DateTime.now();
@@ -87,7 +87,7 @@ public class ItemCheckedInHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void eventIsIgnoredWhenSummaryForUserDoesNotExist(VertxTestContext context) {
+  void eventIsIgnoredWhenSummaryForUserDoesNotExist(VertxTestContext context) {
     String userId = randomId();
     ItemCheckedInEvent event = buildItemCheckedInEvent(userId, randomId(), new Date());
 

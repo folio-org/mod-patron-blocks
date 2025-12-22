@@ -26,13 +26,13 @@ public class UserSummaryRepositoryTest extends TestBase {
   private final UserSummaryRepository repository = new UserSummaryRepository(postgresClient);
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     resetMocks();
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
   }
 
   @Test
-  public void shouldAddUserSummary(VertxTestContext context) {
+  void shouldAddUserSummary(VertxTestContext context) {
     String summaryId = randomId();
     UserSummary userSummaryToSave = createUserSummary(summaryId, randomId());
     waitFor(repository.save(userSummaryToSave));
@@ -46,7 +46,7 @@ public class UserSummaryRepositoryTest extends TestBase {
   }
 
   @Test
-  public void shouldFailWhenAttemptingToSaveSummaryWithDuplicateId(VertxTestContext context) {
+  void shouldFailWhenAttemptingToSaveSummaryWithDuplicateId(VertxTestContext context) {
     String sameSummaryId = randomId();
     UserSummary userSummaryToSave1 = createUserSummary(sameSummaryId, randomId());
     UserSummary userSummaryToSave2 = createUserSummary(sameSummaryId, randomId());
@@ -64,7 +64,7 @@ public class UserSummaryRepositoryTest extends TestBase {
   }
 
   @Test
-  public void shouldFailWhenAttemptingToSaveSummaryWithDuplicateUserId(VertxTestContext context) {
+  void shouldFailWhenAttemptingToSaveSummaryWithDuplicateUserId(VertxTestContext context) {
     String sameUserId = randomId();
     UserSummary userSummaryToSave1 = createUserSummary(randomId(), sameUserId);
     UserSummary userSummaryToSave2 = createUserSummary(randomId(), sameUserId);
@@ -82,7 +82,7 @@ public class UserSummaryRepositoryTest extends TestBase {
   }
 
   @Test
-  public void shouldGetUserSummaryById(VertxTestContext context) {
+  void shouldGetUserSummaryById(VertxTestContext context) {
     UserSummary expectedUserSummary = createUserSummary(randomId(), randomId());
 
     waitFor(Future.all(List.of(
@@ -101,7 +101,7 @@ public class UserSummaryRepositoryTest extends TestBase {
   }
 
   @Test
-  public void shouldGetUserSummaryByUserId(VertxTestContext context) {
+  void shouldGetUserSummaryByUserId(VertxTestContext context) {
     UserSummary expectedUserSummary = createUserSummary(randomId(), randomId());
 
     waitFor(Future.all(List.of(
@@ -120,7 +120,7 @@ public class UserSummaryRepositoryTest extends TestBase {
   }
 
   @Test
-  public void shouldUpdateUserSummary(VertxTestContext context) {
+  void shouldUpdateUserSummary(VertxTestContext context) {
     String userSummaryId = randomId();
 
     waitFor(repository.save(
@@ -145,7 +145,7 @@ public class UserSummaryRepositoryTest extends TestBase {
   }
 
   @Test
-  public void shouldDeleteUserSummary(VertxTestContext context) {
+  void shouldDeleteUserSummary(VertxTestContext context) {
     String userSummaryId1 = randomId();
     String userSummaryId2 = randomId();
     String userSummaryId3 = randomId();
@@ -180,7 +180,7 @@ public class UserSummaryRepositoryTest extends TestBase {
   }
 
   @Test
-  public void shouldUpsertUserSummary(VertxTestContext context) {
+  void shouldUpsertUserSummary(VertxTestContext context) {
     String summaryId = randomId();
     UserSummary initialUserSummary = createUserSummary(summaryId, randomId());
 

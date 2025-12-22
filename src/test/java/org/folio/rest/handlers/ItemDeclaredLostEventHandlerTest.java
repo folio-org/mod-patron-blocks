@@ -23,7 +23,7 @@ public class ItemDeclaredLostEventHandlerTest extends EventHandlerTestBase {
   private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
 
     initUserSummaryRepository();
@@ -37,7 +37,7 @@ public class ItemDeclaredLostEventHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void shouldFlipItemLostFlagWhenUserSummaryExists(VertxTestContext context) {
+  void shouldFlipItemLostFlagWhenUserSummaryExists(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     Date dueDate = new Date();

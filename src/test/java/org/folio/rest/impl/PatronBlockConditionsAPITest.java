@@ -31,14 +31,14 @@ public class PatronBlockConditionsAPITest extends TestBase {
   private static final int NUMBER_OF_PREDEFINED_CONDITIONS = 6;
 
   @Test
-  public void shouldReturnAllConditions() {
+  void shouldReturnAllConditions() {
     PatronBlockConditions conditions = getWithStatus(PATRON_BLOCK_CONDITIONS_URL, SC_OK)
       .as(PatronBlockConditions.class);
     assertEquals(NUMBER_OF_PREDEFINED_CONDITIONS, conditions.getTotalRecords());
   }
 
   @Test
-  public void shouldReturnMaxNumberOfLostItemsCondition() {
+  void shouldReturnMaxNumberOfLostItemsCondition() {
     PatronBlockCondition patronBlockCondition = getWithStatus(PATRON_BLOCK_CONDITIONS_URL
       + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, SC_OK)
       .as(PatronBlockCondition.class);
@@ -46,7 +46,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
   }
 
   @Test
-  public void shouldUpdateMaxNumberOfLostItemsCondition()
+  void shouldUpdateMaxNumberOfLostItemsCondition()
     throws IOException, URISyntaxException {
 
     String updatedMaxNumberOfLostItemsCondition = readFile(PATRON_BLOCK_CONDITIONS
@@ -64,7 +64,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
   }
 
   @Test
-  public void cannotUpdateMaxNumberOfLostItemsConditionWithNonExistentId()
+  void cannotUpdateMaxNumberOfLostItemsConditionWithNonExistentId()
     throws IOException, URISyntaxException {
 
     String updatedConditionWithNonExistentId = readFile(PATRON_BLOCK_CONDITIONS
@@ -79,7 +79,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
   }
 
   @Test
-  public void cannotUpdateMaxNumberOfLostItemWithNoMessage()
+  void cannotUpdateMaxNumberOfLostItemWithNoMessage()
     throws IOException, URISyntaxException {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
@@ -93,7 +93,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
   }
 
   @Test
-  public void cannotUpdateMaxNumberOfLostItemWithMessageAndNoFlagSetToTrue()
+  void cannotUpdateMaxNumberOfLostItemWithMessageAndNoFlagSetToTrue()
     throws IOException, URISyntaxException {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
@@ -107,13 +107,13 @@ public class PatronBlockConditionsAPITest extends TestBase {
   }
 
   @Test
-  public void cannotDeletePredefinedCondition() {
+  void cannotDeletePredefinedCondition() {
     deleteWithStatus(PATRON_BLOCK_CONDITIONS_URL + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID,
       SC_METHOD_NOT_ALLOWED);
   }
 
   @Test
-  public void cannotPostNewCondition()
+  void cannotPostNewCondition()
     throws IOException, URISyntaxException {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS

@@ -32,13 +32,13 @@ public class UserSummaryServiceTest extends TestBase {
     new UserSummaryRepository(postgresClient);
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
   }
 
   @Test
-  public void shouldAddEvent(VertxTestContext context) {
+  void shouldAddEvent(VertxTestContext context) {
     final String userId = randomId();
     waitFor(userSummaryRepository.save(createUserSummary(randomId(), userId)));
 
@@ -59,7 +59,7 @@ public class UserSummaryServiceTest extends TestBase {
   }
 
   @Test
-  public void loanDueDateChangedEventShouldSetItemLostToFalse(VertxTestContext context) {
+  void loanDueDateChangedEventShouldSetItemLostToFalse(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     Date dueDate = now().plusHours(1).toDate();
@@ -88,7 +88,7 @@ public class UserSummaryServiceTest extends TestBase {
   }
 
   @Test
-  public void shouldDeleteFeeFineAfterRetryingInCaseOfOptimisticLockingError(VertxTestContext context) {
+  void shouldDeleteFeeFineAfterRetryingInCaseOfOptimisticLockingError(VertxTestContext context) {
     final String userId = randomId();
 
     String summaryId = randomId();
@@ -119,7 +119,7 @@ public class UserSummaryServiceTest extends TestBase {
   }
 
   @Test
-  public void shouldUpdateNewUserSummaryIfUserSummaryDidNotExist(VertxTestContext context) {
+  void shouldUpdateNewUserSummaryIfUserSummaryDidNotExist(VertxTestContext context) {
     final String userId = randomId();
     final String summaryId = randomId();
     FeeFineBalanceChangedEvent feeFineBalanceChangedEvent1 = buildFeeFineBalanceChangedEvent(

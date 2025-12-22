@@ -34,7 +34,7 @@ public class UsersClientTest extends TestBase {
   private UsersClient usersClient;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     Map<String, String> okapiHeaders = new HashMap<>();
     okapiHeaders.put(URL, getMockedOkapiUrl());
     okapiHeaders.put(TENANT, OKAPI_TENANT);
@@ -44,7 +44,7 @@ public class UsersClientTest extends TestBase {
   }
 
   @Test
-  public void getPatronGroupByExistingUserId(VertxTestContext context) {
+  void getPatronGroupByExistingUserId(VertxTestContext context) {
     mockUsersResponse(200, new JsonObject()
       .put("id", USER_ID)
       .put("patronGroup", PATRON_GROUP_ID)
@@ -59,7 +59,7 @@ public class UsersClientTest extends TestBase {
   }
 
   @Test
-  public void getPatronGroupByNonExistentUserId(VertxTestContext context) {
+  void getPatronGroupByNonExistentUserId(VertxTestContext context) {
     String userId = randomId();
     int responseCode = 404;
     String responseBody = "User not found";
@@ -77,7 +77,7 @@ public class UsersClientTest extends TestBase {
   }
 
   @Test
-  public void invalidJsonResponse(VertxTestContext context) {
+  void invalidJsonResponse(VertxTestContext context) {
     mockUsersResponse(200, "not really json");
 
     usersClient.findPatronGroupIdForUser(randomId())
@@ -89,7 +89,7 @@ public class UsersClientTest extends TestBase {
   }
 
   @Test
-  public void additionalFieldShouldBeAllowed(VertxTestContext context) {
+  void additionalFieldShouldBeAllowed(VertxTestContext context) {
     mockUsersResponse(200, new JsonObject()
       .put("id", USER_ID)
       .put("patronGroup", PATRON_GROUP_ID)

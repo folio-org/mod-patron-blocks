@@ -20,13 +20,13 @@ public class PatronBlockLimitsRepositoryTest extends TestBase {
   private PatronBlockLimitsRepository repository;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     repository = new PatronBlockLimitsRepository(postgresClient);
     deleteAllFromTable(PatronBlockLimitsRepository.PATRON_BLOCK_LIMITS_TABLE_NAME);
   }
 
   @Test
-  public void findLimitsForPatronGroup(VertxTestContext context) {
+  void findLimitsForPatronGroup(VertxTestContext context) {
     String id1 = randomId();
     String id2 = randomId();
     String id3 = randomId();

@@ -24,7 +24,7 @@ public class LoanDueDateChangedEventHandlerTest extends EventHandlerTestBase {
   private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
 
     initUserSummaryRepository();
@@ -37,7 +37,7 @@ public class LoanDueDateChangedEventHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void existingLoanIsUpdated(VertxTestContext context) {
+  void existingLoanIsUpdated(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
 

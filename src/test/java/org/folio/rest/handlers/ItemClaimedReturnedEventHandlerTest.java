@@ -20,7 +20,7 @@ public class ItemClaimedReturnedEventHandlerTest extends EventHandlerTestBase {
   private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     initUserSummaryRepository();
 
     itemClaimedReturnedEventHandler = new EventHandler<>(postgresClient);
@@ -30,7 +30,7 @@ public class ItemClaimedReturnedEventHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void shouldFlipItemClaimedReturnedFlagWhenUserSummaryExists(VertxTestContext context) {
+  void shouldFlipItemClaimedReturnedFlagWhenUserSummaryExists(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     Date dueDate = new Date();

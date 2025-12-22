@@ -20,7 +20,7 @@ public class UserSummaryAPITest extends TestBase {
   private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
 
     userSummaryRepository = new UserSummaryRepository(postgresClient);
@@ -31,7 +31,7 @@ public class UserSummaryAPITest extends TestBase {
   }
 
   @Test
-  public void shouldReturn400WhenCalledWithInvalidUserId() {
+  void shouldReturn400WhenCalledWithInvalidUserId() {
     sendRequest("invalid")
       .then()
       .statusCode(400)
@@ -40,7 +40,7 @@ public class UserSummaryAPITest extends TestBase {
   }
 
   @Test
-  public void shouldReturn404WhenUserSummaryDoesNotExist() {
+  void shouldReturn404WhenUserSummaryDoesNotExist() {
     String userId = randomId();
 
     sendRequest(userId)
@@ -51,7 +51,7 @@ public class UserSummaryAPITest extends TestBase {
   }
 
   @Test
-  public void shouldReturn200WhenUserSummaryExistsAndIsValid() {
+  void shouldReturn200WhenUserSummaryExistsAndIsValid() {
     String userId = randomId();
 
     waitFor(itemCheckedOutEventHandler.handle(

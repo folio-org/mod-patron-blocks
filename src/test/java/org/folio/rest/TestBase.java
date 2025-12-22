@@ -96,12 +96,12 @@ public class TestBase {
   protected static String jobId;
 
   @RegisterExtension
-  public static WireMockExtension wireMock = WireMockExtension.newInstance()
+  protected static WireMockExtension wireMock = WireMockExtension.newInstance()
     .options(new WireMockConfiguration().dynamicPort().dynamicHttpsPort())
     .build();
 
   @BeforeAll
-  public static void beforeAll(final VertxTestContext context) {
+  static void beforeAll(final VertxTestContext context) {
     vertx = Vertx.vertx();
     okapiClient = new OkapiClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
     tenantClient = new TenantClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
@@ -159,7 +159,7 @@ public class TestBase {
   }
 
   @AfterAll
-  public static void afterAll(VertxTestContext context) {
+  static void afterAll(VertxTestContext context) {
     deleteTenant(tenantClient);
     vertx.close().onComplete(res -> {
       PostgresClient.stopPostgresTester();
@@ -179,7 +179,7 @@ public class TestBase {
   }
 
   @BeforeEach
-  public void resetMocks() {
+  protected void resetMocks() {
     mockEndpoints();
   }
 
@@ -348,5 +348,4 @@ public class TestBase {
       .statusCode(expectedStatus)
       .extract();
   }
-
 }

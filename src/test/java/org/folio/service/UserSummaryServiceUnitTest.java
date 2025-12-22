@@ -34,12 +34,12 @@ public class UserSummaryServiceUnitTest extends TestBase {
   private final UserSummaryService userSummaryService = new UserSummaryService(postgresClient);
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     MockitoAnnotations.openMocks(this);
   }
 
   @Test
-  public void shouldStopRetryingAfterRunningOutOfAttempts() {
+  void shouldStopRetryingAfterRunningOutOfAttempts() {
     PgException pgException = new PgException("", "", "23F09", "");
     String userId = randomId();
     String summaryId = randomId();

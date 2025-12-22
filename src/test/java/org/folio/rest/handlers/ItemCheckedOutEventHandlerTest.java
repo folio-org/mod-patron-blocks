@@ -20,7 +20,7 @@ public class ItemCheckedOutEventHandlerTest extends EventHandlerTestBase {
   private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
 
     initUserSummaryRepository();
@@ -31,7 +31,7 @@ public class ItemCheckedOutEventHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void userSummaryShouldBeCreatedWhenDoesNotExist(VertxTestContext context) {
+  void userSummaryShouldBeCreatedWhenDoesNotExist(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     DateTime dueDate = DateTime.now();
@@ -58,7 +58,7 @@ public class ItemCheckedOutEventHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void shouldAddOpenLoanWhenUserSummaryExists(VertxTestContext context) {
+  void shouldAddOpenLoanWhenUserSummaryExists(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     DateTime dueDate = DateTime.now();
@@ -84,7 +84,7 @@ public class ItemCheckedOutEventHandlerTest extends EventHandlerTestBase {
   }
 
   @Test
-  public void shouldNotChangeWhenOpenLoanWithTheSameLoanIdExists(VertxTestContext context) {
+  void shouldNotChangeWhenOpenLoanWithTheSameLoanIdExists(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     DateTime dueDate = DateTime.now();

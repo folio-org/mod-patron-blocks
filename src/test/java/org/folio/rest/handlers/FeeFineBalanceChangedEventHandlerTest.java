@@ -36,7 +36,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     super.resetMocks();
 
     initUserSummaryRepository();
@@ -52,7 +52,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   @Test
-  public void createNewUserSummary(VertxTestContext context) {
+  void createNewUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
     final String feeFineId = randomId();
@@ -79,7 +79,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   @Test
-  public void addNewFeeFineToExistingUserSummary(VertxTestContext context) {
+  void addNewFeeFineToExistingUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
 
@@ -123,7 +123,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   @Test
-  public void updateFeeFineBalanceInExistingUserSummary(VertxTestContext context) {
+  void updateFeeFineBalanceInExistingUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
     final String feeFineId = randomId();
@@ -167,7 +167,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   @Test
-  public void deleteClosedFeeFineFromExistingUserSummary(VertxTestContext context) {
+  void deleteClosedFeeFineFromExistingUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
 
@@ -213,7 +213,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   @Test
-  public void removeDeletedFeeFineFromExistingUserSummary(VertxTestContext context) {
+  void removeDeletedFeeFineFromExistingUserSummary(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
 
@@ -258,7 +258,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   @Test
-  public void eventForDeletedFeeFineAndNonExistingSummaryShouldBeIgnored(VertxTestContext context) {
+  void eventForDeletedFeeFineAndNonExistingSummaryShouldBeIgnored(VertxTestContext context) {
     FeeFineBalanceChangedEvent event =
       createEvent(null, null, randomId(), null, ZERO);
 
@@ -272,7 +272,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   @Test
-  public void closedFeeFineEventForNonExistingSummaryCreatesAnEmptySummary(VertxTestContext context) {
+  void closedFeeFineEventForNonExistingSummaryCreatesAnEmptySummary(VertxTestContext context) {
     String userId = randomId();
 
     FeeFineBalanceChangedEvent event =
@@ -288,7 +288,7 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   }
 
   @Test
-  public void bothFeesShouldBeProcessedWhenAddedSimultaneously(VertxTestContext context) {
+  void bothFeesShouldBeProcessedWhenAddedSimultaneously(VertxTestContext context) {
     final String userId = randomId();
     final String loanId = randomId();
 

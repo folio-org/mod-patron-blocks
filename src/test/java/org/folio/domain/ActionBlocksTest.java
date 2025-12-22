@@ -46,12 +46,12 @@ public class ActionBlocksTest {
   }
 
   @Test
-  public void emptyReturnsNoBlocks() {
+  void emptyReturnsNoBlocks() {
     assertAllBlocksAreFalse(ActionBlocks.empty());
   }
 
   @Test
-  public void byLimitReturnsEmptyBlocksWhenCalledWithUnknownConditionId() {
+  void byLimitReturnsEmptyBlocksWhenCalledWithUnknownConditionId() {
     PatronBlockLimit limit = new PatronBlockLimit()
       .withValue(1.23)
       .withConditionId(randomId());
@@ -86,7 +86,7 @@ public class ActionBlocksTest {
   }
 
   @Test
-  public void byLimitReturnsNoBlocksForOutstandingFeeFineBalanceWhenItemIsClaimedReturned() {
+  void byLimitReturnsNoBlocksForOutstandingFeeFineBalanceWhenItemIsClaimedReturned() {
     final PatronBlockLimit limit = new PatronBlockLimit()
       .withPatronGroupId(randomId())
       .withConditionId(MAX_OUTSTANDING_FEE_FINE_BALANCE.getId())
@@ -125,7 +125,7 @@ public class ActionBlocksTest {
   }
 
   @Test
-  public void byLimitReturnsAllBlocksForBalanceWhenItemClaimedReturnedButFeeFineHasNoLoanId() {
+  void byLimitReturnsAllBlocksForBalanceWhenItemClaimedReturnedButFeeFineHasNoLoanId() {
     final PatronBlockLimit limit = new PatronBlockLimit()
       .withPatronGroupId(randomId())
       .withConditionId(MAX_OUTSTANDING_FEE_FINE_BALANCE.getId())

@@ -31,7 +31,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   private static final String LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID = "1de95200-72e4-4967-bdf8-257fb7559539";
 
   @AfterEach
-  public void tearDown() {
+  void tearDown() {
     PatronBlockLimits response = getWithStatus(PATRON_BLOCK_LIMITS_URL, SC_OK)
       .as(PatronBlockLimits.class);
     List<PatronBlockLimit> patronBlockLimits = response.getPatronBlockLimits();
@@ -42,7 +42,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
-  public void shouldReturnAllPatronBlockLimits() throws IOException, URISyntaxException {
+  void shouldReturnAllPatronBlockLimits() throws IOException, URISyntaxException {
     postAllLimits();
     PatronBlockLimits response = getWithStatus(PATRON_BLOCK_LIMITS_URL, SC_OK)
       .as(PatronBlockLimits.class);
@@ -50,7 +50,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
-  public void shouldReturnPatronBlockLimitByPatronBlockLimitId() throws IOException, URISyntaxException {
+  void shouldReturnPatronBlockLimitByPatronBlockLimitId() throws IOException, URISyntaxException {
     postAllLimits();
     PatronBlockLimit response = getWithStatus(PATRON_BLOCK_LIMITS_URL
       + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, SC_OK)
@@ -62,7 +62,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
-  public void cannotCreatePatronBlockLimitWithInvalidIntegerLimit()
+  void cannotCreatePatronBlockLimitWithInvalidIntegerLimit()
     throws IOException, URISyntaxException {
 
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
@@ -76,7 +76,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
-  public void shouldCreatePatronBlockLimitWithZeroValue()
+  void shouldCreatePatronBlockLimitWithZeroValue()
     throws IOException, URISyntaxException {
 
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
@@ -89,7 +89,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
-  public void cannotCreatePatronBlockLimitWithDoubleLimitOutOfRange()
+  void cannotCreatePatronBlockLimitWithDoubleLimitOutOfRange()
     throws IOException, URISyntaxException {
 
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
@@ -103,7 +103,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
-  public void shouldUpdatePatronBlockLimit() throws IOException, URISyntaxException {
+  void shouldUpdatePatronBlockLimit() throws IOException, URISyntaxException {
     postAllLimits();
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
       + "/limit_max_outstanding_feefine_balance_with_updated_value.json");
@@ -118,7 +118,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
-  public void shouldUpdatePatronBlockLimitWithZeroValue() throws IOException, URISyntaxException {
+  void shouldUpdatePatronBlockLimitWithZeroValue() throws IOException, URISyntaxException {
     postAllLimits();
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
       + "/limit_max_outstanding_feefine_balance_zero_value_limit.json");

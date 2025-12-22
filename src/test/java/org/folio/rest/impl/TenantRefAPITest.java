@@ -15,7 +15,7 @@ import io.vertx.junit5.VertxTestContext;
 public class TenantRefAPITest extends TestBase {
 
   @Test
-  public void postTenantShouldFailWhenRegistrationInPubsubFailed(VertxTestContext context) {
+  void postTenantShouldFailWhenRegistrationInPubsubFailed(VertxTestContext context) {
     wireMock.stubFor(post(urlPathMatching("/pubsub/.+"))
       .willReturn(aResponse().withStatus(500).withBody("Module registration failed")));
 
@@ -34,7 +34,7 @@ public class TenantRefAPITest extends TestBase {
   }
 
   @Test
-  public void deleteTenantShouldNotTryToUnregisterFromPubSub(
+  void deleteTenantShouldNotTryToUnregisterFromPubSub(
     VertxTestContext context) {
 
     wireMock.stubFor(delete(urlPathMatching("/pubsub/event-types/\\w+/publishers"))

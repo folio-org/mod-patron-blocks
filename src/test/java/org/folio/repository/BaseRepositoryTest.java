@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 public class BaseRepositoryTest {
 
   @Test
-  public void handlesCQL2PgJSONException() {
+  void handlesCQL2PgJSONException() {
     Exception thrown = assertThrows(RuntimeException.class,
         () -> new BaseRepository<Long>(null, "'", null));
     assertThat(thrown.getCause(), instanceOf(FieldException.class));

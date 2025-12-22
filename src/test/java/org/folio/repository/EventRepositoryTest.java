@@ -14,7 +14,7 @@ public class EventRepositoryTest extends TestBase {
   private EventRepository<ItemCheckedOutEvent> repository;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     resetMocks();
 
     repository = new EventRepository<>(postgresClient, ITEM_CHECKED_OUT_EVENT_TABLE_NAME,
@@ -24,7 +24,7 @@ public class EventRepositoryTest extends TestBase {
   }
 
   @Test
-  public void shouldAddUserSummary() {
+  void shouldAddUserSummary() {
     Future<Void> result = repository.removeByUserId("''", "''");
     assertFalse(result.succeeded());
   }
