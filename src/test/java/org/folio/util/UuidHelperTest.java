@@ -1,50 +1,49 @@
 package org.folio.util;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import jakarta.validation.ValidationException;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.provider.Arguments;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-
-@RunWith(JUnitParamsRunner.class)
 public class UuidHelperTest {
   private static final String VALID_UUID = "901d2ff8-7efb-4014-a9da-e1dc544402bc";
   private static final String INVALID_UUID = "901d2ff8-7efb-haha-a9da-e1dc544402bc";
   private static final String RANDOM_STRING = "not even close";
   private static final String EMPTY_STRING = "";
 
-  public Object[] parametersForShouldPass() {
-    return new Object[] {
-      new Object[]{VALID_UUID, true},
-      new Object[]{VALID_UUID, false},
-      new Object[]{null, false}
-    };
+  static Stream<Arguments> shouldPass() {
+    return Stream.of(
+      Arguments.of(VALID_UUID, true),
+      Arguments.of(VALID_UUID, false),
+      Arguments.of(null, false)
+    );
   }
 
-  @Test
-  @Parameters
-  public void shouldPass(String uuid, boolean isRequired) {
+  @ParameterizedTest
+  @MethodSource
+  void shouldPass(String uuid, boolean isRequired) {
     UuidHelper.validateUUID(uuid, isRequired);
   }
 
-  public Object[] parametersForShouldFail() {
-    return new Object[] {
-      new Object[]{INVALID_UUID, true},
-      new Object[]{INVALID_UUID, false},
-      new Object[]{RANDOM_STRING, true},
-      new Object[]{RANDOM_STRING, false},
-      new Object[]{EMPTY_STRING, true},
-      new Object[]{EMPTY_STRING, false},
-      new Object[]{null, true}
-    };
+  static Stream<Arguments> shouldFail() {
+    return Stream.of(
+      Arguments.of(INVALID_UUID, true),
+      Arguments.of(INVALID_UUID, false),
+      Arguments.of(RANDOM_STRING, true),
+      Arguments.of(RANDOM_STRING, false),
+      Arguments.of(EMPTY_STRING, true),
+      Arguments.of(EMPTY_STRING, false),
+      Arguments.of(null, true)
+    );
   }
 
-  @Test(expected = ValidationException.class)
-  @Parameters
-  public void shouldFail(String uuid, boolean isRequired) {
-    UuidHelper.validateUUID(uuid, isRequired);
+  @ParameterizedTest
+  @MethodSource
+  void shouldFail(String uuid, boolean isRequired) {
+    assertThrows(ValidationException.class, () -> UuidHelper.validateUUID(uuid, isRequired));
   }
-
 }

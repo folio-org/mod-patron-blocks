@@ -1,25 +1,23 @@
 package org.folio.rest;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+
+import org.junit.jupiter.api.Test;
+
+import io.vertx.core.json.JsonObject;
 
 /**
  * Test that shaded jar and Dockerfile work.
  *
  * <p>Test that module installation and module upgrade work.
  */
-@RunWith(VertxUnitRunner.class)
 public class ApiIT extends TestBase {
 
   @Test
-  public void health() {
+  void health() {
     okapiClient.get("/admin/health")
       .then()
       .statusCode(200)
@@ -42,10 +40,10 @@ public class ApiIT extends TestBase {
   }
 
   @Test
-  public void installAndUpgrade() {
-    postTenant(new JsonObject().put("module_to", "999999.0.0"));
+  void installAndUpgrade() {
+    postTenant(new JsonObject().put("module_to", "mod_patron_blocks-999999.0.0"));
     // migrate from 0.0.0, migration should be idempotent
-    postTenant(new JsonObject().put("module_to", "999999.0.0").put("module_from", "0.0.0"));
+    postTenant(new JsonObject().put("module_to", "mod_patron_blocks-999999.0.0").put("module_from", "mod_patron_blocks-0.0.0"));
 
     // smoke test
     String checkoutBody = new JsonObject()
