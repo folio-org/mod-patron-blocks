@@ -272,7 +272,9 @@ public class TestBase {
         return isReady.get();
       });
 
-    if (!isReady.get()) throw new RuntimeException("Could not connect to postgres");
+    if (!isReady.get()) {
+      throw new RuntimeException("Could not connect to postgres");
+    }
   }
 
   protected static <T> void awaitUntil(Callable<T> supplier, Matcher<? super T> matcher) {
