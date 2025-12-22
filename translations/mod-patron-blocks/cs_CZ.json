@@ -25,5 +25,6 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id": "Typ poplatku/pokuty (UUID)",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Poplatky/pokuty - otevřít poplatek/pokutu (UUID)",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Poplatek/pokuta (UUID)",
-    "fqm.entityType.user_summary.jsonb": "JSONB"
+    "fqm.entityType.user_summary.jsonb": "JSONB",
+    "fqm.entityType.user_summary._description": "Jednoduchý typ entity pro souhrnná data uživatelských blokací."
 }
