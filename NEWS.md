@@ -1,3 +1,6 @@
+## 1.11.4 2025-12-24
+* Upgrade to RMB 35.3.2 and Vertx 4.5.23 (MODPATBLK-217)
+
 ## 1.11.3 2025-04-03
 * Update loan schema, allow additional properties (MODPATBLK-198)
 
