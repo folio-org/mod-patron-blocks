@@ -7,6 +7,9 @@ import static java.lang.String.format;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.okapi.common.XOkapiHeaders.TOKEN;
 import static org.folio.okapi.common.XOkapiHeaders.URL;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,23 +17,24 @@ import java.util.Map;
 import org.folio.exception.EntityNotFoundException;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.User;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.fasterxml.jackson.core.JsonParseException;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class UsersClientTest extends TestBase {
   private static final String USER_ID = randomId();
   private static final String PATRON_GROUP_ID = randomId();
-  private static final UsersClient usersClient;
+  private UsersClient usersClient;
 
-  static {
+  @BeforeEach
+  void beforeEach() {
     Map<String, String> okapiHeaders = new HashMap<>();
     okapiHeaders.put(URL, getMockedOkapiUrl());
     okapiHeaders.put(TENANT, OKAPI_TENANT);
@@ -40,26 +44,22 @@ public class UsersClientTest extends TestBase {
   }
 
   @Test
-  public void getPatronGroupByExistingUserId(TestContext context) {
-    Async async = context.async();
-
+  void getPatronGroupByExistingUserId(VertxTestContext context) {
     mockUsersResponse(200, new JsonObject()
       .put("id", USER_ID)
       .put("patronGroup", PATRON_GROUP_ID)
       .encodePrettily());
 
     usersClient.findPatronGroupIdForUser(USER_ID)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(groupId -> {
-        context.assertEquals(PATRON_GROUP_ID, groupId);
-        async.complete();
+        assertEquals(PATRON_GROUP_ID, groupId);
+        context.completeNow();
       });
   }
 
   @Test
-  public void getPatronGroupByNonExistentUserId(TestContext context) {
-    Async async = context.async();
-
+  void getPatronGroupByNonExistentUserId(VertxTestContext context) {
     String userId = randomId();
     int responseCode = 404;
     String responseBody = "User not found";
@@ -67,33 +67,29 @@ public class UsersClientTest extends TestBase {
     mockUsersResponse(responseCode, responseBody);
 
     usersClient.findPatronGroupIdForUser(userId)
-      .onSuccess(context::fail)
+      .onSuccess(context::failNow)
       .onFailure(throwable -> {
-        context.assertTrue(throwable instanceof EntityNotFoundException);
-        context.assertEquals(format("Failed to fetch %s by ID: %s. Response: %d %s",
+        assertTrue(throwable instanceof EntityNotFoundException);
+        assertEquals(format("Failed to fetch %s by ID: %s. Response: %d %s",
           User.class.getName(), userId, responseCode, responseBody), throwable.getMessage());
-        async.complete();
+        context.completeNow();
       });
   }
 
   @Test
-  public void invalidJsonResponse(TestContext context) {
-    Async async = context.async();
-
+  void invalidJsonResponse(VertxTestContext context) {
     mockUsersResponse(200, "not really json");
 
     usersClient.findPatronGroupIdForUser(randomId())
-      .onSuccess(context::fail)
+      .onSuccess(context::failNow)
       .onFailure(throwable -> {
-        context.assertTrue(throwable instanceof JsonParseException);
-        async.complete();
+        assertInstanceOf(JsonParseException.class, throwable);
+        context.completeNow();
       });
   }
 
   @Test
-  public void additionalFieldShouldBeAllowed(TestContext context) {
-    Async async = context.async();
-
+  void additionalFieldShouldBeAllowed(VertxTestContext context) {
     mockUsersResponse(200, new JsonObject()
       .put("id", USER_ID)
       .put("patronGroup", PATRON_GROUP_ID)
@@ -101,10 +97,10 @@ public class UsersClientTest extends TestBase {
       .encodePrettily());
 
     usersClient.findPatronGroupIdForUser(USER_ID)
-      .onFailure(context::fail)
+      .onFailure(context::failNow)
       .onSuccess(groupId -> {
-        context.assertEquals(PATRON_GROUP_ID, groupId);
-        async.complete();
+        assertEquals(PATRON_GROUP_ID, groupId);
+        context.completeNow();
       });
   }
 

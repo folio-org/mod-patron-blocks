@@ -1,8 +1,6 @@
 package org.folio.rest.handlers;
 
 import static java.util.Collections.singletonList;
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
-import static org.folio.rest.utils.EntityBuilder.buildDefaultMetadata;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
 
@@ -12,29 +10,34 @@ import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class ItemDeclaredLostEventHandlerTest extends EventHandlerTestBase {
-  private static final EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler =
-    new EventHandler<>(postgresClient);
+  private EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler;
+  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
-  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
-    new EventHandler<>(postgresClient);
-
-  @Before
-  public void beforeEach(TestContext context) {
+  @BeforeEach
+  void beforeEach() {
     super.resetMocks();
+
+    initUserSummaryRepository();
+
+    itemDeclaredLostEventHandler = new EventHandler<>(postgresClient);
+    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+    deleteAllFromTable(ITEM_DECLARED_LOST_EVENT_TABLE_NAME);
+    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
   }
 
   @Test
-  public void shouldFlipItemLostFlagWhenUserSummaryExists(TestContext context) {
+  void shouldFlipItemLostFlagWhenUserSummaryExists(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     Date dueDate = new Date();
@@ -55,6 +58,8 @@ public class ItemDeclaredLostEventHandlerTest extends EventHandlerTestBase {
           .withItemClaimedReturned(false)
           .withItemLost(true)));
 
-    checkUserSummary(userSummaryId, expectedUserSummary, context);
+    checkUserSummary(userSummaryId, expectedUserSummary);
+
+    context.completeNow();
   }
 }

@@ -8,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.domain.Event;
 import org.folio.domain.EventType;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.repository.EventRepository;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
@@ -160,7 +159,7 @@ public class EventService {
   }
 
   public Future<Void> removeAllEvents(String tenantId) {
-    return GenericCompositeFuture.all(List.of(itemCheckedOutEventRepository.removeAll(tenantId),
+    return Future.all(List.of(itemCheckedOutEventRepository.removeAll(tenantId),
       itemCheckedInEventRepository.removeAll(tenantId),
       itemClaimedReturnedEventRepository.removeAll(tenantId),
       itemDeclaredLostEventRepository.removeAll(tenantId),
@@ -171,7 +170,7 @@ public class EventService {
   }
 
   public Future<Void> removeAllEventsForUser(String tenantId, String userId) {
-    return GenericCompositeFuture.all(
+    return Future.all(
       List.of(itemCheckedOutEventRepository.removeByUserId(tenantId, userId),
         itemCheckedInEventRepository.removeByUserId(tenantId, userId),
         itemClaimedReturnedEventRepository.removeByUserId(tenantId, userId),

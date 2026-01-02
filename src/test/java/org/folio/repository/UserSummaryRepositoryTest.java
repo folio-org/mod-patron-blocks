@@ -3,50 +3,50 @@ package org.folio.repository;
 import static java.math.BigDecimal.TEN;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.TestBase;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.Future;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgException;
 
-@RunWith(VertxUnitRunner.class)
 public class UserSummaryRepositoryTest extends TestBase {
   private final UserSummaryRepository repository = new UserSummaryRepository(postgresClient);
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     resetMocks();
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
   }
 
   @Test
-  public void shouldAddUserSummary(TestContext context) {
+  void shouldAddUserSummary(VertxTestContext context) {
     String summaryId = randomId();
     UserSummary userSummaryToSave = createUserSummary(summaryId, randomId());
     waitFor(repository.save(userSummaryToSave));
 
     Optional<UserSummary> retrievedUserSummary = waitFor(repository.get(summaryId));
 
-    context.assertTrue(retrievedUserSummary.isPresent());
+    assertTrue(retrievedUserSummary.isPresent());
     assertSummariesAreEqual(userSummaryToSave, retrievedUserSummary.get(), context);
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldFailWhenAttemptingToSaveSummaryWithDuplicateId(TestContext context) {
+  void shouldFailWhenAttemptingToSaveSummaryWithDuplicateId(VertxTestContext context) {
     String sameSummaryId = randomId();
     UserSummary userSummaryToSave1 = createUserSummary(sameSummaryId, randomId());
     UserSummary userSummaryToSave2 = createUserSummary(sameSummaryId, randomId());
@@ -55,14 +55,16 @@ public class UserSummaryRepositoryTest extends TestBase {
     Future<String> saveDuplicateSummary = repository.save(userSummaryToSave2);
     waitFor(saveDuplicateSummary);
 
-    context.assertTrue(saveDuplicateSummary.failed());
-    context.assertTrue(saveDuplicateSummary.cause() instanceof PgException);
-    context.assertTrue(saveDuplicateSummary.cause().getMessage().contains(
+    assertTrue(saveDuplicateSummary.failed());
+    assertInstanceOf(PgException.class, saveDuplicateSummary.cause());
+    assertTrue(saveDuplicateSummary.cause().getMessage().contains(
       "duplicate key value violates unique constraint \"user_summary_pkey\""));
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldFailWhenAttemptingToSaveSummaryWithDuplicateUserId(TestContext context) {
+  void shouldFailWhenAttemptingToSaveSummaryWithDuplicateUserId(VertxTestContext context) {
     String sameUserId = randomId();
     UserSummary userSummaryToSave1 = createUserSummary(randomId(), sameUserId);
     UserSummary userSummaryToSave2 = createUserSummary(randomId(), sameUserId);
@@ -71,17 +73,19 @@ public class UserSummaryRepositoryTest extends TestBase {
     Future<String> saveDuplicateSummary = repository.save(userSummaryToSave2);
     waitFor(saveDuplicateSummary);
 
-    context.assertTrue(saveDuplicateSummary.failed());
-    context.assertTrue(saveDuplicateSummary.cause() instanceof PgException);
-    context.assertTrue(saveDuplicateSummary.cause().getMessage().contains(
+    assertTrue(saveDuplicateSummary.failed());
+    assertTrue(saveDuplicateSummary.cause() instanceof PgException);
+    assertTrue(saveDuplicateSummary.cause().getMessage().contains(
       "duplicate key value violates unique constraint \"user_summary_userid_idx_unique\""));
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldGetUserSummaryById(TestContext context) {
+  void shouldGetUserSummaryById(VertxTestContext context) {
     UserSummary expectedUserSummary = createUserSummary(randomId(), randomId());
 
-    waitFor(GenericCompositeFuture.all(List.of(
+    waitFor(Future.all(List.of(
       repository.save(createUserSummary(randomId(), randomId())),
       repository.save(expectedUserSummary),
       repository.save(createUserSummary(randomId(), randomId()))))
@@ -90,15 +94,17 @@ public class UserSummaryRepositoryTest extends TestBase {
     Optional<UserSummary> retrievedUserSummary =
       waitFor(repository.get(expectedUserSummary.getId()));
 
-    context.assertTrue(retrievedUserSummary.isPresent());
+    assertTrue(retrievedUserSummary.isPresent());
     assertSummariesAreEqual(expectedUserSummary, retrievedUserSummary.get(), context);
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldGetUserSummaryByUserId(TestContext context) {
+  void shouldGetUserSummaryByUserId(VertxTestContext context) {
     UserSummary expectedUserSummary = createUserSummary(randomId(), randomId());
 
-    waitFor(GenericCompositeFuture.all(List.of(
+    waitFor(Future.all(List.of(
       repository.save(createUserSummary(randomId(), randomId())),
       repository.save(expectedUserSummary),
       repository.save(createUserSummary(randomId(), randomId()))))
@@ -107,12 +113,14 @@ public class UserSummaryRepositoryTest extends TestBase {
     Optional<UserSummary> retrievedUserSummary =
       waitFor(repository.getByUserId(expectedUserSummary.getUserId()));
 
-    context.assertTrue(retrievedUserSummary.isPresent());
+    assertTrue(retrievedUserSummary.isPresent());
     assertSummariesAreEqual(expectedUserSummary, retrievedUserSummary.get(), context);
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldUpdateUserSummary(TestContext context) {
+  void shouldUpdateUserSummary(VertxTestContext context) {
     String userSummaryId = randomId();
 
     waitFor(repository.save(
@@ -129,20 +137,22 @@ public class UserSummaryRepositoryTest extends TestBase {
       waitFor(repository.update(userSummary1));
       Optional<UserSummary> userSummary = waitFor(repository.get(userSummaryId));
 
-      context.assertTrue(userSummary.isPresent());
+      assertTrue(userSummary.isPresent());
       assertSummariesAreEqual(userSummary1, userSummary.get(), context);
     });
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldDeleteUserSummary(TestContext context) {
+  void shouldDeleteUserSummary(VertxTestContext context) {
     String userSummaryId1 = randomId();
     String userSummaryId2 = randomId();
     String userSummaryId3 = randomId();
 
     UserSummary userSummary = createUserSummary(userSummaryId2, randomId());
 
-    waitFor(GenericCompositeFuture.all(List.of(
+    waitFor(Future.all(List.of(
       repository.save(
         createUserSummary(userSummaryId1, randomId())),
       repository.save(userSummary),
@@ -153,9 +163,9 @@ public class UserSummaryRepositoryTest extends TestBase {
     List<UserSummary> retrievedSummaries =
       waitFor(repository.get(null, 0, 100));
 
-    context.assertEquals(3, retrievedSummaries.size());
+    assertEquals(3, retrievedSummaries.size());
 
-    waitFor(GenericCompositeFuture.all(List.of(
+    waitFor(Future.all(List.of(
       repository.delete(userSummaryId1),
       repository.delete(userSummaryId3)))
     );
@@ -163,12 +173,14 @@ public class UserSummaryRepositoryTest extends TestBase {
     List<UserSummary> remainingUserSummaries =
       waitFor(repository.get(null, 0, 100));
 
-    context.assertEquals(1, remainingUserSummaries.size());
+    assertEquals(1, remainingUserSummaries.size());
     assertSummariesAreEqual(userSummary, remainingUserSummaries.get(0), context);
+
+    context.completeNow();
   }
 
   @Test
-  public void shouldUpsertUserSummary(TestContext context) {
+  void shouldUpsertUserSummary(VertxTestContext context) {
     String summaryId = randomId();
     UserSummary initialUserSummary = createUserSummary(summaryId, randomId());
 
@@ -176,7 +188,7 @@ public class UserSummaryRepositoryTest extends TestBase {
     Optional<UserSummary> retrievedInitialSummaryOptional =
       waitFor(repository.get(summaryId));
 
-    context.assertTrue(retrievedInitialSummaryOptional.isPresent());
+    assertTrue(retrievedInitialSummaryOptional.isPresent());
     UserSummary retrievedInitialSummary = retrievedInitialSummaryOptional.get();
     assertSummariesAreEqual(initialUserSummary, retrievedInitialSummary, context);
 
@@ -192,8 +204,10 @@ public class UserSummaryRepositoryTest extends TestBase {
     Optional<UserSummary> retrievedUpdatedSummary =
       waitFor(repository.get(summaryId));
 
-    context.assertTrue(retrievedUpdatedSummary.isPresent());
+    assertTrue(retrievedUpdatedSummary.isPresent());
     assertSummariesAreEqual(updatedSummary, retrievedUpdatedSummary.get(), context);
+
+    context.completeNow();
   }
 
   private UserSummary createUserSummary(String id, String userId) {
@@ -216,11 +230,15 @@ public class UserSummaryRepositoryTest extends TestBase {
       .withOpenFeesFines(asList(openFeeFine, openFeeFine));
   }
 
-  private void assertSummariesAreEqual(UserSummary expected, UserSummary actual, TestContext ctx) {
-    ctx.assertEquals(expected.getId(), actual.getId());
-    ctx.assertEquals(expected.getUserId(), actual.getUserId());
-    ctx.assertEquals(expected.getOpenFeesFines().size(), actual.getOpenFeesFines().size());
-    ctx.assertEquals(expected.getOpenLoans().size(), actual.getOpenLoans().size());
+  private void assertSummariesAreEqual(UserSummary expected, UserSummary actual, 
+    VertxTestContext ctx) {
+    
+    assertEquals(expected.getId(), actual.getId());
+    assertEquals(expected.getUserId(), actual.getUserId());
+    assertEquals(expected.getOpenFeesFines().size(), actual.getOpenFeesFines().size());
+    assertEquals(expected.getOpenLoans().size(), actual.getOpenLoans().size());
+    
+    ctx.completeNow();
   }
 
 }

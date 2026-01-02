@@ -1,10 +1,9 @@
 package org.folio.rest.handlers;
 
 import static java.util.Collections.singletonList;
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
-import static org.folio.rest.utils.EntityBuilder.buildDefaultMetadata;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Date;
 import java.util.Optional;
@@ -14,30 +13,31 @@ import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
 public class LoanDueDateChangedEventHandlerTest extends EventHandlerTestBase {
 
-  private static final EventHandler<LoanDueDateChangedEvent> loanDueDateChangedEventHandler =
-    new EventHandler<>(postgresClient);
+  private EventHandler<LoanDueDateChangedEvent> loanDueDateChangedEventHandler;
+  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
-  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
-    new EventHandler<>(postgresClient);
-
-  @Before
-  public void beforeEach(TestContext context) {
+  @BeforeEach
+  void beforeEach() {
     super.resetMocks();
+
+    initUserSummaryRepository();
+
+    loanDueDateChangedEventHandler = new EventHandler<>(postgresClient);
+    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
   }
 
   @Test
-  public void existingLoanIsUpdated(TestContext context) {
+  void existingLoanIsUpdated(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
 
@@ -54,7 +54,7 @@ public class LoanDueDateChangedEventHandlerTest extends EventHandlerTestBase {
     LoanDueDateChangedEvent event = buildLoanDueDateChangedEvent(userId, loanId, newDueDate, true);
 
     String updatedSummaryId = waitFor(loanDueDateChangedEventHandler.handle(event));
-    context.assertEquals(summaryBeforeEvent.getId(), updatedSummaryId);
+    assertEquals(summaryBeforeEvent.getId(), updatedSummaryId);
 
     UserSummary expectedUserSummary = summaryBeforeEvent
       .withOpenLoans(singletonList(new OpenLoan()
@@ -62,6 +62,8 @@ public class LoanDueDateChangedEventHandlerTest extends EventHandlerTestBase {
           .withDueDate(event.getDueDate())
           .withRecall(true)));
 
-    checkUserSummary(updatedSummaryId, expectedUserSummary, context);
+    checkUserSummary(updatedSummaryId, expectedUserSummary);
+
+    context.completeNow();
   }
 }

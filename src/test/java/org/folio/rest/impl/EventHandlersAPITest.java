@@ -2,7 +2,6 @@ package org.folio.rest.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedInEvent;
@@ -10,7 +9,7 @@ import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemClaimedReturnedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -28,33 +27,31 @@ import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-
-@RunWith(VertxUnitRunner.class)
 public class EventHandlersAPITest extends TestBase {
   public static final String USER_ID = randomId();
   public static final String INVALID_USER_ID = USER_ID + "xyz";
 
-  private final UserSummaryRepository userSummaryRepository =
-    new UserSummaryRepository(postgresClient);
+  private UserSummaryRepository userSummaryRepository;
 
-  @After
-  public void afterEach() {
+  @BeforeEach
+  void beforeEach() {
     super.resetMocks();
+
+    userSummaryRepository = new UserSummaryRepository(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
   }
 
   @Test
-  public void feeFineBalanceChangedEventProcessedSuccessfully() {
+  void feeFineBalanceChangedEventProcessedSuccessfully() {
     sendEventAndVerifyThatUserSummaryWasCreated(createFeeFineBalanceChangedEvent());
   }
 
   @Test
-  public void shouldNotCreateUserSummary() {
+  void shouldNotCreateUserSummary() {
     assertFalse(getUserSummary().isPresent());
     eventClient.sendEvent(createItemCheckedInEvent());
     eventClient.sendEvent(createItemClaimedReturnedEvent());
@@ -65,84 +62,84 @@ public class EventHandlersAPITest extends TestBase {
   }
 
   @Test
-  public void feeFineBalanceChangedEventValidationFails() {
+  void feeFineBalanceChangedEventValidationFails() {
     eventClient.sendEventAndVerifyValidationFailure(
       createFeeFineBalanceChangedEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
-  public void itemCheckedInEventProcessedSuccessfully() {
+  void itemCheckedInEventProcessedSuccessfully() {
     eventClient.sendEvent(createItemCheckedInEvent());
   }
 
   @Test
-  public void itemCheckedInEventValidationFails() {
+  void itemCheckedInEventValidationFails() {
     eventClient.sendEventAndVerifyValidationFailure(
       createItemCheckedInEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
-  public void itemCheckedOutEventProcessedSuccessfully() {
+  void itemCheckedOutEventProcessedSuccessfully() {
     sendEventAndVerifyThatUserSummaryWasCreated(createItemCheckedOutEvent());
   }
 
   @Test
-  public void itemCheckedOutEventValidationFails() {
+  void itemCheckedOutEventValidationFails() {
     eventClient.sendEventAndVerifyValidationFailure(
       createItemCheckedOutEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
-  public void loanDueDateChangedEventProcessedSuccessfully() {
+  void loanDueDateChangedEventProcessedSuccessfully() {
     eventClient.sendEvent(createLoanDueDateChangedEvent());
   }
 
   @Test
-  public void loanDueDateChangedEventValidationFails() {
+  void loanDueDateChangedEventValidationFails() {
     eventClient.sendEventAndVerifyValidationFailure(
       createLoanDueDateChangedEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
-  public void itemDeclaredLostEventProcessedSuccessfully() {
+  void itemDeclaredLostEventProcessedSuccessfully() {
     eventClient.sendEvent(createItemDeclaredLostEvent());
   }
 
   @Test
-  public void itemDeclaredLostEventValidationFails() {
+  void itemDeclaredLostEventValidationFails() {
     eventClient.sendEventAndVerifyValidationFailure(
       createItemDeclaredLostEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
-  public void itemAgedToLostEventProcessedSuccessfully() {
+  void itemAgedToLostEventProcessedSuccessfully() {
     eventClient.sendEvent(createItemAgedToLostEvent());
   }
 
   @Test
-  public void itemAgedToLostEventValidationFails() {
+  void itemAgedToLostEventValidationFails() {
     eventClient.sendEventAndVerifyValidationFailure(
       createItemAgedToLostEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
-  public void itemClaimedReturnedEventProcessedSuccessfully() {
+  void itemClaimedReturnedEventProcessedSuccessfully() {
     eventClient.sendEvent(createItemClaimedReturnedEvent());
   }
 
   @Test
-  public void itemClaimedReturnedEventValidationFails() {
+  void itemClaimedReturnedEventValidationFails() {
     eventClient.sendEventAndVerifyValidationFailure(
       createItemClaimedReturnedEvent().withUserId(INVALID_USER_ID));
   }
 
   @Test
-  public void eventHandlingFailsWhenEventJsonIsInvalid() {
+  void eventHandlingFailsWhenEventJsonIsInvalid() {
     eventClient.sendEvent("not json", FeeFineBalanceChangedEvent.class, SC_BAD_REQUEST);
   }
 
   @Test
-  public void loanDueDateChangedEventWithMissingRequiredDueDateProperty() {
+  void loanDueDateChangedEventWithMissingRequiredDueDateProperty() {
     eventClient.sendEventAndVerifyValidationFailure(
       createLoanDueDateChangedEvent().withDueDate(null));
   }

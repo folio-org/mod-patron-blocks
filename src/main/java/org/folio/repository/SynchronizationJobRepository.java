@@ -14,7 +14,6 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -69,9 +68,7 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
 
   public Future<RowSet<Row>> select(String sql) {
     log.debug("select:: parameters sql: {}", sql);
-    Promise<RowSet<Row>> promise = Promise.promise();
-    pgClient.select(sql, promise);
-    return promise.future()
+    return pgClient.select(sql)
       .onSuccess(r -> log.info("select:: result: RowSet with {} rows", r.rowCount()));
   }
 

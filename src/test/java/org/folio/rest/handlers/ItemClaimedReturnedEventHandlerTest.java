@@ -1,8 +1,6 @@
 package org.folio.rest.handlers;
 
 import static java.util.Collections.singletonList;
-import static org.folio.repository.UserSummaryRepository.USER_SUMMARY_TABLE_NAME;
-import static org.folio.rest.utils.EntityBuilder.buildDefaultMetadata;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemClaimedReturnedEvent;
 
@@ -12,27 +10,27 @@ import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxTestContext;
 
-@RunWith(VertxUnitRunner.class)
 public class ItemClaimedReturnedEventHandlerTest extends EventHandlerTestBase {
-  private static final EventHandler<ItemClaimedReturnedEvent> itemClaimedReturnedEventHandler =
-    new EventHandler<>(postgresClient);
-  private static final EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler =
-    new EventHandler<>(postgresClient);
+  private EventHandler<ItemClaimedReturnedEvent> itemClaimedReturnedEventHandler;
+  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
 
-  @Before
-  public void beforeEach() {
+  @BeforeEach
+  void beforeEach() {
+    initUserSummaryRepository();
+
+    itemClaimedReturnedEventHandler = new EventHandler<>(postgresClient);
+    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
   }
 
   @Test
-  public void shouldFlipItemClaimedReturnedFlagWhenUserSummaryExists(TestContext context) {
+  void shouldFlipItemClaimedReturnedFlagWhenUserSummaryExists(VertxTestContext context) {
     String userId = randomId();
     String loanId = randomId();
     Date dueDate = new Date();
@@ -56,6 +54,8 @@ public class ItemClaimedReturnedEventHandlerTest extends EventHandlerTestBase {
 
     userSummary.getOpenLoans().get(0).setItemClaimedReturned(true);
 
-    checkUserSummary(summaryId, userSummary, context);
+    checkUserSummary(summaryId, userSummary);
+
+    context.completeNow();
   }
 }

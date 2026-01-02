@@ -3,60 +3,51 @@ package org.folio.rest.impl;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.folio.rest.TestBase;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxTestContext;
 
-import java.util.UUID;
-
-@RunWith(VertxUnitRunner.class)
 public class TenantRefAPITest extends TestBase {
 
   @Test
-  public void postTenantShouldFailWhenRegistrationInPubsubFailed(TestContext context) {
-    Async async = context.async();
-
+  void postTenantShouldFailWhenRegistrationInPubsubFailed(VertxTestContext context) {
     wireMock.stubFor(post(urlPathMatching("/pubsub/.+"))
       .willReturn(aResponse().withStatus(500).withBody("Module registration failed")));
 
     try {
       tenantClient.postTenant(getTenantAttributes(), response -> {
-        context.assertEquals(500, response.result().statusCode());
+        assertEquals(500, response.result().statusCode());
 
-        context.assertTrue(response.result().bodyAsString().contains(
+        assertTrue(response.result().bodyAsString().contains(
           "EventDescriptor was not registered for eventType"));
 
-        async.complete();
+        context.completeNow();
       });
     } catch (Exception e) {
-      context.fail(e);
+      context.failNow(e);
     }
   }
 
   @Test
-  public void deleteTenantShouldNotTryToUnregisterFromPubSub(
-    TestContext context) {
-
-    Async async = context.async();
+  void deleteTenantShouldNotTryToUnregisterFromPubSub(
+    VertxTestContext context) {
 
     wireMock.stubFor(delete(urlPathMatching("/pubsub/event-types/\\w+/publishers"))
       .willReturn(aResponse().withStatus(500)));
 
     try {
       tenantClient.deleteTenantByOperationId(jobId, response -> {
-        context.assertEquals(204, response.result().statusCode());
+        assertEquals(204, response.result().statusCode());
 
-        async.complete();
+        context.completeNow();
       });
     } catch (Exception e) {
-      context.fail(e);
+      context.failNow(e);
     }
   }
 }

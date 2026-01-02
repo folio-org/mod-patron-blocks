@@ -129,17 +129,17 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     loggingResponseHandler("postAutomatedPatronBlocksSynchronizationStart", asyncResultHandler, log)
       .handle(succeededFuture(PostAutomatedPatronBlocksSynchronizationStartResponse.respond202()));
 
-    vertxContext.owner().executeBlocking(promise ->
+    vertxContext.owner().executeBlocking(() ->
       new SynchronizationJobService(okapiHeaders, vertxContext.owner())
         .runSynchronization()
-        .onComplete(v -> promise.complete()),
-      response -> {
-        if (response.failed()) {
-          log.warn("postAutomatedPatronBlocksSynchronizationStart:: synchronization failed",
-            response.cause());
-        } else {
-          log.info("postAutomatedPatronBlocksSynchronizationStart:: synchronization completed");
-        }
-    });
+        .onComplete(response -> {
+          if (response.failed()) {
+            log.warn("postAutomatedPatronBlocksSynchronizationStart:: synchronization failed",
+              response.cause());
+          } else {
+            log.info("postAutomatedPatronBlocksSynchronizationStart:: synchronization completed");
+          }
+        })
+    );
   }
 }
