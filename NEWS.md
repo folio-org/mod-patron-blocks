@@ -1,3 +1,7 @@
+## 1.12.2 2025-08-22
+* Fix DB timeout issue during synchronization (MODPATBLK-209)
+* Remove permissions for event handlers (MODPATBLK-212)
+
 ## 1.12.1 2025-04-08
 * Fix synchronization issue by updating loan schema (MODPATBLK-198)
 
