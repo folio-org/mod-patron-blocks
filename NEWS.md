@@ -1,3 +1,6 @@
+## 1.12.3 2026-01-08
+* Update to Vertx 4.5.23 and RMB 35.4.2 (MODPATBLK-218)
+
 ## 1.12.2 2025-08-22
 * Fix DB timeout issue during synchronization (MODPATBLK-209)
 * Remove permissions for event handlers (MODPATBLK-212)
