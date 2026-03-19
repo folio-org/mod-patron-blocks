@@ -96,12 +96,17 @@
             "description": "Unique ID of the fee/fine type",
             "type": "string",
             "$ref": "raml-util/schemas/uuid.schema",
-            "x-fqm-value-getter": "(SELECT array_agg(fee_fine_type.value->>'feeFineType' ORDER BY fee_fine_type.value->>'feeFineType') FROM jsonb_array_elements(:src__circulation__patron_blocks__user_summary.jsonb->'openFeesFines') AS fee_fine_type)",
-            "x-fqm-filter-value-getter": "(SELECT array_agg(fee_fine_type.value->>'feeFineType' ORDER BY fee_fine_type.value->>'feeFineType') FROM jsonb_array_elements(:src__circulation__patron_blocks__user_summary.jsonb->'openFeesFines') AS fee_fine_type)",
+            "x-fqm-value-getter": "(SELECT array_agg(fee_fine_type.value->>'feeFineTypeId' ORDER BY fee_fine_type.value->>'feeFineTypeId') FROM jsonb_array_elements(:src__circulation__patron_blocks__user_summary.jsonb->'openFeesFines') AS fee_fine_type)",
+            "x-fqm-filter-value-getter": "(SELECT array_agg(fee_fine_type.value->>'feeFineTypeId' ORDER BY fee_fine_type.value->>'feeFineTypeId') FROM jsonb_array_elements(:src__circulation__patron_blocks__user_summary.jsonb->'openFeesFines') AS fee_fine_type)",
             "x-fqm-data-type": "stringType",
             "x-fqm-source": {
-              "columnName": "fee_fine_type",
-              "entityTypeId": "b721ddae-0e0e-52f9-83cb-aa5cf83008fe"
+              "columnName": "open_fees_fines[*]->feeFineTypeId",
+              "entityTypeId": "f5443525-d2a9-5e59-8f4a-4ac526ec8528"
+            },
+            "x-fqm-value-source-api": {
+              "path": "feefines",
+              "labelJsonPath": "$.feefines.*.feeFineType",
+              "valueJsonPath": "$.feefines.*.id"
             }
           },
           "loanId": {
