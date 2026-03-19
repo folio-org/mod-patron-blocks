@@ -18,13 +18,13 @@
   "fqm.entityType.user_summary.open_loans.loan_id._qualified": "Open loans loan UUID",
   "fqm.entityType.user_summary.open_loans.loan_id": "Loan UUID",
   "fqm.entityType.user_summary.open_fees_fines": "Open fees/fines",
-  "fqm.entityType.user_summary.open_fees_fines.balance._qualified": "Open fees/fines balance",
+  "fqm.entityType.user_summary.open_fees_fines.balance._qualified": "Open fees/fines — Balance",
   "fqm.entityType.user_summary.open_fees_fines.balance": "Balance",
-  "fqm.entityType.user_summary.open_fees_fines.loan_id._qualified": "Open fees/fines loan UUID",
+  "fqm.entityType.user_summary.open_fees_fines.loan_id._qualified": "Open fees/fines — Loan UUID",
   "fqm.entityType.user_summary.open_fees_fines.loan_id": "Loan UUID",
-  "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id._qualified": "Open fees/fines fee fine type UUID",
-  "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id": "Fee fine type UUID",
-  "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Open fees/fines fee fine UUID",
+  "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id._qualified": "Open fees/fines — Fee fine type",
+  "fqm.entityType.user_summary.open_fees_fines.fee_fine_type_id": "Fee fine type",
+  "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Open fees/fines — Fee fine UUID",
   "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Fee fine UUID",
   "fqm.entityType.user_summary.jsonb": "JSONB"
 }
