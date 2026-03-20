@@ -100,14 +100,15 @@
             "x-fqm-filter-value-getter": "(SELECT array_agg(fee_fine_type.value->>'feeFineTypeId' ORDER BY fee_fine_type.value->>'feeFineTypeId') FROM jsonb_array_elements(:src__circulation__patron_blocks__user_summary.jsonb->'openFeesFines') AS fee_fine_type)",
             "x-fqm-data-type": "stringType",
             "x-fqm-source": {
-              "columnName": "open_fees_fines[*]->feeFineTypeId",
+              "columnName": "open_fees_fines[*]->fee_fine_type_id",
               "entityTypeId": "f5443525-d2a9-5e59-8f4a-4ac526ec8528"
             },
             "x-fqm-value-source-api": {
               "path": "feefines",
               "labelJsonPath": "$.feefines.*.feeFineType",
               "valueJsonPath": "$.feefines.*.id"
-            }
+            },
+            "x-fqm-property": "feeFineType"
           },
           "loanId": {
             "description": "Unique ID of the loan the fee/fine was created for",
@@ -127,7 +128,7 @@
           "balance"
         ]
       },
-      "x-fqm-value-getter": "( SELECT jsonb_agg( record.value || jsonb_build_object('feeFineTypeId', fee_fine_type.jsonb ->> 'feeFineType') ORDER BY record.value ->> 'fee_fine_type_id') FROM jsonb_array_elements((:sourceAlias.jsonb -> 'openFeesFines')) record(value) LEFT JOIN ${tenant_id}_mod_fqm_manager.src__circulation__feesfines__feefines fee_fine_type ON (record.value ->> 'feeFineTypeId') = fee_fine_type.id::text)::text",
+      "x-fqm-value-getter": "( SELECT jsonb_agg( record.value || jsonb_build_object('feeFineType', fee_fine_type.jsonb ->> 'feeFineType') ORDER BY record.value ->> 'feeFineTypeId') FROM jsonb_array_elements((:sourceAlias.jsonb -> 'openFeesFines')) record(value) LEFT JOIN ${tenant_id}_mod_fqm_manager.src__circulation__feesfines__feefines fee_fine_type ON (record.value ->> 'feeFineTypeId') = fee_fine_type.id::text)::text",
       "x-fqm-essential": true
     },
     "metadata": {
