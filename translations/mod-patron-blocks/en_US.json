@@ -30,5 +30,5 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Open fees/fines — Fee fine UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Fee fine UUID",
     "fqm.entityType.user_summary.jsonb": "JSONB",
-    "fqm.entityType.user_summary._description": "Simple entity type for user blocks summary data."
+    "fqm.entityType.user_summary._description": "Simple entity type for user blocks summary data. This entity type can be used for debugging purposes when user summaries fall out of sync."
 }
