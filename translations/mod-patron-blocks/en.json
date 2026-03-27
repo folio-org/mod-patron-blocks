@@ -1,6 +1,6 @@
 {
   "fqm.entityType.user_summary": "User blocks summary",
-  "fqm.entityType.user_summary._description": "Simple entity type for user blocks summary data.",
+  "fqm.entityType.user_summary._description": "Simple entity type for user blocks summary data. This entity type can be used for debugging purposes when user summaries fall out of sync.",
   "fqm.entityType.user_summary.id": "UUID",
   "fqm.entityType.user_summary.version": "Record version",
   "fqm.entityType.user_summary.user_id": "User UUID",
