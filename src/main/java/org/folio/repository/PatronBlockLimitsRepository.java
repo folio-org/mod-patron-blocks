@@ -1,5 +1,7 @@
 package org.folio.repository;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,11 +25,15 @@ public class PatronBlockLimitsRepository extends BaseRepository<PatronBlockLimit
 
   public Future<List<PatronBlockLimit>> findLimitsForPatronGroup(String patronGroupId) {
     log.debug("findLimitsForPatronGroup:: parameters patronGroupId: {}", patronGroupId);
+    long criterionStartedAt = System.nanoTime();
     Criterion criterion = new Criterion(new Criteria()
       .addField(PATRON_GROUP_ID_FIELD)
       .setOperation(OPERATION_EQUALS)
       .setVal(patronGroupId)
       .setJSONB(true));
+
+    log.info("findLimitsForPatronGroup:: criterion prepared in {} ms for patronGroupId {}, invoking get",
+      NANOSECONDS.toMillis(System.nanoTime() - criterionStartedAt), patronGroupId);
 
     return get(criterion);
   }

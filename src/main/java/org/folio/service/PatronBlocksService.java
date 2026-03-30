@@ -3,6 +3,7 @@ package org.folio.service;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.util.LogUtil.asJson;
@@ -110,8 +111,13 @@ public class PatronBlocksService {
 
     return usersClient.findPatronGroupIdForUser(ctx.userSummary.getUserId())
       .map(ctx::withUserGroupId)
-      .onSuccess(result -> log.info("addUserGroupIdToContext:: result: {}",
-        () -> asJson(result)));
+      .onSuccess(result -> {
+        long serializationStartedAt = System.nanoTime();
+        String resultJson = asJson(result);
+        long serializationTimeMs = NANOSECONDS.toMillis(System.nanoTime() - serializationStartedAt);
+        log.info("addUserGroupIdToContext:: result prepared in {} ms: {}",
+          serializationTimeMs, resultJson);
+      });
   }
 
   private Future<BlocksCalculationContext> addPatronBlockLimitsToContext(
@@ -124,7 +130,14 @@ public class PatronBlocksService {
       return failedFuture(DEFAULT_ERROR_MESSAGE);
     }
 
+    long lookupStartedAt = System.nanoTime();
+    log.info("addPatronBlockLimitsToContext:: starting lookup for userId {}, patronGroupId {}",
+      ctx.userSummary == null ? null : ctx.userSummary.getUserId(), ctx.userGroupId);
+
     return limitsRepository.findLimitsForPatronGroup(ctx.userGroupId)
+      .onSuccess(limits -> log.info(
+        "addPatronBlockLimitsToContext:: lookup completed in {} ms, limitsCount: {}",
+        NANOSECONDS.toMillis(System.nanoTime() - lookupStartedAt), limits.size()))
       .map(ctx::withPatronBlockLimits)
       .onSuccess(result -> log.info("addPatronBlockLimitsToContext:: result: {}",
         () -> asJson(result)));
