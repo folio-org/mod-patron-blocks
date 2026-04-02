@@ -26,5 +26,9 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "UUID пені у відкритих пенях/штрафах",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "UUID пені/штрафу",
     "fqm.entityType.user_summary.jsonb": "JSONB",
-    "fqm.entityType.user_summary._description": "Simple entity type for user blocks summary data."
+    "fqm.entityType.user_summary._description": "Простий тип сутності (тип запису) для даних загальної інфо про блокування користувача.",
+    "fqm.entityType.user_summary.open_loans.duration": "Період відстрочки - Тривалість",
+    "fqm.entityType.user_summary.open_loans.duration._qualified": "Відкриті видачі - Період відстрочки - Тривалість",
+    "fqm.entityType.user_summary.open_loans.interval_id": "Період відстрочки - ІД інтервалу",
+    "fqm.entityType.user_summary.open_loans.interval_id._qualified": "Відкриті видачі - Період відстрочки - ІД інтервалу"
 }

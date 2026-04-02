@@ -26,5 +26,9 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Açık ücretler/cezalar ücret ceza Evrensel benzersiz tanımlayıcı",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Ücret cezası Evrensel benzersiz tanımlayıcı",
     "fqm.entityType.user_summary.jsonb": "JSONB",
-    "fqm.entityType.user_summary._description": "Kullanıcı blokları özet verileri için basit varlık türü."
+    "fqm.entityType.user_summary._description": "Kullanıcı blokları özet verileri için basit varlık türü.",
+    "fqm.entityType.user_summary.open_loans.duration": "Grace period — Duration",
+    "fqm.entityType.user_summary.open_loans.duration._qualified": "Open loans — Grace period — Duration",
+    "fqm.entityType.user_summary.open_loans.interval_id": "Grace period — Interval ID",
+    "fqm.entityType.user_summary.open_loans.interval_id._qualified": "Open loans — Grace period — Interval ID"
 }
