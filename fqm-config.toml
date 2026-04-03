@@ -24,3 +24,11 @@ fieldExclusions = [
   "metadata_updated_by_user_id",
   "metadata_updated_by_username",
 ]
+
+[[sources]]
+name = "patron_block_conditions"
+table = "patron_block_conditions"
+
+[[sources]]
+name = "patron_block_limits"
+table = "patron_block_limits"
