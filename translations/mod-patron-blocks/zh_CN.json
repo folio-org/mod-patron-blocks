@@ -26,5 +26,9 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "未结 费用/罚款 费用罚款 UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "罚款UUID",
     "fqm.entityType.user_summary.jsonb": "JSONB",
-    "fqm.entityType.user_summary._description": "用于用户冻结汇总数据的简单实体类型。"
+    "fqm.entityType.user_summary._description": "用于用户冻结汇总数据的简单实体类型。",
+    "fqm.entityType.user_summary.open_loans.duration": "Grace period — Duration",
+    "fqm.entityType.user_summary.open_loans.duration._qualified": "Open loans — Grace period — Duration",
+    "fqm.entityType.user_summary.open_loans.interval_id": "Grace period — Interval ID",
+    "fqm.entityType.user_summary.open_loans.interval_id._qualified": "Open loans — Grace period — Interval ID"
 }

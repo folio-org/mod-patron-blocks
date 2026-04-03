@@ -26,5 +26,9 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Openstaande vergoedingen/boetes boete UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Boete UUID",
     "fqm.entityType.user_summary.jsonb": "JSONB",
-    "fqm.entityType.user_summary._description": "Eenvoudig entiteittype voor overzichtsgegevens van gebruikersblokken."
+    "fqm.entityType.user_summary._description": "Eenvoudig entiteittype voor overzichtsgegevens van gebruikersblokken.",
+    "fqm.entityType.user_summary.open_loans.duration": "Respijtperiode - Duur",
+    "fqm.entityType.user_summary.open_loans.duration._qualified": "Openstaande leningen - Respijtperiode - Looptijd",
+    "fqm.entityType.user_summary.open_loans.interval_id": "Respijtperiode - Interval ID",
+    "fqm.entityType.user_summary.open_loans.interval_id._qualified": "Openstaande leningen - Respijtperiode - Interval ID"
 }
