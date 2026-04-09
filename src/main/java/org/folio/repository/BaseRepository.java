@@ -46,22 +46,21 @@ public class BaseRepository<T> {
     CQLWrapper cql = new CQLWrapper(cql2pgJson, query, limit, offset);
     return pgClient.get(tableName, entityType, cql, true)
       .map(Results::getResults)
-      .onSuccess(result -> log.info("get:: result: {}", () -> asJson(result)));
+      .onSuccess(result -> log.info("get:: success"));
   }
 
   public Future<List<T>> get(Criterion criterion) {
     log.debug("get:: parameters criterion: {}", criterion);
     return pgClient.get(tableName, entityType, criterion, true)
       .map(Results::getResults)
-      .onSuccess(result -> log.info("get:: result: {}", () -> asJson(result)));
+      .onSuccess(result -> log.info("get:: success"));
   }
 
   public Future<Optional<T>> get(String id) {
     log.debug("get:: parameters id: {}", id);
     return pgClient.getById(tableName, id, entityType)
       .map(Optional::ofNullable)
-      .onSuccess(result -> log.info("get:: result: optional, value is {}",
-        () -> asJson(result.orElse(null))));
+      .onSuccess(result -> log.info("get:: result found: {}", result.isPresent()));
   }
 
   public Future<List<T>> getAllWithDefaultLimit() {

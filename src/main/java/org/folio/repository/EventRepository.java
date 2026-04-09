@@ -37,7 +37,7 @@ public class EventRepository<T> extends BaseRepository<T> {
       .setVal(userId)
       .setJSONB(true)
     ).setLimit(new Limit(NUMBER_OF_EVENTS_LIMIT)))
-      .onSuccess(result -> log.info("getByUserId:: result: {}", () -> asJson(result)));
+      .onSuccess(result -> log.info("getByUserId:: success"));
   }
 
   public Future<Void> removeByUserId(String tenantId, String userId) {

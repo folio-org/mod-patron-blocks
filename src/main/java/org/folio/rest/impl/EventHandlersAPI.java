@@ -1,9 +1,5 @@
 package org.folio.rest.impl;
 
-
-import static org.folio.util.LogUtil.asJson;
-import static org.folio.util.LogUtil.headersAsString;
-
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
@@ -145,8 +141,6 @@ public class EventHandlersAPI implements AutomatedPatronBlocksHandlers {
   private static void logEventReceived(String methodName, Event event,
     Map<String, String> okapiHeaders) {
 
-    log.info("{}:: parameters : {} event {}, okapiHeaders: {}", () -> methodName,
-      () -> EventType.getNameByEvent(event), () -> asJson(event),
-      () -> headersAsString(okapiHeaders));
+    log.info("{}:: parameters : {} event received", methodName, EventType.getNameByEvent(event));
   }
 }
