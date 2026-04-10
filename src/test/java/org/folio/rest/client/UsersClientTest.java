@@ -70,8 +70,8 @@ public class UsersClientTest extends TestBase {
       .onSuccess(context::failNow)
       .onFailure(throwable -> {
         assertTrue(throwable instanceof EntityNotFoundException);
-        assertEquals(format("Failed to fetch %s by ID: %s. Response: %d %s",
-          User.class.getName(), userId, responseCode, responseBody), throwable.getMessage());
+        assertEquals(format("Failed to fetch %s by ID: %s. Response: %d",
+          User.class.getName(), userId, responseCode), throwable.getMessage());
         context.completeNow();
       });
   }

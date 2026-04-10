@@ -75,7 +75,7 @@ public class UserSummaryService {
     return userSummaryRepository.getByUserId(userId)
       .map(optionalUserSummary -> optionalUserSummary.orElseThrow(() ->
         new EntityNotFoundInDbException(format("User summary for user ID %s not found", userId))))
-      .onSuccess(result -> log.info("getByUserId:: result: {}", () -> asJson(result)));
+      .onSuccess(result -> log.info("getByUserId:: result found"));
   }
 
   public Future<String> updateUserSummaryWithEvent(UserSummary userSummary, Event event) {
@@ -177,7 +177,7 @@ public class UserSummaryService {
       .compose(eventService::getFeeFineBalanceChangedEvents)
       .map(ctx.events::addAll)
       .map(ctx)
-      .onSuccess(result -> log.info("loadEventsToContext:: result: {}", () -> asJson(result)));
+      .onSuccess(result -> log.info("loadEventsToContext:: success"));
   }
 
   private Future<RebuildContext> cleanUpUserSummary(RebuildContext ctx) {
@@ -190,7 +190,7 @@ public class UserSummaryService {
     ctx.userSummary.setOpenLoans(new ArrayList<>());
     ctx.userSummary.setOpenFeesFines(new ArrayList<>());
 
-    log.info("cleanUpUserSummary:: result: {}", () -> asJson(ctx));
+    log.info("cleanUpUserSummary:: result: user summary cleared");
     return succeededFuture(ctx);
   }
 

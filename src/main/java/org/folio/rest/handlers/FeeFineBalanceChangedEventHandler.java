@@ -29,7 +29,7 @@ public class FeeFineBalanceChangedEventHandler extends EventHandler<FeeFineBalan
     return event.getUserId() != null
       ? userSummaryRepository.findByUserIdOrBuildNew(event.getUserId())
       : findSummaryByFeeFineIdOrFail(event.getFeeFineId())
-      .onSuccess(r -> log.info("getUserSummary:: result: {}", () -> asJson(r)));
+      .onSuccess(r -> log.info("getUserSummary:: result found"));
   }
 
   private Future<UserSummary> findSummaryByFeeFineIdOrFail(String feeFineId) {

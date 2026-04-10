@@ -63,22 +63,18 @@ public class OkapiClient {
         response -> {
           int responseStatus = response.statusCode();
           if (responseStatus != 200) {
-            String errorMessage = format("Failed to fetch %s by ID: %s. " +
-                "Response: %d %s", responseType.getName(), id, responseStatus,
-              bodyAsString(response));
+            String errorMessage = format("Failed to fetch %s by ID: %s. Response: %d",
+              responseType.getName(), id, responseStatus);
             log.warn("fetchById:: {}", errorMessage);
             return failedFuture(new EntityNotFoundException(errorMessage));
           } else {
             try {
               T fetchedObject = objectMapper.readValue(response.bodyAsString(), responseType);
-              log.info("fetchById:: Fetched by ID: {}. Response body: {}", () -> path,
-                () -> bodyAsString(response));
+              log.info("fetchById:: Fetched by ID: {}", path);
               return succeededFuture(fetchedObject);
             } catch (JsonProcessingException e) {
-              int statusCode = response.statusCode();
-              String responseBody = bodyAsString(response);
-              log.warn("fetchById:: Failed to parse response from {}. Status code: {}, " +
-                "response body: {}", path, statusCode, responseBody, e);
+              log.warn("fetchById:: Failed to parse response from {}. Status code: {}",
+                path, response.statusCode(), e);
               return failedFuture(e);
             }
           }

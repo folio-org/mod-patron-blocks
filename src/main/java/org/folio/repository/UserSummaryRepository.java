@@ -51,7 +51,7 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
       .map(queryResult -> {
         Optional<UserSummary> result = queryResult.stream().findFirst();
         if (result.isPresent()) {
-          log.info("findByFeeFineId:: result: {}", () -> asJson(result.get()));
+          log.info("findByFeeFineId:: result found");
         } else {
           log.info("findByFeeFineId:: result: empty");
         }
@@ -69,7 +69,7 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
         }
 
         UserSummary result = results.get(0);
-        log.info("getByUserId:: result: {}", () -> asJson(result));
+        log.info("getByUserId:: result found");
         return succeededFuture(Optional.ofNullable(result));
       });
   }
