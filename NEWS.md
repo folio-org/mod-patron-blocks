@@ -1,3 +1,18 @@
+## 1.13.0 2026-04-15
+* Remove sensitive data from logs (MODPATBLK-192)
+* Add patron_block views for FQM (MODFQMMGR-770)
+* Refine user_summary FQM entity, make `open_loans` and `open_fees_fines` visible by default in FQM (MODFQMMGR-1088)
+* Enable GitHub Maven workflow (MODPATBLK-219)
+* Upgrade module to Vert.x 5.0 (MODPATBLK-211)
+* Add description for user block summary entity type (MODFQMMGR-973)
+* Use batch chaining for user summary processing (MODPATBLK-206)
+* Bump commons-lang3 to 3.18.0
+* Lokalise: translations update
+* Fix location of translation strings
+* Expose user_summary as FQM entity type (MODPATBLK-207)
+* Update loan schema to allow additional properties (MODPATBLK-198)
+* Remove permissions for event handlers (MODPATBLK-195)
+
 ## 1.12.0 2025-03-13
 * Update to java 21 (MODPATBLK-193)
 * Review and cleanup Module Descriptors (MODPATBLK-182)
