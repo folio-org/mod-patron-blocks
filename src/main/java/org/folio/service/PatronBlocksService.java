@@ -109,9 +109,7 @@ public class PatronBlocksService {
     }
 
     return usersClient.findPatronGroupIdForUser(ctx.userSummary.getUserId())
-      .map(ctx::withUserGroupId)
-      .onSuccess(result -> log.info("addUserGroupIdToContext:: result: {}",
-        () -> asJson(result)));
+      .map(ctx::withUserGroupId);
   }
 
   private Future<BlocksCalculationContext> addPatronBlockLimitsToContext(
