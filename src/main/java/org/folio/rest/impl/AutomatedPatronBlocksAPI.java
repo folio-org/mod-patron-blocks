@@ -134,8 +134,13 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
         .runSynchronization()
         .onComplete(response -> {
           if (response.failed()) {
-            log.warn("postAutomatedPatronBlocksSynchronizationStart:: synchronization failed",
-              response.cause());
+            if (response.cause() != null && response.cause() instanceof RuntimeException
+            && "There are no open requests".equals(response.cause().getMessage())) {
+              log.info("postAutomatedPatronBlocksSynchronizationStart:: no open sync requests");
+            } else {
+              log.warn("postAutomatedPatronBlocksSynchronizationStart:: synchronization failed",
+                response.cause());
+            }
           } else {
             log.info("postAutomatedPatronBlocksSynchronizationStart:: synchronization completed");
           }
