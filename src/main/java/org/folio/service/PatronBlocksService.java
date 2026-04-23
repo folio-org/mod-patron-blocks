@@ -123,9 +123,7 @@ public class PatronBlocksService {
     }
 
     return limitsRepository.findLimitsForPatronGroup(ctx.userGroupId)
-      .map(ctx::withPatronBlockLimits)
-      .onSuccess(result -> log.info("addPatronBlockLimitsToContext:: result: {}",
-        () -> asJson(result)));
+      .map(ctx::withPatronBlockLimits);
   }
 
   private Future<BlocksCalculationContext> addAllPatronBlockConditionsToContext(
