@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +44,8 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.util.AsyncProcessingContext;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,7 +59,7 @@ public class UserSummaryService {
     "updateUserSummary:: parameters userSummary: {}, event: {}";
   private static final String FAILED_TO_REBUILD_USER_SUMMARY_ERROR_MESSAGE =
     "Failed to rebuild user summary";
-  private static final int MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT = 10;
+  private static final int MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT = 100;
   private static final List<String> LOST_ITEM_FEE_TYPE_IDS = Arrays.asList(
     FeeFineType.LOST_ITEM_FEE.getId(),
     FeeFineType.LOST_ITEM_PROCESSING_FEE.getId()
@@ -79,47 +82,79 @@ public class UserSummaryService {
   }
 
   public Future<String> updateUserSummaryWithEvent(UserSummary userSummary, Event event) {
-    log.debug("updateUserSummaryWithEvent:: parameters userSummary: {}, event: {}",
-      () -> asJson(userSummary), () -> asJson(event));
-    return recursivelyUpdateUserSummaryWithEvent(new UpdateRetryContext(userSummary), event)
-      .onSuccess(result -> log.info("updateUserSummaryWithEvent:: result: {}", result));
+    UserSummaryUpdateContext updateContext = new UserSummaryUpdateContext(userSummary, event);
+    log.info("updateUserSummaryWithEvent:: {}", updateContext);
+    Promise<String> updatePromise = Promise.promise();
+    recursivelyUpdateUserSummaryWithEvent(updateContext, updatePromise);
+
+    return updatePromise.future();
   }
 
-  private Future<String> recursivelyUpdateUserSummaryWithEvent(UpdateRetryContext ctx,
-      Event event) {
+  private void recursivelyUpdateUserSummaryWithEvent(UserSummaryUpdateContext context,
+    Promise<String> updatePromise) {
 
-    log.debug("recursivelyUpdateUserSummaryWithEvent:: parameters ctx: {}, event: {}",
-      () -> asJson(ctx), () -> asJson(event));
-    return updateAndStoreUserSummary(ctx.userSummary, event)
-      .recover(throwable -> {
-        log.warn("recursivelyUpdateUserSummaryWithEvent:: Failed to update user summary", throwable);
-        if (! PgExceptionUtil.isVersionConflict(throwable)) {
-          return Future.failedFuture(throwable);
-        }
-        if (! ctx.shouldRetryUpdate()) {
-          log.warn("recursivelyUpdateUserSummaryWithEvent:: Failed to update user summary due " +
-              "to version conflict. User ID: {}. Failed attempts: {}", ctx.userSummary.getUserId(),
-              MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, throwable);
-          return Future.failedFuture(throwable);
-        }
-        log.warn("recursivelyUpdateUserSummaryWithEvent:: Version conflict when trying to update " +
-            "user summary. User ID: {}. Attempt # {} of {}", ctx.userSummary.getUserId(),
-            ctx.attemptCounter.get(), MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, throwable);
-        return userSummaryRepository.findByUserIdOrBuildNew(ctx.userSummary.getUserId())
-            .compose(latestVersionUserSummary -> {
-              ctx.attemptCounter.incrementAndGet();
-              ctx.setUserSummary(latestVersionUserSummary);
-              return recursivelyUpdateUserSummaryWithEvent(ctx, event);
-            })
-          .onSuccess(result -> log.info("recursivelyUpdateUserSummaryWithEvent:: result: {}", result));
-      });
+    log.info("recursivelyUpdateUserSummaryWithEvent:: {}", context);
+
+    updateAndStoreUserSummary(context)
+      .onSuccess(updatePromise::succeed)
+      .onFailure(t -> retryUpdate(t, context, updatePromise));
   }
 
-  private Future<String> updateAndStoreUserSummary(UserSummary userSummary, Event event) {
-    log.debug("updateAndStoreUserSummary:: parameters userSummary: {}, event: {}",
-      () -> asJson(userSummary), () -> asJson(event));
-    RebuildContext rebuildContext = new RebuildContext().withUserSummary(userSummary);
-    handleEvent(rebuildContext, event);
+  private void retryUpdate(Throwable throwable, UserSummaryUpdateContext context,
+    Promise<String> updatePromise) {
+
+    log.warn("retryUpdate:: failed to update user summary: {}", context, throwable);
+
+    if (!PgExceptionUtil.isVersionConflict(throwable)) {
+      log.error("retryUpdate:: error is not retriable");
+      updatePromise.fail(throwable);
+      return;
+    }
+
+    if (!context.canRetryUpdate()) {
+      log.warn("retryUpdate:: Failed to update user summary due " +
+          "to version conflict. User ID: {}. Failed attempts: {}", context.userSummary.getUserId(),
+        MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, throwable);
+      updatePromise.fail(throwable);
+      return;
+    }
+
+    log.warn("retryUpdate:: Version conflict when trying to update " +
+        "user summary. User ID: {}. Attempt # {} of {}", context.userSummary.getUserId(),
+      context.attemptCounter.get(), MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, throwable);
+
+    log.info("retryUpdate:: {}", context);
+    long backoff = computeBackoffWithJitter(context.getAttemptCounter().get());
+    log.info("retryUpdate:: scheduling retry in {} ms", backoff);
+
+    context.getAttemptCounter().incrementAndGet();
+
+    Vertx.currentContext().owner()
+      .setTimer(backoff, timerId ->
+        userSummaryRepository.findByUserIdOrBuildNew(context.getUserSummary().getUserId())
+          .map(context::withUserSummary)
+          .onSuccess(v -> recursivelyUpdateUserSummaryWithEvent(context, updatePromise)));
+  }
+
+  private static long computeBackoffWithJitter(int attempt) {
+    long base = 50L;
+    long max = 2000L;
+    long exp = Math.min(max, (long) (base * Math.pow(2, attempt - 1)));
+
+    return ThreadLocalRandom.current().nextLong(0, exp + 1);
+  }
+
+  private Future<UserSummaryUpdateContext> prepareContextForRetry(UserSummaryUpdateContext context) {
+    context.getAttemptCounter().incrementAndGet();
+
+    return userSummaryRepository.findByUserIdOrBuildNew(context.getUserSummary().getUserId())
+      .map(context::withUserSummary);
+  }
+
+  private Future<String> updateAndStoreUserSummary(UserSummaryUpdateContext context) {
+    log.info("updateAndStoreUserSummary:: {}", context);
+    RebuildContext rebuildContext = new RebuildContext().withUserSummary(context.getUserSummary());
+    handleEvent(rebuildContext, context.getEvent());
 
     if (isNotEmpty(rebuildContext.userSummary)) {
       log.info("updateAndStoreUserSummary:: user summary is not empty");
@@ -422,18 +457,31 @@ public class UserSummaryService {
   }
 
   @Getter
-  private static class UpdateRetryContext {
+  private static class UserSummaryUpdateContext {
     @Setter
     private UserSummary userSummary;
+    private final Event event;
 
     private final AtomicInteger attemptCounter = new AtomicInteger(1);
 
-    public UpdateRetryContext(UserSummary userSummary) {
+    public UserSummaryUpdateContext(UserSummary userSummary, Event event) {
       this.userSummary = userSummary;
+      this.event = event;
     }
 
-    boolean shouldRetryUpdate() {
+    boolean canRetryUpdate() {
       return attemptCounter.get() <= MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT;
+    }
+
+    UserSummaryUpdateContext withUserSummary(UserSummary userSummary) {
+      setUserSummary(userSummary);
+      return this;
+    }
+
+    @Override
+    public String toString() {
+      return "UserSummaryUpdateContext(userSummaryId=%s, userId=%s, eventId=%s, retryAttempts=%d)"
+        .formatted(userSummary.getId(), userSummary.getUserId(), event.getId(), attemptCounter.get());
     }
   }
 }
