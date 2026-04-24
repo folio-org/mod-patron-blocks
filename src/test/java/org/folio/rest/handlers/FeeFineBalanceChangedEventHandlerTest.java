@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.folio.domain.FeeFineType;
 import org.folio.exception.EntityNotFoundException;
+import org.folio.repository.EventRepository;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemCheckedOutEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
@@ -34,12 +35,15 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
   private FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler;
   private EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler;
   private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
+  private EventRepository<FeeFineBalanceChangedEvent> feeFineBalanceChangedEventRepository;
 
   @BeforeEach
   void beforeEach() {
     super.resetMocks();
 
     initUserSummaryRepository();
+    feeFineBalanceChangedEventRepository = new EventRepository<>(postgresClient,
+      FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME, FeeFineBalanceChangedEvent.class);
 
     feeFineBalanceChangedEventHandler = new FeeFineBalanceChangedEventHandler(postgresClient);
     itemDeclaredLostEventHandler = new EventHandler<>(postgresClient);
@@ -255,6 +259,36 @@ public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase 
             context.completeNow();
           });
       });
+  }
+
+  @Test
+  void persistResolvedUserIdWhenIncomingFeeFineEventDoesNotContainIt() {
+    final String userId = randomId();
+    final String loanId = randomId();
+    final String feeFineId = randomId();
+    final String feeFineTypeId = randomId();
+
+    UserSummary existingUserSummary = new UserSummary()
+      .withId(randomId())
+      .withUserId(userId)
+      .withOpenFeesFines(singletonList(new OpenFeeFine()
+        .withLoanId(loanId)
+        .withFeeFineId(feeFineId)
+        .withFeeFineTypeId(feeFineTypeId)
+        .withBalance(new BigDecimal("2.55"))));
+
+    waitFor(userSummaryRepository.save(existingUserSummary));
+
+    FeeFineBalanceChangedEvent event = createEvent(null, null, feeFineId, null, ZERO);
+
+    String summaryId = waitFor(feeFineBalanceChangedEventHandler.handle(event));
+    List<FeeFineBalanceChangedEvent> events = waitFor(feeFineBalanceChangedEventRepository.getByUserId(userId));
+
+    assertEquals(1, events.size());
+    assertEquals(userId, events.get(0).getUserId());
+
+    UserSummary userSummary = waitFor(userSummaryRepository.get(summaryId)).orElseThrow();
+    assertEquals(userId, userSummary.getUserId());
   }
 
   @Test

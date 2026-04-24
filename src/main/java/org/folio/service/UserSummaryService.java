@@ -25,6 +25,7 @@ import org.folio.domain.Event;
 import org.folio.domain.EventType;
 import org.folio.domain.FeeFineType;
 import org.folio.exception.EntityNotFoundInDbException;
+import org.folio.repository.UserSummaryLockRepository;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.jaxrs.model.FeeFineBalanceChangedEvent;
 import org.folio.rest.jaxrs.model.ItemAgedToLostEvent;
@@ -38,6 +39,7 @@ import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.UserSummary;
+import org.folio.rest.persist.Conn;
 import org.folio.rest.persist.PgExceptionUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.util.AsyncProcessingContext;
@@ -63,10 +65,12 @@ public class UserSummaryService {
   );
 
   private final UserSummaryRepository userSummaryRepository;
+  private final UserSummaryLockRepository userSummaryLockRepository;
   private final EventService eventService;
 
   public UserSummaryService(PostgresClient postgresClient) {
     userSummaryRepository = new UserSummaryRepository(postgresClient);
+    userSummaryLockRepository = new UserSummaryLockRepository(postgresClient);
     eventService = new EventService(postgresClient);
   }
 
@@ -85,12 +89,28 @@ public class UserSummaryService {
       .onSuccess(result -> log.info("updateUserSummaryWithEvent:: result: {}", result));
   }
 
+  public Future<String> updateUserSummaryWithEventUsingLock(String userId, Event event) {
+    log.debug("updateUserSummaryWithEventUsingLock:: parameters userId: {}, event: {}",
+      () -> userId, () -> asJson(event));
+    return userSummaryLockRepository.withUserLock(userId, conn -> userSummaryRepository
+        .findByUserIdOrBuildNew(conn, userId)
+        .compose(userSummary -> recursivelyUpdateUserSummaryWithEvent(conn,
+          new UpdateRetryContext(userSummary), event)))
+      .onSuccess(result -> log.info("updateUserSummaryWithEventUsingLock:: result: {}", result));
+  }
+
   private Future<String> recursivelyUpdateUserSummaryWithEvent(UpdateRetryContext ctx,
+      Event event) {
+
+    return recursivelyUpdateUserSummaryWithEvent(null, ctx, event);
+  }
+
+  private Future<String> recursivelyUpdateUserSummaryWithEvent(Conn conn, UpdateRetryContext ctx,
       Event event) {
 
     log.debug("recursivelyUpdateUserSummaryWithEvent:: parameters ctx: {}, event: {}",
       () -> asJson(ctx), () -> asJson(event));
-    return updateAndStoreUserSummary(ctx.userSummary, event)
+    return updateAndStoreUserSummary(conn, ctx.userSummary, event)
       .recover(throwable -> {
         log.warn("recursivelyUpdateUserSummaryWithEvent:: Failed to update user summary", throwable);
         if (! PgExceptionUtil.isVersionConflict(throwable)) {
@@ -105,17 +125,21 @@ public class UserSummaryService {
         log.warn("recursivelyUpdateUserSummaryWithEvent:: Version conflict when trying to update " +
             "user summary. User ID: {}. Attempt # {} of {}", ctx.userSummary.getUserId(),
             ctx.attemptCounter.get(), MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, throwable);
-        return userSummaryRepository.findByUserIdOrBuildNew(ctx.userSummary.getUserId())
+        Future<UserSummary> latestSummaryFuture = conn == null
+          ? userSummaryRepository.findByUserIdOrBuildNew(ctx.userSummary.getUserId())
+          : userSummaryRepository.findByUserIdOrBuildNew(conn, ctx.userSummary.getUserId());
+
+        return latestSummaryFuture
             .compose(latestVersionUserSummary -> {
               ctx.attemptCounter.incrementAndGet();
               ctx.setUserSummary(latestVersionUserSummary);
-              return recursivelyUpdateUserSummaryWithEvent(ctx, event);
+              return recursivelyUpdateUserSummaryWithEvent(conn, ctx, event);
             })
           .onSuccess(result -> log.info("recursivelyUpdateUserSummaryWithEvent:: result: {}", result));
       });
   }
 
-  private Future<String> updateAndStoreUserSummary(UserSummary userSummary, Event event) {
+  private Future<String> updateAndStoreUserSummary(Conn conn, UserSummary userSummary, Event event) {
     log.debug("updateAndStoreUserSummary:: parameters userSummary: {}, event: {}",
       () -> asJson(userSummary), () -> asJson(event));
     RebuildContext rebuildContext = new RebuildContext().withUserSummary(userSummary);
@@ -123,12 +147,17 @@ public class UserSummaryService {
 
     if (isNotEmpty(rebuildContext.userSummary)) {
       log.info("updateAndStoreUserSummary:: user summary is not empty");
-      return userSummaryRepository.upsert(rebuildContext.userSummary)
+      return (conn == null
+          ? userSummaryRepository.upsert(rebuildContext.userSummary)
+          : userSummaryRepository.upsert(conn, rebuildContext.userSummary))
         .onSuccess(result -> log.info("updateAndStoreUserSummary:: result: {}", result));
     } else {
       log.info("updateAndStoreUserSummary:: user summary is empty");
-      return userSummaryRepository.delete(
-        Objects.requireNonNull(rebuildContext.userSummary).getId())
+      Future<Boolean> deleteFuture = conn == null
+        ? userSummaryRepository.delete(Objects.requireNonNull(rebuildContext.userSummary).getId())
+        : userSummaryRepository.delete(conn, Objects.requireNonNull(rebuildContext.userSummary).getId());
+
+      return deleteFuture
         .map(rebuildContext.userSummary.getId())
         .otherwise(rebuildContext.userSummary.getId())
         .onSuccess(result -> log.info("updateAndStoreUserSummary:: result: {}", result));

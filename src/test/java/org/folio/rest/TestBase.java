@@ -78,6 +78,7 @@ public class TestBase {
   private static final int GET_TENANT_TIMEOUT_MS = 10000;
 
   protected static final String USER_SUMMARY_TABLE_NAME = "user_summary";
+  protected static final String USER_SUMMARY_LOCK_TABLE_NAME = "user_summary_lock";
   protected static final String SYNCHRONIZATION_JOBS_TABLE_NAME = "synchronization_jobs";
   protected static final String ITEM_CHECKED_OUT_EVENT_TABLE_NAME = "item_checked_out_event";
   protected static final String ITEM_CHECKED_IN_EVENT_TABLE_NAME = "item_checked_in_event";

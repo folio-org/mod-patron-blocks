@@ -115,6 +115,16 @@
       ]
     },
     {
+      "tableName": "user_summary_lock",
+      "withMetadata": true,
+      "uniqueIndex": [
+        {
+          "fieldName": "userId",
+          "tOps": "ADD"
+        }
+      ]
+    },
+    {
       "tableName" : "patron_block_conditions",
       "withMetadata" : true,
       "customSnippetPath": "populate-patron-block-conditions.sql"

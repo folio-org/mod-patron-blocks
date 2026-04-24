@@ -3,6 +3,7 @@ package org.folio.repository;
 import static java.math.BigDecimal.TEN;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.folio.repository.UserSummaryLockRepository.USER_SUMMARY_LOCK_TABLE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,11 +25,13 @@ import io.vertx.pgclient.PgException;
 
 public class UserSummaryRepositoryTest extends TestBase {
   private final UserSummaryRepository repository = new UserSummaryRepository(postgresClient);
+  private final UserSummaryLockRepository lockRepository = new UserSummaryLockRepository(postgresClient);
 
   @BeforeEach
   void setUp() {
     resetMocks();
     deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+    deleteAllFromTable(USER_SUMMARY_LOCK_TABLE_NAME);
   }
 
   @Test
@@ -206,6 +209,20 @@ public class UserSummaryRepositoryTest extends TestBase {
 
     assertTrue(retrievedUpdatedSummary.isPresent());
     assertSummariesAreEqual(updatedSummary, retrievedUpdatedSummary.get(), context);
+
+    context.completeNow();
+  }
+
+  @Test
+  void setUpShouldClearUserSummaryLockTable(VertxTestContext context) {
+    String userId = randomId();
+
+    waitFor(lockRepository.ensureLockRowExists(userId));
+    assertTrue(waitFor(lockRepository.getByUserId(userId)).isPresent());
+
+    setUp();
+
+    assertTrue(waitFor(lockRepository.getByUserId(userId)).isEmpty());
 
     context.completeNow();
   }

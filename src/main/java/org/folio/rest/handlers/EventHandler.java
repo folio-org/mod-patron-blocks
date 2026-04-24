@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.domain.Event;
 import org.folio.domain.EventType;
 import org.folio.repository.UserSummaryRepository;
-import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.service.EventService;
 import org.folio.service.UserSummaryService;
@@ -54,16 +53,10 @@ public class EventHandler<E extends Event> {
 
   private Future<String> updateUserSummary(E event) {
     log.debug("updateUserSummary:: parameters event: {}", () -> asJson(event));
-    return getUserSummary(event)
-      .compose(userSummary -> userSummaryService.updateUserSummaryWithEvent(userSummary, event));
+    return userSummaryService.updateUserSummaryWithEventUsingLock(event.getUserId(), event);
   }
 
-  protected Future<UserSummary> getUserSummary(E event) {
-    log.debug("getUserSummary:: parameters event: {}", () -> asJson(event));
-    return userSummaryRepository.findByUserIdOrBuildNew(event.getUserId());
-  }
-
-  private void logResult(AsyncResult<String> result, E event) {
+  protected void logResult(AsyncResult<String> result, E event) {
     String eventType = EventType.getNameByEvent(event);
     if (result.failed()) {
       log.warn("logResult: Failed to process event {}", eventType);

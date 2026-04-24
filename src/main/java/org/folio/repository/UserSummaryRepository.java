@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.UserSummary;
+import org.folio.rest.persist.Conn;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 
@@ -29,6 +30,10 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
     return super.upsert(entity, entity.getId());
   }
 
+  public Future<String> upsert(Conn conn, UserSummary entity) {
+    return conn.upsert(tableName, entity.getId(), entity);
+  }
+
   public Future<String> save(UserSummary entity) {
     return super.save(entity, entity.getId());
   }
@@ -40,6 +45,12 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
   public Future<UserSummary> findByUserIdOrBuildNew(String userId) {
     log.debug("findByUserIdOrBuildNew:: parameters userId: {}", userId);
     return getByUserId(userId)
+      .map(summary -> summary.orElseGet(() -> buildEmptyUserSummary(userId)));
+  }
+
+  public Future<UserSummary> findByUserIdOrBuildNew(Conn conn, String userId) {
+    log.debug("findByUserIdOrBuildNew:: parameters userId: {}", userId);
+    return getByUserId(conn, userId)
       .map(summary -> summary.orElseGet(() -> buildEmptyUserSummary(userId)));
   }
 
@@ -74,8 +85,28 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
       });
   }
 
+  public Future<Optional<UserSummary>> getByUserId(Conn conn, String userId) {
+    log.debug("getByUserId:: parameters userId: {}", userId);
+    return conn.get(tableName, UserSummary.class, buildCriterionWithUserId(userId), true)
+      .compose(results -> {
+        if (results.getResults().isEmpty()) {
+          log.info("getByUserId:: result is empty");
+          return succeededFuture(Optional.empty());
+        }
+
+        UserSummary result = results.getResults().get(0);
+        log.info("getByUserId:: result found");
+        return succeededFuture(Optional.ofNullable(result));
+      });
+  }
+
   public Future<Boolean> deleteByUserId(String userId) {
     return delete(buildCriterionWithUserId(userId));
+  }
+
+  public Future<Boolean> delete(Conn conn, String id) {
+    return conn.delete(tableName, id)
+      .map(updateResult -> updateResult.rowCount() == 1);
   }
 
   private UserSummary buildEmptyUserSummary(String userId) {
@@ -84,7 +115,7 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
       .withUserId(userId);
   }
 
-  private static Criterion buildCriterionWithUserId(String userId) {
+  static Criterion buildCriterionWithUserId(String userId) {
     return buildCriterion(USER_ID_FIELD, userId);
   }
 
