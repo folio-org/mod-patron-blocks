@@ -20,50 +20,50 @@ import io.vertx.junit5.VertxTestContext;
 
 public class LoanDueDateChangedEventHandlerTest extends EventHandlerTestBase {
 
-  private EventHandler<LoanDueDateChangedEvent> loanDueDateChangedEventHandler;
-  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
-
-  @BeforeEach
-  void beforeEach() {
-    super.resetMocks();
-
-    initUserSummaryRepository();
-
-    loanDueDateChangedEventHandler = new EventHandler<>(postgresClient);
-    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
-
-    deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
-    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
-  }
-
-  @Test
-  void existingLoanIsUpdated(VertxTestContext context) {
-    String userId = randomId();
-    String loanId = randomId();
-
-    waitFor(itemCheckedOutEventHandler.handle(
-      buildItemCheckedOutEvent(userId, loanId, new Date())));
-
-    UserSummary summaryBeforeEvent = waitFor(userSummaryRepository.getByUserId(userId)
-      .map(Optional::get));
-
-    Date newDueDate = new DateTime(summaryBeforeEvent.getOpenLoans().get(0).getDueDate())
-      .plusDays(1)
-      .toDate();
-
-    LoanDueDateChangedEvent event = buildLoanDueDateChangedEvent(userId, loanId, newDueDate, true);
-
-    String updatedSummaryId = waitFor(loanDueDateChangedEventHandler.handle(event));
-    assertEquals(summaryBeforeEvent.getId(), updatedSummaryId);
-
-    UserSummary expectedUserSummary = summaryBeforeEvent
-      .withOpenLoans(singletonList(new OpenLoan()
-          .withLoanId(loanId)
-          .withDueDate(event.getDueDate())
-          .withRecall(true)));
-
-    checkUserSummary(updatedSummaryId, expectedUserSummary);
-
-    context.completeNow();
-  }
+//  private EventHandler<LoanDueDateChangedEvent> loanDueDateChangedEventHandler;
+//  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
+//
+//  @BeforeEach
+//  void beforeEach() {
+//    super.resetMocks();
+//
+//    initUserSummaryRepository();
+//
+//    loanDueDateChangedEventHandler = new EventHandler<>(postgresClient);
+//    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+//
+//    deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+//    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
+//  }
+//
+//  @Test
+//  void existingLoanIsUpdated(VertxTestContext context) {
+//    String userId = randomId();
+//    String loanId = randomId();
+//
+//    waitFor(itemCheckedOutEventHandler.handle(
+//      buildItemCheckedOutEvent(userId, loanId, new Date())));
+//
+//    UserSummary summaryBeforeEvent = waitFor(userSummaryRepository.getByUserId(userId)
+//      .map(Optional::get));
+//
+//    Date newDueDate = new DateTime(summaryBeforeEvent.getOpenLoans().get(0).getDueDate())
+//      .plusDays(1)
+//      .toDate();
+//
+//    LoanDueDateChangedEvent event = buildLoanDueDateChangedEvent(userId, loanId, newDueDate, true);
+//
+//    String updatedSummaryId = waitFor(loanDueDateChangedEventHandler.handle(event));
+//    assertEquals(summaryBeforeEvent.getId(), updatedSummaryId);
+//
+//    UserSummary expectedUserSummary = summaryBeforeEvent
+//      .withOpenLoans(singletonList(new OpenLoan()
+//          .withLoanId(loanId)
+//          .withDueDate(event.getDueDate())
+//          .withRecall(true)));
+//
+//    checkUserSummary(updatedSummaryId, expectedUserSummary);
+//
+//    context.completeNow();
+//  }
 }

@@ -38,14 +38,13 @@ public class EventHandler<E extends Event> {
     userSummaryService = new UserSummaryService(postgresClient);
   }
 
-  public Future<String> handle(E event) {
+  public void handle(E event) {
     Vertx.currentContext().executeBlocking(() -> {
       log.debug("handle:: parameters event: {}", () -> asJson(event));
       return eventService.save(event)
-        .compose(eventId -> updateUserSummary(event))
+        .compose(eventId -> userSummaryService.updateUserSummary(event))
         .onComplete(result -> logResult(result, event));
     });
-    return null;
   }
 
   public Future<String> handleSkippingUserSummaryUpdate(E event) {
@@ -53,12 +52,6 @@ public class EventHandler<E extends Event> {
       () -> asJson(event));
     return eventService.save(event)
       .onComplete(result -> logResult(result, event));
-  }
-
-  private Future<String> updateUserSummary(E event) {
-    log.debug("updateUserSummary:: parameters event: {}", () -> asJson(event));
-    return getUserSummary(event)
-      .compose(userSummary -> userSummaryService.updateUserSummaryWithEvent(userSummary, event));
   }
 
   protected Future<UserSummary> getUserSummary(E event) {
@@ -69,7 +62,7 @@ public class EventHandler<E extends Event> {
   private void logResult(AsyncResult<String> result, E event) {
     String eventType = EventType.getNameByEvent(event);
     if (result.failed()) {
-      log.warn("logResult: Failed to process event {}", eventType);
+      log.warn("logResult: Failed to process event {}", eventType, result.cause());
     } else {
       String userSummaryId = result.result();
       log.info("logResult: Event {} processed successfully. Affected user summary: {}",

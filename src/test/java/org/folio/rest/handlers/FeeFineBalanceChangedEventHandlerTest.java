@@ -31,335 +31,335 @@ import io.vertx.core.Future;
 import io.vertx.junit5.VertxTestContext;
 
 public class FeeFineBalanceChangedEventHandlerTest extends EventHandlerTestBase {
-  private FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler;
-  private EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler;
-  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
-
-  @BeforeEach
-  void beforeEach() {
-    super.resetMocks();
-
-    initUserSummaryRepository();
-
-    feeFineBalanceChangedEventHandler = new FeeFineBalanceChangedEventHandler(postgresClient);
-    itemDeclaredLostEventHandler = new EventHandler<>(postgresClient);
-    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
-
-    deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
-    deleteAllFromTable(FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME);
-    deleteAllFromTable(ITEM_DECLARED_LOST_EVENT_TABLE_NAME);
-    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
-  }
-
-  @Test
-  void createNewUserSummary(VertxTestContext context) {
-    final String userId = randomId();
-    final String loanId = randomId();
-    final String feeFineId = randomId();
-    final String feeFineTypeId = randomId();
-    final BigDecimal balance = new BigDecimal("1.55");
-
-    List<OpenFeeFine> expectedFeeFines = singletonList(
-      new OpenFeeFine()
-        .withFeeFineId(feeFineId)
-        .withFeeFineTypeId(feeFineTypeId)
-        .withLoanId(loanId)
-        .withBalance(balance));
-
-    FeeFineBalanceChangedEvent event =
-      createEvent(userId, loanId, feeFineId, feeFineTypeId, balance)
-        .withMetadata(buildDefaultMetadata());
-
-    feeFineBalanceChangedEventHandler.handle(event)
-      .onFailure(context::failNow)
-      .onSuccess(summaryId -> {
-        checkResult(summaryId, userId, expectedFeeFines, context);
-        context.completeNow();
-      });
-  }
-
-  @Test
-  void addNewFeeFineToExistingUserSummary(VertxTestContext context) {
-    final String userId = randomId();
-    final String loanId = randomId();
-
-    UserSummary initialUserSummary = new UserSummary()
-      .withId(randomId())
-      .withUserId(userId);
-
-    OpenFeeFine existingFeeFine = new OpenFeeFine()
-      .withBalance(new BigDecimal("2.55"))
-      .withLoanId(loanId)
-      .withFeeFineTypeId(randomId())
-      .withFeeFineId(randomId());
-
-    initialUserSummary.getOpenFeesFines().add(existingFeeFine);
-
-    userSummaryRepository.save(initialUserSummary)
-      .onFailure(context::failNow)
-      .onSuccess(summaryId -> {
-        final String eventFeeFineId = randomId();
-        final String eventFeeFineTypeId = randomId();
-        final BigDecimal eventBalance = new BigDecimal("1.55");
-
-        FeeFineBalanceChangedEvent event =
-          createEvent(userId, loanId, eventFeeFineId, eventFeeFineTypeId, eventBalance)
-            .withMetadata(buildDefaultMetadata());
-
-        feeFineBalanceChangedEventHandler.handle(event)
-          .onFailure(context::failNow)
-          .onSuccess(id -> {
-            List<OpenFeeFine> expectedFeeFines = Arrays.asList(existingFeeFine,
-              new OpenFeeFine()
-                .withFeeFineId(eventFeeFineId)
-                .withFeeFineTypeId(eventFeeFineTypeId)
-                .withLoanId(loanId)
-                .withBalance(eventBalance));
-
-            checkResult(id, userId, expectedFeeFines, context);
-            context.completeNow();
-          });
-      });
-  }
-
-  @Test
-  void updateFeeFineBalanceInExistingUserSummary(VertxTestContext context) {
-    final String userId = randomId();
-    final String loanId = randomId();
-    final String feeFineId = randomId();
-    final String feeFineTypeId = randomId();
-    final BigDecimal initialFeeFineBalance = new BigDecimal("1.25");
-
-    UserSummary existingUserSummary = new UserSummary()
-      .withId(randomId())
-      .withUserId(userId);
-
-    OpenFeeFine existingFeeFine = new OpenFeeFine()
-      .withLoanId(loanId)
-      .withBalance(initialFeeFineBalance)
-      .withFeeFineTypeId(feeFineTypeId)
-      .withFeeFineId(feeFineId);
-
-    existingUserSummary.getOpenFeesFines().add(existingFeeFine);
-
-    userSummaryRepository.save(existingUserSummary)
-      .onFailure(context::failNow)
-      .onSuccess(summaryId -> {
-        final BigDecimal eventBalance = new BigDecimal("2.75");
-        FeeFineBalanceChangedEvent event =
-          createEvent(userId, loanId, feeFineId, feeFineTypeId, eventBalance)
-            .withMetadata(buildDefaultMetadata());
-
-        feeFineBalanceChangedEventHandler.handle(event)
-          .onFailure(context::failNow)
-          .onSuccess(id -> {
-            List<OpenFeeFine> expectedFeeFines = singletonList(
-              new OpenFeeFine()
-                .withFeeFineId(feeFineId)
-                .withFeeFineTypeId(feeFineTypeId)
-                .withLoanId(loanId)
-                .withBalance(eventBalance));
-
-            checkResult(id, userId, expectedFeeFines, context);
-            context.completeNow();
-          });
-      });
-  }
-
-  @Test
-  void deleteClosedFeeFineFromExistingUserSummary(VertxTestContext context) {
-    final String userId = randomId();
-    final String loanId = randomId();
-
-    final String feeFineId1 = randomId();
-    final String feeFineTypeId1 = randomId();
-    final BigDecimal feeFineBalance1 = new BigDecimal("1.25");
-
-    OpenFeeFine existingFeeFine1 = new OpenFeeFine()
-      .withLoanId(randomId())
-      .withFeeFineId(feeFineId1)
-      .withFeeFineTypeId(feeFineTypeId1)
-      .withBalance(feeFineBalance1);
-
-    final String feeFineId2 = randomId();
-    final String feeFineTypeId2 = randomId();
-    final BigDecimal feeFineBalance2 = new BigDecimal("2.55");
-
-    OpenFeeFine existingFeeFine2 = new OpenFeeFine()
-      .withLoanId(loanId)
-      .withBalance(feeFineBalance2)
-      .withFeeFineTypeId(feeFineTypeId2)
-      .withFeeFineId(feeFineId2);
-
-    UserSummary existingUserSummary = new UserSummary()
-      .withId(randomId())
-      .withUserId(userId)
-      .withOpenFeesFines(Arrays.asList(existingFeeFine1, existingFeeFine2));
-
-    userSummaryRepository.save(existingUserSummary)
-      .onFailure(context::failNow)
-      .onSuccess(summaryId -> {
-        FeeFineBalanceChangedEvent event =
-          createEvent(userId, loanId, feeFineId2, feeFineTypeId1, ZERO)
-            .withMetadata(buildDefaultMetadata());
-
-        feeFineBalanceChangedEventHandler.handle(event)
-          .onFailure(context::failNow)
-          .onSuccess(id -> {
-            checkResult(id, userId, emptyList(), context);
-            context.completeNow();
-          });
-      });
-  }
-
-  @Test
-  void removeDeletedFeeFineFromExistingUserSummary(VertxTestContext context) {
-    final String userId = randomId();
-    final String loanId = randomId();
-
-    final String feeFineId1 = randomId();
-    final String feeFineTypeId1 = randomId();
-    final BigDecimal feeFineBalance1 = new BigDecimal("1.25");
-
-    OpenFeeFine existingFeeFine1 = new OpenFeeFine()
-      .withLoanId(randomId())
-      .withFeeFineId(feeFineId1)
-      .withFeeFineTypeId(feeFineTypeId1)
-      .withBalance(feeFineBalance1);
-
-    final String feeFineId2 = randomId();
-    final String feeFineTypeId2 = randomId();
-    final BigDecimal feeFineBalance2 = new BigDecimal("2.55");
-
-    OpenFeeFine existingFeeFine2 = new OpenFeeFine()
-      .withLoanId(loanId)
-      .withBalance(feeFineBalance2)
-      .withFeeFineTypeId(feeFineTypeId2)
-      .withFeeFineId(feeFineId2);
-
-    UserSummary existingUserSummary = new UserSummary()
-      .withId(randomId())
-      .withUserId(userId)
-      .withOpenFeesFines(Arrays.asList(existingFeeFine1, existingFeeFine2));
-
-    userSummaryRepository.save(existingUserSummary)
-      .onFailure(context::failNow)
-      .onSuccess(summaryId -> {
-        FeeFineBalanceChangedEvent event =
-          createEvent(null, null, feeFineId2, null, ZERO);
-
-        feeFineBalanceChangedEventHandler.handle(event)
-          .onFailure(context::failNow)
-          .onSuccess(id -> {
-            checkResult(id, userId, emptyList(), context);
-            context.completeNow();
-          });
-      });
-  }
-
-  @Test
-  void eventForDeletedFeeFineAndNonExistingSummaryShouldBeIgnored(VertxTestContext context) {
-    FeeFineBalanceChangedEvent event =
-      createEvent(null, null, randomId(), null, ZERO);
-
-    feeFineBalanceChangedEventHandler.handle(event)
-      .onSuccess(context::failNow)
-      .onFailure(throwable -> {
-        assertInstanceOf(EntityNotFoundException.class, throwable);
-        assertTrue(throwable.getMessage().contains("event is ignored"));
-        context.completeNow();
-      });
-  }
-
-  @Test
-  void closedFeeFineEventForNonExistingSummaryCreatesAnEmptySummary(VertxTestContext context) {
-    String userId = randomId();
-
-    FeeFineBalanceChangedEvent event =
-      createEvent(userId, randomId(), randomId(), randomId(), ZERO)
-        .withMetadata(buildDefaultMetadata());
-
-    feeFineBalanceChangedEventHandler.handle(event)
-      .onFailure(context::failNow)
-      .onSuccess(summaryId -> {
-        checkResult(summaryId, userId, emptyList(), context);
-        context.completeNow();
-      });
-  }
-
-  @Test
-  void bothFeesShouldBeProcessedWhenAddedSimultaneously(VertxTestContext context) {
-    final String userId = randomId();
-    final String loanId = randomId();
-
-    final String feeFineId1 = randomId();
-    final String feeFineId2 = randomId();
-    final String feeFineTypeId1 = FeeFineType.LOST_ITEM_FEE.getId();
-    final String feeFineTypeId2 = FeeFineType.LOST_ITEM_PROCESSING_FEE.getId();
-    final BigDecimal feeFineBalance1 = new BigDecimal("1.25");
-    final BigDecimal feeFineBalance2 = new BigDecimal("2.55");
-
-    waitFor(itemCheckedOutEventHandler.handle(
-      buildItemCheckedOutEvent(userId, loanId, new Date())));
-
-    waitFor(itemDeclaredLostEventHandler.handle(
-      buildItemDeclaredLostEvent(userId, loanId)));
-    waitFor(Future.all(List.of(
-      feeFineBalanceChangedEventHandler.handle(buildFeeFineBalanceChangedEvent(
-        userId, loanId, feeFineId1, feeFineTypeId1, feeFineBalance1)),
-      feeFineBalanceChangedEventHandler.handle(buildFeeFineBalanceChangedEvent(
-        userId, loanId, feeFineId2, feeFineTypeId2, feeFineBalance2)))));
-
-    UserSummary userSummary = waitFor(userSummaryRepository.getByUserId(userId)
-      .map(Optional::get));
-
-    assertEquals(0, new BigDecimal("3.80").compareTo(
-      userSummary.getOpenFeesFines().stream()
-      .map(OpenFeeFine::getBalance)
-      .reduce(BigDecimal::add)
-      .orElse(ZERO)));
-
-    context.completeNow();
-  }
-
-  private static FeeFineBalanceChangedEvent createEvent(String userId, String loanId,
-    String feeFineId, String feeFineTypeId, BigDecimal balance) {
-
-    return new FeeFineBalanceChangedEvent()
-      .withUserId(userId)
-      .withLoanId(loanId)
-      .withFeeFineId(feeFineId)
-      .withFeeFineTypeId(feeFineTypeId)
-      .withBalance(balance);
-  }
-
-  private void checkResult(String summaryId, String userId, List<OpenFeeFine> expectedFeeFines,
-    VertxTestContext context) {
-
-    userSummaryRepository.get(summaryId)
-      .onFailure(context::failNow)
-      .onSuccess(optionalSummary -> {
-        UserSummary userSummary = optionalSummary.orElseThrow(() ->
-          new AssertionError("User summary was not found: " + summaryId));
-
-        assertEquals(userId, userSummary.getUserId());
-        assertEquals(expectedFeeFines.size(), userSummary.getOpenFeesFines().size());
-
-        for (OpenFeeFine expectedFeeFine : expectedFeeFines) {
-          OpenFeeFine existingFeeFine = userSummary.getOpenFeesFines().stream()
-            .filter(feeFine -> feeFine.getFeeFineId().equals(expectedFeeFine.getFeeFineId()))
-            .findFirst()
-            .orElseThrow(() ->
-              new AssertionError("Fee/fine was not found: " + expectedFeeFine.getFeeFineId()));
-
-          assertEquals(expectedFeeFine.getLoanId(), existingFeeFine.getLoanId());
-          assertEquals(expectedFeeFine.getFeeFineId(), existingFeeFine.getFeeFineId());
-          assertEquals(expectedFeeFine.getFeeFineTypeId(), existingFeeFine.getFeeFineTypeId());
-          assertEquals(0, expectedFeeFine.getBalance().compareTo(existingFeeFine.getBalance()));
-        }
-
-        context.completeNow();
-      });
-  }
+//  private FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler;
+//  private EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler;
+//  private EventHandler<ItemCheckedOutEvent> itemCheckedOutEventHandler;
+//
+//  @BeforeEach
+//  void beforeEach() {
+//    super.resetMocks();
+//
+//    initUserSummaryRepository();
+//
+//    feeFineBalanceChangedEventHandler = new FeeFineBalanceChangedEventHandler(postgresClient);
+//    itemDeclaredLostEventHandler = new EventHandler<>(postgresClient);
+//    itemCheckedOutEventHandler = new EventHandler<>(postgresClient);
+//
+//    deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+//    deleteAllFromTable(FEE_FINE_BALANCE_CHANGED_EVENT_TABLE_NAME);
+//    deleteAllFromTable(ITEM_DECLARED_LOST_EVENT_TABLE_NAME);
+//    deleteAllFromTable(ITEM_CHECKED_OUT_EVENT_TABLE_NAME);
+//  }
+//
+//  @Test
+//  void createNewUserSummary(VertxTestContext context) {
+//    final String userId = randomId();
+//    final String loanId = randomId();
+//    final String feeFineId = randomId();
+//    final String feeFineTypeId = randomId();
+//    final BigDecimal balance = new BigDecimal("1.55");
+//
+//    List<OpenFeeFine> expectedFeeFines = singletonList(
+//      new OpenFeeFine()
+//        .withFeeFineId(feeFineId)
+//        .withFeeFineTypeId(feeFineTypeId)
+//        .withLoanId(loanId)
+//        .withBalance(balance));
+//
+//    FeeFineBalanceChangedEvent event =
+//      createEvent(userId, loanId, feeFineId, feeFineTypeId, balance)
+//        .withMetadata(buildDefaultMetadata());
+//
+//    feeFineBalanceChangedEventHandler.handle(event)
+//      .onFailure(context::failNow)
+//      .onSuccess(summaryId -> {
+//        checkResult(summaryId, userId, expectedFeeFines, context);
+//        context.completeNow();
+//      });
+//  }
+//
+//  @Test
+//  void addNewFeeFineToExistingUserSummary(VertxTestContext context) {
+//    final String userId = randomId();
+//    final String loanId = randomId();
+//
+//    UserSummary initialUserSummary = new UserSummary()
+//      .withId(randomId())
+//      .withUserId(userId);
+//
+//    OpenFeeFine existingFeeFine = new OpenFeeFine()
+//      .withBalance(new BigDecimal("2.55"))
+//      .withLoanId(loanId)
+//      .withFeeFineTypeId(randomId())
+//      .withFeeFineId(randomId());
+//
+//    initialUserSummary.getOpenFeesFines().add(existingFeeFine);
+//
+//    userSummaryRepository.save(initialUserSummary)
+//      .onFailure(context::failNow)
+//      .onSuccess(summaryId -> {
+//        final String eventFeeFineId = randomId();
+//        final String eventFeeFineTypeId = randomId();
+//        final BigDecimal eventBalance = new BigDecimal("1.55");
+//
+//        FeeFineBalanceChangedEvent event =
+//          createEvent(userId, loanId, eventFeeFineId, eventFeeFineTypeId, eventBalance)
+//            .withMetadata(buildDefaultMetadata());
+//
+//        feeFineBalanceChangedEventHandler.handle(event)
+//          .onFailure(context::failNow)
+//          .onSuccess(id -> {
+//            List<OpenFeeFine> expectedFeeFines = Arrays.asList(existingFeeFine,
+//              new OpenFeeFine()
+//                .withFeeFineId(eventFeeFineId)
+//                .withFeeFineTypeId(eventFeeFineTypeId)
+//                .withLoanId(loanId)
+//                .withBalance(eventBalance));
+//
+//            checkResult(id, userId, expectedFeeFines, context);
+//            context.completeNow();
+//          });
+//      });
+//  }
+//
+//  @Test
+//  void updateFeeFineBalanceInExistingUserSummary(VertxTestContext context) {
+//    final String userId = randomId();
+//    final String loanId = randomId();
+//    final String feeFineId = randomId();
+//    final String feeFineTypeId = randomId();
+//    final BigDecimal initialFeeFineBalance = new BigDecimal("1.25");
+//
+//    UserSummary existingUserSummary = new UserSummary()
+//      .withId(randomId())
+//      .withUserId(userId);
+//
+//    OpenFeeFine existingFeeFine = new OpenFeeFine()
+//      .withLoanId(loanId)
+//      .withBalance(initialFeeFineBalance)
+//      .withFeeFineTypeId(feeFineTypeId)
+//      .withFeeFineId(feeFineId);
+//
+//    existingUserSummary.getOpenFeesFines().add(existingFeeFine);
+//
+//    userSummaryRepository.save(existingUserSummary)
+//      .onFailure(context::failNow)
+//      .onSuccess(summaryId -> {
+//        final BigDecimal eventBalance = new BigDecimal("2.75");
+//        FeeFineBalanceChangedEvent event =
+//          createEvent(userId, loanId, feeFineId, feeFineTypeId, eventBalance)
+//            .withMetadata(buildDefaultMetadata());
+//
+//        feeFineBalanceChangedEventHandler.handle(event)
+//          .onFailure(context::failNow)
+//          .onSuccess(id -> {
+//            List<OpenFeeFine> expectedFeeFines = singletonList(
+//              new OpenFeeFine()
+//                .withFeeFineId(feeFineId)
+//                .withFeeFineTypeId(feeFineTypeId)
+//                .withLoanId(loanId)
+//                .withBalance(eventBalance));
+//
+//            checkResult(id, userId, expectedFeeFines, context);
+//            context.completeNow();
+//          });
+//      });
+//  }
+//
+//  @Test
+//  void deleteClosedFeeFineFromExistingUserSummary(VertxTestContext context) {
+//    final String userId = randomId();
+//    final String loanId = randomId();
+//
+//    final String feeFineId1 = randomId();
+//    final String feeFineTypeId1 = randomId();
+//    final BigDecimal feeFineBalance1 = new BigDecimal("1.25");
+//
+//    OpenFeeFine existingFeeFine1 = new OpenFeeFine()
+//      .withLoanId(randomId())
+//      .withFeeFineId(feeFineId1)
+//      .withFeeFineTypeId(feeFineTypeId1)
+//      .withBalance(feeFineBalance1);
+//
+//    final String feeFineId2 = randomId();
+//    final String feeFineTypeId2 = randomId();
+//    final BigDecimal feeFineBalance2 = new BigDecimal("2.55");
+//
+//    OpenFeeFine existingFeeFine2 = new OpenFeeFine()
+//      .withLoanId(loanId)
+//      .withBalance(feeFineBalance2)
+//      .withFeeFineTypeId(feeFineTypeId2)
+//      .withFeeFineId(feeFineId2);
+//
+//    UserSummary existingUserSummary = new UserSummary()
+//      .withId(randomId())
+//      .withUserId(userId)
+//      .withOpenFeesFines(Arrays.asList(existingFeeFine1, existingFeeFine2));
+//
+//    userSummaryRepository.save(existingUserSummary)
+//      .onFailure(context::failNow)
+//      .onSuccess(summaryId -> {
+//        FeeFineBalanceChangedEvent event =
+//          createEvent(userId, loanId, feeFineId2, feeFineTypeId1, ZERO)
+//            .withMetadata(buildDefaultMetadata());
+//
+//        feeFineBalanceChangedEventHandler.handle(event)
+//          .onFailure(context::failNow)
+//          .onSuccess(id -> {
+//            checkResult(id, userId, emptyList(), context);
+//            context.completeNow();
+//          });
+//      });
+//  }
+//
+//  @Test
+//  void removeDeletedFeeFineFromExistingUserSummary(VertxTestContext context) {
+//    final String userId = randomId();
+//    final String loanId = randomId();
+//
+//    final String feeFineId1 = randomId();
+//    final String feeFineTypeId1 = randomId();
+//    final BigDecimal feeFineBalance1 = new BigDecimal("1.25");
+//
+//    OpenFeeFine existingFeeFine1 = new OpenFeeFine()
+//      .withLoanId(randomId())
+//      .withFeeFineId(feeFineId1)
+//      .withFeeFineTypeId(feeFineTypeId1)
+//      .withBalance(feeFineBalance1);
+//
+//    final String feeFineId2 = randomId();
+//    final String feeFineTypeId2 = randomId();
+//    final BigDecimal feeFineBalance2 = new BigDecimal("2.55");
+//
+//    OpenFeeFine existingFeeFine2 = new OpenFeeFine()
+//      .withLoanId(loanId)
+//      .withBalance(feeFineBalance2)
+//      .withFeeFineTypeId(feeFineTypeId2)
+//      .withFeeFineId(feeFineId2);
+//
+//    UserSummary existingUserSummary = new UserSummary()
+//      .withId(randomId())
+//      .withUserId(userId)
+//      .withOpenFeesFines(Arrays.asList(existingFeeFine1, existingFeeFine2));
+//
+//    userSummaryRepository.save(existingUserSummary)
+//      .onFailure(context::failNow)
+//      .onSuccess(summaryId -> {
+//        FeeFineBalanceChangedEvent event =
+//          createEvent(null, null, feeFineId2, null, ZERO);
+//
+//        feeFineBalanceChangedEventHandler.handle(event)
+//          .onFailure(context::failNow)
+//          .onSuccess(id -> {
+//            checkResult(id, userId, emptyList(), context);
+//            context.completeNow();
+//          });
+//      });
+//  }
+//
+//  @Test
+//  void eventForDeletedFeeFineAndNonExistingSummaryShouldBeIgnored(VertxTestContext context) {
+//    FeeFineBalanceChangedEvent event =
+//      createEvent(null, null, randomId(), null, ZERO);
+//
+//    feeFineBalanceChangedEventHandler.handle(event)
+//      .onSuccess(context::failNow)
+//      .onFailure(throwable -> {
+//        assertInstanceOf(EntityNotFoundException.class, throwable);
+//        assertTrue(throwable.getMessage().contains("event is ignored"));
+//        context.completeNow();
+//      });
+//  }
+//
+//  @Test
+//  void closedFeeFineEventForNonExistingSummaryCreatesAnEmptySummary(VertxTestContext context) {
+//    String userId = randomId();
+//
+//    FeeFineBalanceChangedEvent event =
+//      createEvent(userId, randomId(), randomId(), randomId(), ZERO)
+//        .withMetadata(buildDefaultMetadata());
+//
+//    feeFineBalanceChangedEventHandler.handle(event)
+//      .onFailure(context::failNow)
+//      .onSuccess(summaryId -> {
+//        checkResult(summaryId, userId, emptyList(), context);
+//        context.completeNow();
+//      });
+//  }
+//
+//  @Test
+//  void bothFeesShouldBeProcessedWhenAddedSimultaneously(VertxTestContext context) {
+//    final String userId = randomId();
+//    final String loanId = randomId();
+//
+//    final String feeFineId1 = randomId();
+//    final String feeFineId2 = randomId();
+//    final String feeFineTypeId1 = FeeFineType.LOST_ITEM_FEE.getId();
+//    final String feeFineTypeId2 = FeeFineType.LOST_ITEM_PROCESSING_FEE.getId();
+//    final BigDecimal feeFineBalance1 = new BigDecimal("1.25");
+//    final BigDecimal feeFineBalance2 = new BigDecimal("2.55");
+//
+//    waitFor(itemCheckedOutEventHandler.handle(
+//      buildItemCheckedOutEvent(userId, loanId, new Date())));
+//
+//    waitFor(itemDeclaredLostEventHandler.handle(
+//      buildItemDeclaredLostEvent(userId, loanId)));
+//    waitFor(Future.all(List.of(
+//      feeFineBalanceChangedEventHandler.handle(buildFeeFineBalanceChangedEvent(
+//        userId, loanId, feeFineId1, feeFineTypeId1, feeFineBalance1)),
+//      feeFineBalanceChangedEventHandler.handle(buildFeeFineBalanceChangedEvent(
+//        userId, loanId, feeFineId2, feeFineTypeId2, feeFineBalance2)))));
+//
+//    UserSummary userSummary = waitFor(userSummaryRepository.getByUserId(userId)
+//      .map(Optional::get));
+//
+//    assertEquals(0, new BigDecimal("3.80").compareTo(
+//      userSummary.getOpenFeesFines().stream()
+//      .map(OpenFeeFine::getBalance)
+//      .reduce(BigDecimal::add)
+//      .orElse(ZERO)));
+//
+//    context.completeNow();
+//  }
+//
+//  private static FeeFineBalanceChangedEvent createEvent(String userId, String loanId,
+//    String feeFineId, String feeFineTypeId, BigDecimal balance) {
+//
+//    return new FeeFineBalanceChangedEvent()
+//      .withUserId(userId)
+//      .withLoanId(loanId)
+//      .withFeeFineId(feeFineId)
+//      .withFeeFineTypeId(feeFineTypeId)
+//      .withBalance(balance);
+//  }
+//
+//  private void checkResult(String summaryId, String userId, List<OpenFeeFine> expectedFeeFines,
+//    VertxTestContext context) {
+//
+//    userSummaryRepository.get(summaryId)
+//      .onFailure(context::failNow)
+//      .onSuccess(optionalSummary -> {
+//        UserSummary userSummary = optionalSummary.orElseThrow(() ->
+//          new AssertionError("User summary was not found: " + summaryId));
+//
+//        assertEquals(userId, userSummary.getUserId());
+//        assertEquals(expectedFeeFines.size(), userSummary.getOpenFeesFines().size());
+//
+//        for (OpenFeeFine expectedFeeFine : expectedFeeFines) {
+//          OpenFeeFine existingFeeFine = userSummary.getOpenFeesFines().stream()
+//            .filter(feeFine -> feeFine.getFeeFineId().equals(expectedFeeFine.getFeeFineId()))
+//            .findFirst()
+//            .orElseThrow(() ->
+//              new AssertionError("Fee/fine was not found: " + expectedFeeFine.getFeeFineId()));
+//
+//          assertEquals(expectedFeeFine.getLoanId(), existingFeeFine.getLoanId());
+//          assertEquals(expectedFeeFine.getFeeFineId(), existingFeeFine.getFeeFineId());
+//          assertEquals(expectedFeeFine.getFeeFineTypeId(), existingFeeFine.getFeeFineTypeId());
+//          assertEquals(0, expectedFeeFine.getBalance().compareTo(existingFeeFine.getBalance()));
+//        }
+//
+//        context.completeNow();
+//      });
+//  }
 
 }

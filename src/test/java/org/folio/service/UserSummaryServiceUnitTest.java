@@ -53,7 +53,7 @@ public class UserSummaryServiceUnitTest extends TestBase {
     userSummaryRepository.save(userSummary);
     FeeFineBalanceChangedEvent feeFineBalanceChangedEvent1 = buildFeeFineBalanceChangedEvent(
       userId, randomId(), randomId(), randomId(), balance1);
-    waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, feeFineBalanceChangedEvent1));
+    waitFor(userSummaryService.updateUserSummary(feeFineBalanceChangedEvent1));
 
     verify(userSummaryRepository, times(11)).upsert(userSummary);
   }

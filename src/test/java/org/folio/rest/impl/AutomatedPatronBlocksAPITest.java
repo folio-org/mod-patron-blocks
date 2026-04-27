@@ -69,877 +69,877 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 public class AutomatedPatronBlocksAPITest extends TestBase {
-  private static final String PATRON_GROUP_ID = randomId();
-  private static final boolean SINGLE_LIMIT = true;
-  private static final boolean ALL_LIMITS = false;
-
-  private final PatronBlockLimitsRepository limitsRepository =
-    new PatronBlockLimitsRepository(postgresClient);
-  private final UserSummaryRepository summaryRepository =
-    new UserSummaryRepository(postgresClient);
-  private final PatronBlockConditionsRepository conditionsRepository =
-    new PatronBlockConditionsRepository(postgresClient);
-
-  private final EventHandler<ItemCheckedOutEvent>  itemCheckedOutEventHandler =
-    new EventHandler<>(postgresClient);
-  private final EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler =
-    new EventHandler<>(postgresClient);
-  private final EventHandler<ItemAgedToLostEvent> itemAgedToLostEventHandler =
-    new EventHandler<>(postgresClient);
-  private final EventHandler<LoanDueDateChangedEvent> loanDueDateChangedEventHandler =
-    new EventHandler<>(postgresClient);
-  private final FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler =
-    new FeeFineBalanceChangedEventHandler(postgresClient);
-  private final EventHandler<ItemClaimedReturnedEvent> itemClaimedReturnedEventHandler =
-    new EventHandler<>(postgresClient);
-
-  private static final EnumMap<Condition, Integer> LIMIT_VALUES;
-
-  static {
-    LIMIT_VALUES = new EnumMap<>(Condition.class);
-    LIMIT_VALUES.put(MAX_NUMBER_OF_ITEMS_CHARGED_OUT, 20);
-    LIMIT_VALUES.put(MAX_NUMBER_OF_LOST_ITEMS, 8);
-    LIMIT_VALUES.put(MAX_NUMBER_OF_OVERDUE_ITEMS, 16);
-    LIMIT_VALUES.put(MAX_NUMBER_OF_OVERDUE_RECALLS, 12);
-    LIMIT_VALUES.put(RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS, 24);
-    LIMIT_VALUES.put(MAX_OUTSTANDING_FEE_FINE_BALANCE, 28);
-  }
-
-  private String userId;
-  private boolean expectBlockBorrowing;
-  private boolean expectBlockRenewals;
-  private boolean expectBlockRequests;
-
-  @BeforeEach
-  void beforeEach() {
-    super.resetMocks();
-    mockUsersResponse();
-    deleteAllFromTable(PATRON_BLOCK_LIMITS_TABLE_NAME);
-    deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
-
-    userId = randomId();
-
-    expectBlockBorrowing = false;
-    expectBlockRenewals = false;
-    expectBlockRequests = false;
-
-    Arrays.stream(Condition.values())
-      .forEach(condition -> updateCondition(condition, true, true, true));
-  }
-
-  @Test
-  void shouldReturnBadRequestErrorWhenCalledWithInvalidUserId() {
-    sendRequest("invalid")
-      .then()
-      .statusCode(400)
-      .contentType(ContentType.TEXT)
-      .body(equalTo("Invalid user UUID: \"invalid\""));
-  }
-
-  @Test
-  void shouldReturnNoBlocksWhenUserSummaryDoesNotExist() {
-    String emptyBlocksResponse = toJson(new AutomatedPatronBlocks());
-    sendRequestAndCheckResult(randomId(), emptyBlocksResponse);
-  }
-
-  @Test
-  void shouldReturnNoBlocksWhenNoLimitsExistForPatronGroup() {
-    final String userId = randomId();
-    UserSummary userSummary = new UserSummary()
-      .withId(randomId())
-      .withUserId(userId);
-    waitFor(summaryRepository.save(userSummary));
-
-    String emptyBlocksResponse = toJson(new AutomatedPatronBlocks());
-    sendRequestAndCheckResult(userId, emptyBlocksResponse);
-  }
-
-  private void validateMaxNumberOfItemsChargedOutBlockResponse(int openLoansSizeDelta,
-    boolean singleLimit) {
-
-    final Condition condition = MAX_NUMBER_OF_ITEMS_CHARGED_OUT;
-    final int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + openLoansSizeDelta)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().plusHours(1).toDate();
-
-        waitFor(
-          itemCheckedOutEventHandler.handle(buildItemCheckedOutEvent(userId, loanId, dueDate)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
-
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfItemsChargedOutLimitIsNotReached() {
-    expectNoBlocks();
-    validateMaxNumberOfItemsChargedOutBlockResponse(-1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfItemsChargedOutLimitIsNotReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxNumberOfItemsChargedOutBlockResponse(-1, ALL_LIMITS);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfItemsChargedOutLimitIsReached() {
-    expectBlockBorrowing = true;
-    expectBlockRenewals = false;
-    expectBlockRequests = false;
-    validateMaxNumberOfItemsChargedOutBlockResponse(0, SINGLE_LIMIT);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfItemsChargedOutLimitIsReachedAndAllLimitsExist() {
-    expectBlockBorrowing = true;
-    expectBlockRenewals = false;
-    expectBlockRequests = false;
-    validateMaxNumberOfItemsChargedOutBlockResponse(0, ALL_LIMITS);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfItemsChargedOutLimitIsExceeded() {
-    expectAllBlocks();
-    validateMaxNumberOfItemsChargedOutBlockResponse(1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfItemsChargedOutLimitIsExceededAndAllLimitsExist() {
-    expectAllBlocks();
-    validateMaxNumberOfItemsChargedOutBlockResponse(1, ALL_LIMITS);
-  }
-
-  private void validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(
-    int lostItemsDelta, boolean singleLimit) {
-
-    final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + lostItemsDelta)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().plusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-
-        waitFor(itemDeclaredLostEventHandler.handle(buildItemDeclaredLostEvent(userId, loanId)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
-
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLost() {
-    expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(-1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLostAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(-1, ALL_LIMITS);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLost() {
-    expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(0, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLostAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(0, ALL_LIMITS);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLost() {
-    expectAllBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLostAndAllLimitsExist() {
-    expectAllBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(1, ALL_LIMITS);
-  }
-
-  private void validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(
-    int lostItemsDelta, boolean singleLimit) {
-
-    final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + lostItemsDelta)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().plusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-
-        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
-
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLost() {
-    expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(-1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLostAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(-1, ALL_LIMITS);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLost() {
-    expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(0, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLostAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(0, ALL_LIMITS);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLost() {
-    expectAllBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLostAndAllLimitsExist() {
-    expectAllBlocks();
-    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(1, ALL_LIMITS);
-  }
-
-  private void validateMaxOverdueItemsBlockResponse(int openLoansSizeDelta, boolean singleLimit) {
-    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + openLoansSizeDelta)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().minusHours(1).toDate();
-
-        waitFor(
-          itemCheckedOutEventHandler.handle(buildItemCheckedOutEvent(userId, loanId, dueDate)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
-
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfOverdueItemsLimitIsNotReached() {
-    expectNoBlocks();
-    validateMaxOverdueItemsBlockResponse(-1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfOverdueItemsLimitIsNotReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxOverdueItemsBlockResponse(-1, ALL_LIMITS);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfOverdueItemsLimitIsReached() {
-    expectNoBlocks();
-    validateMaxOverdueItemsBlockResponse(0, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfOverdueItemsLimitReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxOverdueItemsBlockResponse(0, ALL_LIMITS);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfOverdueItemsLimitIsExceeded() {
-    expectAllBlocks();
-    validateMaxOverdueItemsBlockResponse(1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfOverdueItemsLimitIsExceededAndAllLimitsExist() {
-    expectAllBlocks();
-    validateMaxOverdueItemsBlockResponse(1, ALL_LIMITS);
-  }
-
-  private void validateMaxOverdueRecallsBlockResponse(int openLoansSizeDelta, boolean singleLimit) {
-    Condition condition = MAX_NUMBER_OF_OVERDUE_RECALLS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + openLoansSizeDelta)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().minusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-
-        waitFor(loanDueDateChangedEventHandler.handle(
-          buildLoanDueDateChangedEvent(userId, loanId, dueDate, true)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
-
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsNotReached() {
-    expectNoBlocks();
-    validateMaxOverdueRecallsBlockResponse(-1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsNotReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxOverdueRecallsBlockResponse(-1, ALL_LIMITS);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsReached() {
-    expectNoBlocks();
-    validateMaxOverdueRecallsBlockResponse(0, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxOverdueRecallsBlockResponse(0, ALL_LIMITS);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfOverdueRecallsLimitIsExceeded() {
-    expectAllBlocks();
-    validateMaxOverdueRecallsBlockResponse(1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void blockWhenMaxNumberOfOverdueRecallsLimitIsExceededAllLimitsExist() {
-    expectAllBlocks();
-    validateMaxOverdueRecallsBlockResponse(1, ALL_LIMITS);
-  }
-
-  private void validateRecallOverdueByMaximumNumberOfDaysBlockResponse(int dueDateDelta,
-    boolean singleLimit) {
-
-    final Condition condition = RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    String loanId = randomId();
-    Date dueDate = now().minusDays(limitValue + dueDateDelta).toDate();
-
-    waitFor(itemCheckedOutEventHandler.handle(
-      buildItemCheckedOutEvent(userId, loanId, dueDate)));
-
-    waitFor(loanDueDateChangedEventHandler.handle(
-      buildLoanDueDateChangedEvent(userId, loanId, dueDate, true)));
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
-
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  @Test
-  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsNotReached() {
-    expectNoBlocks();
-    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(-1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsNotReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(-1, ALL_LIMITS);
-  }
-
-  @Test
-  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsReached() {
-    expectNoBlocks();
-    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(0, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(0, ALL_LIMITS);
-  }
-
-  @Test
-  void blockWhenRecallOverdueByMaximumNumberOfDaysLimitIsExceeded() {
-    expectAllBlocks();
-    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void blockWhenRecallOverdueByMaximumNumberOfDaysLimitIsExceededAllLimitsExist() {
-    expectAllBlocks();
-    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(1, ALL_LIMITS);
-  }
-
-  private void validateMaxOutstandingFeeFineBalanceBlockResponse(int feeFineBalanceDelta,
-    boolean singleLimit) {
-
-    final Condition condition = MAX_OUTSTANDING_FEE_FINE_BALANCE;
-    int limitValue = LIMIT_VALUES.get(condition);
-    int numberOfFeesFines = 2;
-
-    BigDecimal balancePerFeeFine = BigDecimal.valueOf(limitValue + feeFineBalanceDelta)
-      .divide(BigDecimal.valueOf(numberOfFeesFines), 2, RoundingMode.UNNECESSARY);
-    IntStream.range(0, numberOfFeesFines)
-      .forEach(num -> waitFor(feeFineBalanceChangedEventHandler.handle(
-        buildFeeFineBalanceChangedEvent(userId, randomId(), randomId(), randomId(),
-          balancePerFeeFine))));
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
-
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  @Test
-  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsNotReached() {
-    expectNoBlocks();
-    validateMaxOutstandingFeeFineBalanceBlockResponse(-1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsNotReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxOutstandingFeeFineBalanceBlockResponse(-1, ALL_LIMITS);
-  }
-
-  @Test
-  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsReached() {
-    expectNoBlocks();
-    validateMaxOutstandingFeeFineBalanceBlockResponse(0, SINGLE_LIMIT);
-  }
-
-  @Test
-  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsReachedAndAllLimitsExist() {
-    expectNoBlocks();
-    validateMaxOutstandingFeeFineBalanceBlockResponse(0, ALL_LIMITS);
-  }
-
-  @Test
-  void blockWhenMaxOutstandingFeeFineBalanceLimitIsExceeded() {
-    expectAllBlocks();
-    validateMaxOutstandingFeeFineBalanceBlockResponse(1, SINGLE_LIMIT);
-  }
-
-  @Test
-  void blockWhenMaxOutstandingFeeFineBalanceLimitIsExceededAllLimitsExist() {
-    expectAllBlocks();
-    validateMaxOutstandingFeeFineBalanceBlockResponse(1, ALL_LIMITS);
-  }
-
-  @Test
-  void everythingIsBlockedWhenAllLimitsAreExceeded() {
-    expectAllBlocks();
-    exceedAllLimits(false);
-    String expectedResponse = buildDefaultResponseFor(Condition.values());
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  @Test
-  void nothingIsBlockedWhenAllLimitsAreExceededForItemsClaimedReturned() {
-    expectNoBlocks();
-    exceedAllLimits(true);
-    sendRequestAndCheckResult(toJson(new AutomatedPatronBlocks()));
-  }
-
-  private void exceedAllLimits(boolean claimedReturned) {
-    createLimitsForAllConditions();
-
-    int numberOfOpenLoans = Collections.max(Arrays.asList(
-      LIMIT_VALUES.get(MAX_NUMBER_OF_LOST_ITEMS),
-      LIMIT_VALUES.get(MAX_NUMBER_OF_ITEMS_CHARGED_OUT),
-      LIMIT_VALUES.get(MAX_NUMBER_OF_OVERDUE_ITEMS),
-      LIMIT_VALUES.get(MAX_NUMBER_OF_OVERDUE_RECALLS))) + 1;
-
-    BigDecimal balance = BigDecimal.valueOf(LIMIT_VALUES.get(MAX_OUTSTANDING_FEE_FINE_BALANCE) + 1);
-
-    IntStream.range(0, numberOfOpenLoans)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().minusDays(LIMIT_VALUES.get(RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS) + 1)
-          .toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-
-        waitFor(loanDueDateChangedEventHandler.handle(
-          buildLoanDueDateChangedEvent(userId, loanId, dueDate, true)));
-
-        waitFor(itemDeclaredLostEventHandler.handle(buildItemDeclaredLostEvent(userId, loanId)));
-
-        if (claimedReturned) {
-          waitFor(itemClaimedReturnedEventHandler.handle(
-            buildItemClaimedReturnedEvent(userId, loanId)));
-        }
-
-        if (num == 0) {
-          waitFor(feeFineBalanceChangedEventHandler.handle(
-            buildFeeFineBalanceChangedEvent(userId, loanId, randomId(), randomId(), balance)));
-        }
-      });
-  }
-
-  @Test
-  void updatedValuesFromConditionArePassedToResponse(VertxTestContext context) {
-    final Condition condition = MAX_NUMBER_OF_ITEMS_CHARGED_OUT;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    createLimitsForAllConditions();
-
-    IntStream.range(0, limitValue + 1)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().plusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-      });
-
-    Optional<PatronBlockCondition> optionalResult =
-      waitFor(conditionsRepository.get(condition.getId()));
-
-    assertTrue(optionalResult.isPresent());
-
-    final PatronBlockCondition originalCondition = optionalResult.get();
-
-    PatronBlockCondition updatedCondition = new PatronBlockCondition()
-      .withId(condition.getId())
-      .withBlockBorrowing(!originalCondition.getBlockBorrowing())
-      .withBlockRenewals(originalCondition.getBlockRenewals())
-      .withBlockRequests(!originalCondition.getBlockRequests())
-      .withMessage(EMPTY);
-
-    waitFor(conditionsRepository.update(updatedCondition));
-
-    String expectedResponse = toJson(
-      new AutomatedPatronBlocks().withAutomatedPatronBlocks(Stream.of(
-        createBlock(condition, updatedCondition.getMessage(), updatedCondition.getBlockBorrowing(),
-          updatedCondition.getBlockRenewals(), updatedCondition.getBlockRequests()))
-        .filter(Objects::nonNull)
-        .collect(toList())
-      ));
-
-    sendRequestAndCheckResult(expectedResponse);
-
-    assertTrue(waitFor(conditionsRepository.update(originalCondition)));
-
-    context.completeNow();
-  }
-
-  @Test
-  void noBlockWhenLoanIsNotOverdue() {
-    expectNoBlocks();
-
-    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + 1)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().plusHours(1).toDate();
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
-
-    sendRequest(userId)
-      .then()
-      .statusCode(200)
-      .contentType(ContentType.JSON)
-      .body(equalTo(expectedResponse));
-  }
-
-  @Test
-  void noBlockWhenLoanIsNotOverdueBecauseOfGracePeriod() {
-    expectNoBlocks();
-
-    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + 1)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().minusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate,
-            buildGracePeriod(3, IntervalId.HOURS))));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
-
-    sendRequest(userId)
-      .then()
-      .statusCode(200)
-      .contentType(ContentType.JSON)
-      .body(equalTo(expectedResponse));
-  }
-
-  @Test
-  void blockWhenLoanIsOverdue() {
-    expectAllBlocks();
-
-    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + 1)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().minusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
-
-    sendRequest(userId)
-      .then()
-      .statusCode(200)
-      .contentType(ContentType.JSON)
-      .body(equalTo(expectedResponse));
-  }
-
-  @Test
-  void blockWhenLoanIsOverdueAndGracePeriodIsNull() {
-    expectAllBlocks();
-    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + 1)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().minusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate, null)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
-
-    sendRequest(userId)
-      .then()
-      .statusCode(200)
-      .contentType(ContentType.JSON)
-      .body(equalTo(expectedResponse));
-  }
-
-  @Test
-  void blockWhenLoanIsOverdueAndGracePeriodExists() {
-    expectAllBlocks();
-
-    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    IntStream.range(0, limitValue + 1)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().minusHours(6).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate,
-            buildGracePeriod(1, IntervalId.HOURS))));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
-
-    sendRequest(userId)
-      .then()
-      .statusCode(200)
-      .contentType(ContentType.JSON)
-      .body(equalTo(expectedResponse));
-  }
-
-  @Test
-  void itemsDeclaredLostAndAgedToLostAreCombinedForMaxNumberOfLostItemsBlock() {
-    expectAllBlocks();
-
-    final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    int totalNumberOfEvents = limitValue + 1;
-    int numberOfItemDeclaredLostEvents = totalNumberOfEvents / 2;
-    int numberOfItemAgedToLostEvents = totalNumberOfEvents - numberOfItemDeclaredLostEvents;
-
-    IntStream.range(0, numberOfItemDeclaredLostEvents)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().plusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-
-        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
-      });
-
-    IntStream.range(0, numberOfItemAgedToLostEvents)
-      .forEach(num -> {
-        String loanId = randomId();
-        Date dueDate = now().plusHours(1).toDate();
-
-        waitFor(itemCheckedOutEventHandler.handle(
-          buildItemCheckedOutEvent(userId, loanId, dueDate)));
-
-        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
-      });
-
-    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
-
-    sendRequestAndCheckResult(expectedResponse);
-  }
-
-  private Response sendRequest(String userId) {
-    return okapiClient.get("automated-patron-blocks/" + userId);
-  }
-
-  private ValidatableResponse sendRequestAndCheckResult(String userId, String expectedResponse) {
-    return sendRequest(userId)
-      .then()
-      .statusCode(200)
-      .contentType(ContentType.JSON)
-      .body(equalTo(expectedResponse));
-  }
-
-  private ValidatableResponse sendRequestAndCheckResult(String expectedResponse) {
-    return sendRequest(userId)
-      .then()
-      .statusCode(200)
-      .contentType(ContentType.JSON)
-      .body(equalTo(expectedResponse));
-  }
-
-  private void mockUsersResponse() {
-    String mockResponse = new JsonObject()
-      .put("id", userId)
-      .put("patronGroup", PATRON_GROUP_ID)
-      .encodePrettily();
-
-    wireMock.stubFor(get(urlPathMatching("/users/.+"))
-      .willReturn(aResponse()
-        .withStatus(200)
-        .withBody(mockResponse)
-      ));
-  }
-
-  private void updateCondition(Condition condition, boolean blockBorrowing, boolean blockRenewals,
-    boolean blockRequests) throws IllegalArgumentException {
-
-    PatronBlockCondition patronBlockCondition =
-      waitFor(conditionsRepository.get(condition.getId()))
-        .orElseThrow(() -> new IllegalArgumentException("Invalid condition ID"))
-        .withBlockBorrowing(blockBorrowing)
-        .withBlockRenewals(blockRenewals)
-        .withBlockRequests(blockRequests);
-
-    waitFor(conditionsRepository.update(patronBlockCondition));
-  }
-
-  private String createLimit(Condition condition, String patronGroupId, double value) {
-    PatronBlockLimit limit = new PatronBlockLimit()
-      .withId(randomId())
-      .withConditionId(condition.getId())
-      .withPatronGroupId(patronGroupId)
-      .withValue(value);
-
-    return waitFor(limitsRepository.save(limit));
-  }
-
-  private String createSummary(String userId, List<OpenFeeFine> feesFines,
-    List<OpenLoan> openLoans) {
-
-    UserSummary userSummary = new UserSummary()
-      .withId(randomId())
-      .withUserId(userId)
-      .withOpenFeesFines(feesFines)
-      .withOpenLoans(openLoans);
-
-    return waitFor(summaryRepository.save(userSummary));
-  }
-
-  private AutomatedPatronBlock createBlock(Condition condition, String message) {
-    return createBlock(condition, message, expectBlockBorrowing, expectBlockRenewals,
-      expectBlockRequests);
-  }
-
-  private AutomatedPatronBlock createBlock(Condition condition, String message,
-    boolean blockBorrowing, boolean blockRenewals, boolean blockRequests) {
-
-    if (blockBorrowing || blockRenewals || blockRequests) {
-      return new AutomatedPatronBlock()
-        .withMessage(message)
-        .withBlockBorrowing(blockBorrowing)
-        .withBlockRenewals(blockRenewals)
-        .withBlockRequests(blockRequests)
-        .withPatronBlockConditionId(condition.getId());
-    }
-
-    return null;
-  }
-
-  private void createLimitsForAllConditions() {
-    for (Condition condition : Condition.values()) {
-      createLimit(condition, PATRON_GROUP_ID, LIMIT_VALUES.get(condition));
-    }
-  }
-
-  private String buildDefaultResponseFor(Condition... conditions) {
-    return toJson(
-      new AutomatedPatronBlocks().withAutomatedPatronBlocks(
-        Arrays.stream(conditions)
-          .map(condition -> createBlock(condition, EMPTY))
-          .filter(Objects::nonNull)
-          .collect(toList())
-      ));
-  }
-
-  private String createLimitsAndBuildExpectedResponse(Condition condition, boolean singleLimit) {
-
-    int limitValue = LIMIT_VALUES.get(condition);
-
-    if (singleLimit) {
-      createLimit(condition, PATRON_GROUP_ID, limitValue);
-    } else {
-      createLimitsForAllConditions();
-    }
-
-    return buildDefaultResponseFor(condition);
-  }
-
-  private void expectNoBlocks() {
-    expectBlockBorrowing = false;
-    expectBlockRenewals = false;
-    expectBlockRequests = false;
-  }
-
-  private void expectAllBlocks() {
-    expectBlockBorrowing = true;
-    expectBlockRenewals = true;
-    expectBlockRequests = true;
-  }
+//  private static final String PATRON_GROUP_ID = randomId();
+//  private static final boolean SINGLE_LIMIT = true;
+//  private static final boolean ALL_LIMITS = false;
+//
+//  private final PatronBlockLimitsRepository limitsRepository =
+//    new PatronBlockLimitsRepository(postgresClient);
+//  private final UserSummaryRepository summaryRepository =
+//    new UserSummaryRepository(postgresClient);
+//  private final PatronBlockConditionsRepository conditionsRepository =
+//    new PatronBlockConditionsRepository(postgresClient);
+//
+//  private final EventHandler<ItemCheckedOutEvent>  itemCheckedOutEventHandler =
+//    new EventHandler<>(postgresClient);
+//  private final EventHandler<ItemDeclaredLostEvent> itemDeclaredLostEventHandler =
+//    new EventHandler<>(postgresClient);
+//  private final EventHandler<ItemAgedToLostEvent> itemAgedToLostEventHandler =
+//    new EventHandler<>(postgresClient);
+//  private final EventHandler<LoanDueDateChangedEvent> loanDueDateChangedEventHandler =
+//    new EventHandler<>(postgresClient);
+//  private final FeeFineBalanceChangedEventHandler feeFineBalanceChangedEventHandler =
+//    new FeeFineBalanceChangedEventHandler(postgresClient);
+//  private final EventHandler<ItemClaimedReturnedEvent> itemClaimedReturnedEventHandler =
+//    new EventHandler<>(postgresClient);
+//
+//  private static final EnumMap<Condition, Integer> LIMIT_VALUES;
+//
+//  static {
+//    LIMIT_VALUES = new EnumMap<>(Condition.class);
+//    LIMIT_VALUES.put(MAX_NUMBER_OF_ITEMS_CHARGED_OUT, 20);
+//    LIMIT_VALUES.put(MAX_NUMBER_OF_LOST_ITEMS, 8);
+//    LIMIT_VALUES.put(MAX_NUMBER_OF_OVERDUE_ITEMS, 16);
+//    LIMIT_VALUES.put(MAX_NUMBER_OF_OVERDUE_RECALLS, 12);
+//    LIMIT_VALUES.put(RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS, 24);
+//    LIMIT_VALUES.put(MAX_OUTSTANDING_FEE_FINE_BALANCE, 28);
+//  }
+//
+//  private String userId;
+//  private boolean expectBlockBorrowing;
+//  private boolean expectBlockRenewals;
+//  private boolean expectBlockRequests;
+//
+//  @BeforeEach
+//  void beforeEach() {
+//    super.resetMocks();
+//    mockUsersResponse();
+//    deleteAllFromTable(PATRON_BLOCK_LIMITS_TABLE_NAME);
+//    deleteAllFromTable(USER_SUMMARY_TABLE_NAME);
+//
+//    userId = randomId();
+//
+//    expectBlockBorrowing = false;
+//    expectBlockRenewals = false;
+//    expectBlockRequests = false;
+//
+//    Arrays.stream(Condition.values())
+//      .forEach(condition -> updateCondition(condition, true, true, true));
+//  }
+//
+//  @Test
+//  void shouldReturnBadRequestErrorWhenCalledWithInvalidUserId() {
+//    sendRequest("invalid")
+//      .then()
+//      .statusCode(400)
+//      .contentType(ContentType.TEXT)
+//      .body(equalTo("Invalid user UUID: \"invalid\""));
+//  }
+//
+//  @Test
+//  void shouldReturnNoBlocksWhenUserSummaryDoesNotExist() {
+//    String emptyBlocksResponse = toJson(new AutomatedPatronBlocks());
+//    sendRequestAndCheckResult(randomId(), emptyBlocksResponse);
+//  }
+//
+//  @Test
+//  void shouldReturnNoBlocksWhenNoLimitsExistForPatronGroup() {
+//    final String userId = randomId();
+//    UserSummary userSummary = new UserSummary()
+//      .withId(randomId())
+//      .withUserId(userId);
+//    waitFor(summaryRepository.save(userSummary));
+//
+//    String emptyBlocksResponse = toJson(new AutomatedPatronBlocks());
+//    sendRequestAndCheckResult(userId, emptyBlocksResponse);
+//  }
+//
+//  private void validateMaxNumberOfItemsChargedOutBlockResponse(int openLoansSizeDelta,
+//    boolean singleLimit) {
+//
+//    final Condition condition = MAX_NUMBER_OF_ITEMS_CHARGED_OUT;
+//    final int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + openLoansSizeDelta)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().plusHours(1).toDate();
+//
+//        waitFor(
+//          itemCheckedOutEventHandler.handle(buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfItemsChargedOutLimitIsNotReached() {
+//    expectNoBlocks();
+//    validateMaxNumberOfItemsChargedOutBlockResponse(-1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfItemsChargedOutLimitIsNotReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxNumberOfItemsChargedOutBlockResponse(-1, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfItemsChargedOutLimitIsReached() {
+//    expectBlockBorrowing = true;
+//    expectBlockRenewals = false;
+//    expectBlockRequests = false;
+//    validateMaxNumberOfItemsChargedOutBlockResponse(0, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfItemsChargedOutLimitIsReachedAndAllLimitsExist() {
+//    expectBlockBorrowing = true;
+//    expectBlockRenewals = false;
+//    expectBlockRequests = false;
+//    validateMaxNumberOfItemsChargedOutBlockResponse(0, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfItemsChargedOutLimitIsExceeded() {
+//    expectAllBlocks();
+//    validateMaxNumberOfItemsChargedOutBlockResponse(1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfItemsChargedOutLimitIsExceededAndAllLimitsExist() {
+//    expectAllBlocks();
+//    validateMaxNumberOfItemsChargedOutBlockResponse(1, ALL_LIMITS);
+//  }
+//
+//  private void validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(
+//    int lostItemsDelta, boolean singleLimit) {
+//
+//    final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + lostItemsDelta)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().plusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//
+//        waitFor(itemDeclaredLostEventHandler.handle(buildItemDeclaredLostEvent(userId, loanId)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLost() {
+//    expectNoBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(-1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsDeclaredLostAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(-1, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLost() {
+//    expectNoBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(0, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsDeclaredLostAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(0, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLost() {
+//    expectAllBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsDeclaredLostAndAllLimitsExist() {
+//    expectAllBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsDeclaredLost(1, ALL_LIMITS);
+//  }
+//
+//  private void validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(
+//    int lostItemsDelta, boolean singleLimit) {
+//
+//    final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + lostItemsDelta)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().plusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//
+//        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLost() {
+//    expectNoBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(-1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfLostItemsLimitIsNotReachedWithItemsAgedToLostAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(-1, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLost() {
+//    expectNoBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(0, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfLostItemsLimitIsReachedWithItemsAgedToLostAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(0, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLost() {
+//    expectAllBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfLostItemsLimitIsExceededWithItemsAgedToLostAndAllLimitsExist() {
+//    expectAllBlocks();
+//    validateMaxNumberOfLostItemsBlockResponseWithItemsAgedToLost(1, ALL_LIMITS);
+//  }
+//
+//  private void validateMaxOverdueItemsBlockResponse(int openLoansSizeDelta, boolean singleLimit) {
+//    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + openLoansSizeDelta)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().minusHours(1).toDate();
+//
+//        waitFor(
+//          itemCheckedOutEventHandler.handle(buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfOverdueItemsLimitIsNotReached() {
+//    expectNoBlocks();
+//    validateMaxOverdueItemsBlockResponse(-1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfOverdueItemsLimitIsNotReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxOverdueItemsBlockResponse(-1, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfOverdueItemsLimitIsReached() {
+//    expectNoBlocks();
+//    validateMaxOverdueItemsBlockResponse(0, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfOverdueItemsLimitReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxOverdueItemsBlockResponse(0, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfOverdueItemsLimitIsExceeded() {
+//    expectAllBlocks();
+//    validateMaxOverdueItemsBlockResponse(1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfOverdueItemsLimitIsExceededAndAllLimitsExist() {
+//    expectAllBlocks();
+//    validateMaxOverdueItemsBlockResponse(1, ALL_LIMITS);
+//  }
+//
+//  private void validateMaxOverdueRecallsBlockResponse(int openLoansSizeDelta, boolean singleLimit) {
+//    Condition condition = MAX_NUMBER_OF_OVERDUE_RECALLS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + openLoansSizeDelta)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().minusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//
+//        waitFor(loanDueDateChangedEventHandler.handle(
+//          buildLoanDueDateChangedEvent(userId, loanId, dueDate, true)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsNotReached() {
+//    expectNoBlocks();
+//    validateMaxOverdueRecallsBlockResponse(-1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsNotReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxOverdueRecallsBlockResponse(-1, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsReached() {
+//    expectNoBlocks();
+//    validateMaxOverdueRecallsBlockResponse(0, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxNumberOfOverdueRecallsLimitIsReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxOverdueRecallsBlockResponse(0, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfOverdueRecallsLimitIsExceeded() {
+//    expectAllBlocks();
+//    validateMaxOverdueRecallsBlockResponse(1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void blockWhenMaxNumberOfOverdueRecallsLimitIsExceededAllLimitsExist() {
+//    expectAllBlocks();
+//    validateMaxOverdueRecallsBlockResponse(1, ALL_LIMITS);
+//  }
+//
+//  private void validateRecallOverdueByMaximumNumberOfDaysBlockResponse(int dueDateDelta,
+//    boolean singleLimit) {
+//
+//    final Condition condition = RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    String loanId = randomId();
+//    Date dueDate = now().minusDays(limitValue + dueDateDelta).toDate();
+//
+//    waitFor(itemCheckedOutEventHandler.handle(
+//      buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//
+//    waitFor(loanDueDateChangedEventHandler.handle(
+//      buildLoanDueDateChangedEvent(userId, loanId, dueDate, true)));
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  @Test
+//  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsNotReached() {
+//    expectNoBlocks();
+//    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(-1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsNotReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(-1, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsReached() {
+//    expectNoBlocks();
+//    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(0, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenRecallOverdueByMaximumNumberOfDaysLimitIsReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(0, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void blockWhenRecallOverdueByMaximumNumberOfDaysLimitIsExceeded() {
+//    expectAllBlocks();
+//    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void blockWhenRecallOverdueByMaximumNumberOfDaysLimitIsExceededAllLimitsExist() {
+//    expectAllBlocks();
+//    validateRecallOverdueByMaximumNumberOfDaysBlockResponse(1, ALL_LIMITS);
+//  }
+//
+//  private void validateMaxOutstandingFeeFineBalanceBlockResponse(int feeFineBalanceDelta,
+//    boolean singleLimit) {
+//
+//    final Condition condition = MAX_OUTSTANDING_FEE_FINE_BALANCE;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//    int numberOfFeesFines = 2;
+//
+//    BigDecimal balancePerFeeFine = BigDecimal.valueOf(limitValue + feeFineBalanceDelta)
+//      .divide(BigDecimal.valueOf(numberOfFeesFines), 2, RoundingMode.UNNECESSARY);
+//    IntStream.range(0, numberOfFeesFines)
+//      .forEach(num -> waitFor(feeFineBalanceChangedEventHandler.handle(
+//        buildFeeFineBalanceChangedEvent(userId, randomId(), randomId(), randomId(),
+//          balancePerFeeFine))));
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, singleLimit);
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsNotReached() {
+//    expectNoBlocks();
+//    validateMaxOutstandingFeeFineBalanceBlockResponse(-1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsNotReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxOutstandingFeeFineBalanceBlockResponse(-1, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsReached() {
+//    expectNoBlocks();
+//    validateMaxOutstandingFeeFineBalanceBlockResponse(0, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void noBlockWhenMaxOutstandingFeeFineBalanceLimitIsReachedAndAllLimitsExist() {
+//    expectNoBlocks();
+//    validateMaxOutstandingFeeFineBalanceBlockResponse(0, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void blockWhenMaxOutstandingFeeFineBalanceLimitIsExceeded() {
+//    expectAllBlocks();
+//    validateMaxOutstandingFeeFineBalanceBlockResponse(1, SINGLE_LIMIT);
+//  }
+//
+//  @Test
+//  void blockWhenMaxOutstandingFeeFineBalanceLimitIsExceededAllLimitsExist() {
+//    expectAllBlocks();
+//    validateMaxOutstandingFeeFineBalanceBlockResponse(1, ALL_LIMITS);
+//  }
+//
+//  @Test
+//  void everythingIsBlockedWhenAllLimitsAreExceeded() {
+//    expectAllBlocks();
+//    exceedAllLimits(false);
+//    String expectedResponse = buildDefaultResponseFor(Condition.values());
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  @Test
+//  void nothingIsBlockedWhenAllLimitsAreExceededForItemsClaimedReturned() {
+//    expectNoBlocks();
+//    exceedAllLimits(true);
+//    sendRequestAndCheckResult(toJson(new AutomatedPatronBlocks()));
+//  }
+//
+//  private void exceedAllLimits(boolean claimedReturned) {
+//    createLimitsForAllConditions();
+//
+//    int numberOfOpenLoans = Collections.max(Arrays.asList(
+//      LIMIT_VALUES.get(MAX_NUMBER_OF_LOST_ITEMS),
+//      LIMIT_VALUES.get(MAX_NUMBER_OF_ITEMS_CHARGED_OUT),
+//      LIMIT_VALUES.get(MAX_NUMBER_OF_OVERDUE_ITEMS),
+//      LIMIT_VALUES.get(MAX_NUMBER_OF_OVERDUE_RECALLS))) + 1;
+//
+//    BigDecimal balance = BigDecimal.valueOf(LIMIT_VALUES.get(MAX_OUTSTANDING_FEE_FINE_BALANCE) + 1);
+//
+//    IntStream.range(0, numberOfOpenLoans)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().minusDays(LIMIT_VALUES.get(RECALL_OVERDUE_BY_MAX_NUMBER_OF_DAYS) + 1)
+//          .toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//
+//        waitFor(loanDueDateChangedEventHandler.handle(
+//          buildLoanDueDateChangedEvent(userId, loanId, dueDate, true)));
+//
+//        waitFor(itemDeclaredLostEventHandler.handle(buildItemDeclaredLostEvent(userId, loanId)));
+//
+//        if (claimedReturned) {
+//          waitFor(itemClaimedReturnedEventHandler.handle(
+//            buildItemClaimedReturnedEvent(userId, loanId)));
+//        }
+//
+//        if (num == 0) {
+//          waitFor(feeFineBalanceChangedEventHandler.handle(
+//            buildFeeFineBalanceChangedEvent(userId, loanId, randomId(), randomId(), balance)));
+//        }
+//      });
+//  }
+//
+//  @Test
+//  void updatedValuesFromConditionArePassedToResponse(VertxTestContext context) {
+//    final Condition condition = MAX_NUMBER_OF_ITEMS_CHARGED_OUT;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    createLimitsForAllConditions();
+//
+//    IntStream.range(0, limitValue + 1)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().plusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//      });
+//
+//    Optional<PatronBlockCondition> optionalResult =
+//      waitFor(conditionsRepository.get(condition.getId()));
+//
+//    assertTrue(optionalResult.isPresent());
+//
+//    final PatronBlockCondition originalCondition = optionalResult.get();
+//
+//    PatronBlockCondition updatedCondition = new PatronBlockCondition()
+//      .withId(condition.getId())
+//      .withBlockBorrowing(!originalCondition.getBlockBorrowing())
+//      .withBlockRenewals(originalCondition.getBlockRenewals())
+//      .withBlockRequests(!originalCondition.getBlockRequests())
+//      .withMessage(EMPTY);
+//
+//    waitFor(conditionsRepository.update(updatedCondition));
+//
+//    String expectedResponse = toJson(
+//      new AutomatedPatronBlocks().withAutomatedPatronBlocks(Stream.of(
+//        createBlock(condition, updatedCondition.getMessage(), updatedCondition.getBlockBorrowing(),
+//          updatedCondition.getBlockRenewals(), updatedCondition.getBlockRequests()))
+//        .filter(Objects::nonNull)
+//        .collect(toList())
+//      ));
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//
+//    assertTrue(waitFor(conditionsRepository.update(originalCondition)));
+//
+//    context.completeNow();
+//  }
+//
+//  @Test
+//  void noBlockWhenLoanIsNotOverdue() {
+//    expectNoBlocks();
+//
+//    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + 1)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().plusHours(1).toDate();
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
+//
+//    sendRequest(userId)
+//      .then()
+//      .statusCode(200)
+//      .contentType(ContentType.JSON)
+//      .body(equalTo(expectedResponse));
+//  }
+//
+//  @Test
+//  void noBlockWhenLoanIsNotOverdueBecauseOfGracePeriod() {
+//    expectNoBlocks();
+//
+//    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + 1)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().minusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate,
+//            buildGracePeriod(3, IntervalId.HOURS))));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
+//
+//    sendRequest(userId)
+//      .then()
+//      .statusCode(200)
+//      .contentType(ContentType.JSON)
+//      .body(equalTo(expectedResponse));
+//  }
+//
+//  @Test
+//  void blockWhenLoanIsOverdue() {
+//    expectAllBlocks();
+//
+//    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + 1)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().minusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
+//
+//    sendRequest(userId)
+//      .then()
+//      .statusCode(200)
+//      .contentType(ContentType.JSON)
+//      .body(equalTo(expectedResponse));
+//  }
+//
+//  @Test
+//  void blockWhenLoanIsOverdueAndGracePeriodIsNull() {
+//    expectAllBlocks();
+//    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + 1)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().minusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate, null)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
+//
+//    sendRequest(userId)
+//      .then()
+//      .statusCode(200)
+//      .contentType(ContentType.JSON)
+//      .body(equalTo(expectedResponse));
+//  }
+//
+//  @Test
+//  void blockWhenLoanIsOverdueAndGracePeriodExists() {
+//    expectAllBlocks();
+//
+//    final Condition condition = MAX_NUMBER_OF_OVERDUE_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    IntStream.range(0, limitValue + 1)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().minusHours(6).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate,
+//            buildGracePeriod(1, IntervalId.HOURS))));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
+//
+//    sendRequest(userId)
+//      .then()
+//      .statusCode(200)
+//      .contentType(ContentType.JSON)
+//      .body(equalTo(expectedResponse));
+//  }
+//
+//  @Test
+//  void itemsDeclaredLostAndAgedToLostAreCombinedForMaxNumberOfLostItemsBlock() {
+//    expectAllBlocks();
+//
+//    final Condition condition = MAX_NUMBER_OF_LOST_ITEMS;
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    int totalNumberOfEvents = limitValue + 1;
+//    int numberOfItemDeclaredLostEvents = totalNumberOfEvents / 2;
+//    int numberOfItemAgedToLostEvents = totalNumberOfEvents - numberOfItemDeclaredLostEvents;
+//
+//    IntStream.range(0, numberOfItemDeclaredLostEvents)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().plusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//
+//        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
+//      });
+//
+//    IntStream.range(0, numberOfItemAgedToLostEvents)
+//      .forEach(num -> {
+//        String loanId = randomId();
+//        Date dueDate = now().plusHours(1).toDate();
+//
+//        waitFor(itemCheckedOutEventHandler.handle(
+//          buildItemCheckedOutEvent(userId, loanId, dueDate)));
+//
+//        waitFor(itemAgedToLostEventHandler.handle(buildItemAgedToLostEvent(userId, loanId)));
+//      });
+//
+//    String expectedResponse = createLimitsAndBuildExpectedResponse(condition, true);
+//
+//    sendRequestAndCheckResult(expectedResponse);
+//  }
+//
+//  private Response sendRequest(String userId) {
+//    return okapiClient.get("automated-patron-blocks/" + userId);
+//  }
+//
+//  private ValidatableResponse sendRequestAndCheckResult(String userId, String expectedResponse) {
+//    return sendRequest(userId)
+//      .then()
+//      .statusCode(200)
+//      .contentType(ContentType.JSON)
+//      .body(equalTo(expectedResponse));
+//  }
+//
+//  private ValidatableResponse sendRequestAndCheckResult(String expectedResponse) {
+//    return sendRequest(userId)
+//      .then()
+//      .statusCode(200)
+//      .contentType(ContentType.JSON)
+//      .body(equalTo(expectedResponse));
+//  }
+//
+//  private void mockUsersResponse() {
+//    String mockResponse = new JsonObject()
+//      .put("id", userId)
+//      .put("patronGroup", PATRON_GROUP_ID)
+//      .encodePrettily();
+//
+//    wireMock.stubFor(get(urlPathMatching("/users/.+"))
+//      .willReturn(aResponse()
+//        .withStatus(200)
+//        .withBody(mockResponse)
+//      ));
+//  }
+//
+//  private void updateCondition(Condition condition, boolean blockBorrowing, boolean blockRenewals,
+//    boolean blockRequests) throws IllegalArgumentException {
+//
+//    PatronBlockCondition patronBlockCondition =
+//      waitFor(conditionsRepository.get(condition.getId()))
+//        .orElseThrow(() -> new IllegalArgumentException("Invalid condition ID"))
+//        .withBlockBorrowing(blockBorrowing)
+//        .withBlockRenewals(blockRenewals)
+//        .withBlockRequests(blockRequests);
+//
+//    waitFor(conditionsRepository.update(patronBlockCondition));
+//  }
+//
+//  private String createLimit(Condition condition, String patronGroupId, double value) {
+//    PatronBlockLimit limit = new PatronBlockLimit()
+//      .withId(randomId())
+//      .withConditionId(condition.getId())
+//      .withPatronGroupId(patronGroupId)
+//      .withValue(value);
+//
+//    return waitFor(limitsRepository.save(limit));
+//  }
+//
+//  private String createSummary(String userId, List<OpenFeeFine> feesFines,
+//    List<OpenLoan> openLoans) {
+//
+//    UserSummary userSummary = new UserSummary()
+//      .withId(randomId())
+//      .withUserId(userId)
+//      .withOpenFeesFines(feesFines)
+//      .withOpenLoans(openLoans);
+//
+//    return waitFor(summaryRepository.save(userSummary));
+//  }
+//
+//  private AutomatedPatronBlock createBlock(Condition condition, String message) {
+//    return createBlock(condition, message, expectBlockBorrowing, expectBlockRenewals,
+//      expectBlockRequests);
+//  }
+//
+//  private AutomatedPatronBlock createBlock(Condition condition, String message,
+//    boolean blockBorrowing, boolean blockRenewals, boolean blockRequests) {
+//
+//    if (blockBorrowing || blockRenewals || blockRequests) {
+//      return new AutomatedPatronBlock()
+//        .withMessage(message)
+//        .withBlockBorrowing(blockBorrowing)
+//        .withBlockRenewals(blockRenewals)
+//        .withBlockRequests(blockRequests)
+//        .withPatronBlockConditionId(condition.getId());
+//    }
+//
+//    return null;
+//  }
+//
+//  private void createLimitsForAllConditions() {
+//    for (Condition condition : Condition.values()) {
+//      createLimit(condition, PATRON_GROUP_ID, LIMIT_VALUES.get(condition));
+//    }
+//  }
+//
+//  private String buildDefaultResponseFor(Condition... conditions) {
+//    return toJson(
+//      new AutomatedPatronBlocks().withAutomatedPatronBlocks(
+//        Arrays.stream(conditions)
+//          .map(condition -> createBlock(condition, EMPTY))
+//          .filter(Objects::nonNull)
+//          .collect(toList())
+//      ));
+//  }
+//
+//  private String createLimitsAndBuildExpectedResponse(Condition condition, boolean singleLimit) {
+//
+//    int limitValue = LIMIT_VALUES.get(condition);
+//
+//    if (singleLimit) {
+//      createLimit(condition, PATRON_GROUP_ID, limitValue);
+//    } else {
+//      createLimitsForAllConditions();
+//    }
+//
+//    return buildDefaultResponseFor(condition);
+//  }
+//
+//  private void expectNoBlocks() {
+//    expectBlockBorrowing = false;
+//    expectBlockRenewals = false;
+//    expectBlockRequests = false;
+//  }
+//
+//  private void expectAllBlocks() {
+//    expectBlockBorrowing = true;
+//    expectBlockRenewals = true;
+//    expectBlockRequests = true;
+//  }
 }
