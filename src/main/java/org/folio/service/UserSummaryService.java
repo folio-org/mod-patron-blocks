@@ -144,7 +144,7 @@ public class UserSummaryService {
   }
 
   private Future<String> updateAndStoreUserSummary(UserSummaryUpdateContext context) {
-    log.info("updateAndStoreUserSummary:: {}", context);
+    log.info("updateAndStoreUserSummary:: trying to update user summary: {}", context);
     RebuildContext rebuildContext = new RebuildContext().withUserSummary(context.getUserSummary());
     handleEvent(rebuildContext, context.getEvent());
 

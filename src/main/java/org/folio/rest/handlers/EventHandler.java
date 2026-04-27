@@ -39,10 +39,13 @@ public class EventHandler<E extends Event> {
   }
 
   public Future<String> handle(E event) {
-    log.debug("handle:: parameters event: {}", () -> asJson(event));
-    return eventService.save(event)
-      .compose(eventId -> updateUserSummary(event))
-      .onComplete(result -> logResult(result, event));
+    Vertx.currentContext().executeBlocking(() -> {
+      log.debug("handle:: parameters event: {}", () -> asJson(event));
+      return eventService.save(event)
+        .compose(eventId -> updateUserSummary(event))
+        .onComplete(result -> logResult(result, event));
+    });
+    return null;
   }
 
   public Future<String> handleSkippingUserSummaryUpdate(E event) {
