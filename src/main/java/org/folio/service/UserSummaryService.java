@@ -64,6 +64,8 @@ public class UserSummaryService {
     FeeFineType.LOST_ITEM_FEE.getId(),
     FeeFineType.LOST_ITEM_PROCESSING_FEE.getId()
   );
+  public static final long BASE_UPDATE_BACKOFF_MS = 50L;
+  public static final long MAX_UPDATE_BACKOFF_MS = 2000L;
 
   private final UserSummaryRepository userSummaryRepository;
   private final EventService eventService;
@@ -96,36 +98,35 @@ public class UserSummaryService {
     log.info("recursivelyUpdateUserSummaryWithEvent:: {}", context);
 
     updateAndStoreUserSummary(context)
-      .onSuccess(updatePromise::succeed)
-      .onFailure(t -> retryUpdate(t, context, updatePromise));
+      .onComplete(updatePromise::succeed, t -> retryUpdate(t, context, updatePromise));
   }
 
-  private void retryUpdate(Throwable throwable, UserSummaryUpdateContext context,
+  private void retryUpdate(Throwable error, UserSummaryUpdateContext context,
     Promise<String> updatePromise) {
 
-    log.warn("retryUpdate:: failed to update user summary: {}", context, throwable);
+    log.warn("retryUpdate:: failed to update user summary: {}", context, error);
 
-    if (!PgExceptionUtil.isVersionConflict(throwable)) {
+    if (!PgExceptionUtil.isVersionConflict(error)) {
       log.error("retryUpdate:: error is not retriable");
-      updatePromise.fail(throwable);
+      updatePromise.fail(error);
       return;
     }
 
     if (!context.canRetryUpdate()) {
       log.warn("retryUpdate:: Failed to update user summary due " +
           "to version conflict. User ID: {}. Failed attempts: {}", context.userSummary.getUserId(),
-        MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, throwable);
-      updatePromise.fail(throwable);
+        MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, error);
+      updatePromise.fail(error);
       return;
     }
 
     log.warn("retryUpdate:: Version conflict when trying to update " +
         "user summary. User ID: {}. Attempt # {} of {}", context.userSummary.getUserId(),
-      context.attemptCounter.get(), MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, throwable);
+      context.attemptCounter.get(), MAX_NUMBER_OF_RETRIES_ON_VERSION_CONFLICT, error);
 
     log.info("retryUpdate:: {}", context);
     long backoff = computeBackoffWithJitter(context.getAttemptCounter().get());
-    log.info("retryUpdate:: scheduling retry in {} ms", backoff);
+    log.info("retryUpdate:: scheduling retry in {} ms: {}", backoff, context);
 
     context.getAttemptCounter().incrementAndGet();
 
@@ -133,22 +134,13 @@ public class UserSummaryService {
       .setTimer(backoff, timerId ->
         userSummaryRepository.findByUserIdOrBuildNew(context.getUserSummary().getUserId())
           .map(context::withUserSummary)
-          .onSuccess(v -> recursivelyUpdateUserSummaryWithEvent(context, updatePromise)));
+          .onSuccess(v -> recursivelyUpdateUserSummaryWithEvent(context, updatePromise))
+          .onFailure(updatePromise::fail));
   }
 
   private static long computeBackoffWithJitter(int attempt) {
-    long base = 50L;
-    long max = 2000L;
-    long exp = Math.min(max, (long) (base * Math.pow(2, attempt - 1)));
-
+    long exp = Math.min(MAX_UPDATE_BACKOFF_MS, (long) (BASE_UPDATE_BACKOFF_MS * Math.pow(2, attempt - 1)));
     return ThreadLocalRandom.current().nextLong(0, exp + 1);
-  }
-
-  private Future<UserSummaryUpdateContext> prepareContextForRetry(UserSummaryUpdateContext context) {
-    context.getAttemptCounter().incrementAndGet();
-
-    return userSummaryRepository.findByUserIdOrBuildNew(context.getUserSummary().getUserId())
-      .map(context::withUserSummary);
   }
 
   private Future<String> updateAndStoreUserSummary(UserSummaryUpdateContext context) {
@@ -480,8 +472,9 @@ public class UserSummaryService {
 
     @Override
     public String toString() {
-      return "UserSummaryUpdateContext(userSummaryId=%s, userId=%s, eventId=%s, retryAttempts=%d)"
-        .formatted(userSummary.getId(), userSummary.getUserId(), event.getId(), attemptCounter.get());
+      return "%s(userSummaryId=%s, userId=%s, eventId=%s, retryAttempts=%d)"
+        .formatted(getClass().getSimpleName(), userSummary.getId(), userSummary.getUserId(),
+          event.getId(), attemptCounter.get());
     }
   }
 }
