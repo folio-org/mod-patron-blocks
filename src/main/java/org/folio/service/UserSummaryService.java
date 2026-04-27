@@ -89,12 +89,15 @@ public class UserSummaryService {
     return updatePromise.future();
   }
 
-  private void updateUserSummaryWithRetry(UserSummaryUpdateContext context,
-    Promise<String> updatePromise) {
-
+  private void updateUserSummaryWithRetry(UserSummaryUpdateContext context, Promise<String> updatePromise) {
     log.info("updateUserSummaryWithRetry:: {}", context);
-    loadUserSummary(context)
-      .compose(this::updateAndStoreUserSummary)
+    succeededFuture(context)
+      .compose(this::loadUserSummary)
+      .compose(contextWithSummary -> updateUserSummary(contextWithSummary, updatePromise));
+  }
+
+  private Future<String> updateUserSummary(UserSummaryUpdateContext context, Promise<String> updatePromise) {
+    return updateAndStoreUserSummary(context)
       .onSuccess(updatePromise::succeed)
       .onFailure(t -> retryUpdate(t, context, updatePromise));
   }
@@ -113,8 +116,8 @@ public class UserSummaryService {
       return;
     }
 
-    context.incrementAttemptCounter();
-    long backoff = computeBackoffWithJitter(context.getAttemptCounter().get());
+    int retryAttempts = context.incrementAttemptCounter();
+    long backoff = computeBackoffWithJitter(retryAttempts);
     log.info("retryUpdate:: scheduling retry in {} ms: {}", backoff, context);
 
     Vertx.currentContext().owner()
