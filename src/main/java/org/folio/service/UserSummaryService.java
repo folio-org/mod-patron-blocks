@@ -65,7 +65,7 @@ public class UserSummaryService {
     FeeFineType.LOST_ITEM_PROCESSING_FEE.getId()
   );
   public static final long BASE_UPDATE_BACKOFF_MS = 50L;
-  public static final long MAX_UPDATE_BACKOFF_MS = 1000L;
+  public static final long MAX_UPDATE_BACKOFF_MS = 2000L;
 
   private final UserSummaryRepository userSummaryRepository;
   private final EventService eventService;
@@ -98,7 +98,10 @@ public class UserSummaryService {
 
   private Future<String> updateUserSummary(UserSummaryUpdateContext context, Promise<String> updatePromise) {
     return updateAndStoreUserSummary(context)
-      .onSuccess(updatePromise::succeed)
+      .onSuccess(userSummaryId -> {
+        log.info("updateUserSummary:: user summary updated successfully: {}", context);
+        updatePromise.complete(userSummaryId);
+      })
       .onFailure(t -> retryUpdate(t, context, updatePromise));
   }
 
@@ -116,6 +119,8 @@ public class UserSummaryService {
       return;
     }
 
+
+    log.info("retryUpdate:: retrying user summary update: {}", context);
     int retryAttempts = context.incrementAttemptCounter();
     long backoff = computeBackoffWithJitter(retryAttempts);
     log.info("retryUpdate:: scheduling retry in {} ms: {}", backoff, context);
@@ -136,7 +141,7 @@ public class UserSummaryService {
   }
 
   private Future<UserSummaryUpdateContext> loadUserSummary(UserSummaryUpdateContext context) {
-    log.info("loadUserSummary:: refreshing user summary: {}", context);
+    log.info("loadUserSummary:: {}", context);
     return userSummaryRepository.findByUserIdOrBuildNew(context.getEvent().getUserId())
       .map(context::withUserSummary);
   }
