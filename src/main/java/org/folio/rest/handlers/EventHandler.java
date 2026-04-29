@@ -59,7 +59,7 @@ public class EventHandler<E extends Event> {
   protected void logResult(AsyncResult<String> result, E event) {
     String eventType = EventType.getNameByEvent(event);
     if (result.failed()) {
-      log.warn("logResult: Failed to process event {}", eventType);
+      log.warn("logResult: Failed to process event {}", eventType, result.cause());
     } else {
       String userSummaryId = result.result();
       log.info("logResult: Event {} processed successfully. Affected user summary: {}",
