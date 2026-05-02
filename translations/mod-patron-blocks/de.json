@@ -26,9 +26,5 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Offene Forderungen – Forderungen-UUID",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Forderungen-UUID",
     "fqm.entityType.user_summary.jsonb": "JSONB",
-    "fqm.entityType.user_summary._description": "Einfacher Entitätstyp für Benutzersperrenübersichtsdaten",
-    "fqm.entityType.user_summary.open_loans.duration": "Kulanzfrist – Dauer",
-    "fqm.entityType.user_summary.open_loans.duration._qualified": "Offene Ausleihen – Kulanzfrist – Dauer",
-    "fqm.entityType.user_summary.open_loans.interval_id": "Offene Ausleihen – Intervall-ID",
-    "fqm.entityType.user_summary.open_loans.interval_id._qualified": "Offene Ausleihen – Kulanzfrist – Intervall-ID"
+    "fqm.entityType.user_summary._description": "Einfacher Entitätstyp für Benutzersperrenübersichtsdaten"
 }
