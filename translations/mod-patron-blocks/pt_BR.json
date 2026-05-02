@@ -26,9 +26,5 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Taxas/multas em aberto — UUID de multa",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "UUID de taxa/multa",
     "fqm.entityType.user_summary.jsonb": "JSONB",
-    "fqm.entityType.user_summary._description": "Tipo de entidade simples para dados de resumo de bloqueios de usuário. Esse tipo de entidade pode ser usado para fins de depuração quando os resumos de usuário ficam dessincronizados.",
-    "fqm.entityType.user_summary.open_loans.duration": "Período de carência - Duração",
-    "fqm.entityType.user_summary.open_loans.duration._qualified": "Empréstimos em aberto - Período de carência - Duração",
-    "fqm.entityType.user_summary.open_loans.interval_id": "Período de carência - ID do intervalo",
-    "fqm.entityType.user_summary.open_loans.interval_id._qualified": "Empréstimos em aberto - Período de carência - ID do intervalo"
+    "fqm.entityType.user_summary._description": "Tipo de entidade simples para dados de resumo de bloqueios de usuário. Esse tipo de entidade pode ser usado para fins de depuração quando os resumos de usuário ficam dessincronizados."
 }

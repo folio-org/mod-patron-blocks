@@ -26,9 +26,5 @@
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id._qualified": "Otevřené poplatky/pokuty — Poplatek/Pokuta (UUID)",
     "fqm.entityType.user_summary.open_fees_fines.fee_fine_id": "Poplatek/pokuta (UUID)",
     "fqm.entityType.user_summary.jsonb": "JSONB",
-    "fqm.entityType.user_summary._description": "Jednoduchý typ entity pro souhrnná data uživatelských blokací.",
-    "fqm.entityType.user_summary.open_loans.duration": "Doba odkladu — Doba trvání",
-    "fqm.entityType.user_summary.open_loans.duration._qualified": "Otevřené výpůjčky — Doba odkladu — Doba trvání",
-    "fqm.entityType.user_summary.open_loans.interval_id": "Doba odkladu - ID intervalu",
-    "fqm.entityType.user_summary.open_loans.interval_id._qualified": "Otevřené výpůjčky — Doba odkladu — ID intervalu"
+    "fqm.entityType.user_summary._description": "Jednoduchý typ entity pro souhrnná data uživatelských bloků. Tento typ entity lze použít pro účely ladění, když se uživatelské souhrny nesynchronizují."
 }
