@@ -35,7 +35,9 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.producer.KafkaHeader;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
+import tools.jackson.core.JacksonException;
 
 @Log4j2
 public class EventConsumerVerticle extends AbstractVerticle {
@@ -113,7 +115,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .loadLimit(DEFAULT_LOAD_LIMIT)
       .globalLoadSensor(new GlobalLoadSensor())
       .subscriptionDefinition(buildSubscriptionDefinition(topic))
-      .processRecordErrorHandler((t, r) -> log.error("Failed to process event: {}", r, t))
+      .processRecordErrorHandler((t, r) -> log.error("Failed to process event with key '{}'", r.key(), t))
       .build();
 
     return consumer.start(rec -> handleEvent(rec, eventType, handlerFactory), MODULE_ID)
@@ -141,7 +143,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
     E event;
     try {
       event = EventMapper.toEvent(kafkaRecord, eventType);
-    } catch (Exception e) {
+    } catch (ConstraintViolationException | JacksonException e) {
       return failedFuture(e);
     }
     return succeededFuture(event);
