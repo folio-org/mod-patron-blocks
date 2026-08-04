@@ -24,7 +24,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.folio.domain.Event;
-import org.folio.domain.event.DomainEvent;
 import org.folio.domain.event.FolioKafkaTopic;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.SimpleKafkaProducerManager;
@@ -220,10 +219,8 @@ public class KafkaTestHelper {
     waitForValue(() -> getOffset(fullTopicName, consumerGroupId), initialOffset + 1);
   }
 
-  public void publishEvent(Event eventPayload, String topic, String tenantId) {
-    DomainEvent<Event> event = buildEvent(eventPayload, tenantId);
-
-    var record = new KafkaProducerRecordBuilder<String, DomainEvent<Event>>(tenantId)
+  public void publishEvent(Event event, String topic, String tenantId) {;
+    var record = new KafkaProducerRecordBuilder<String, Event>(tenantId)
       .key(randomUUID().toString())
       .value(event)
       .topic(topic)
@@ -233,15 +230,6 @@ public class KafkaTestHelper {
     var producer = createProducer(topic);
     waitFor(producer.write(record));
     waitFor(producer.close());
-  }
-
-  private static DomainEvent<Event> buildEvent(Event eventPayload, String tenantId) {
-    return DomainEvent.builder()
-      .id(randomUUID())
-      .tenant(tenantId)
-      .timestamp(currentTimeMillis())
-      .data(eventPayload)
-      .build();
   }
 
   public KafkaProducer<String, String> createProducer(String name) {

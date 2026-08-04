@@ -1,14 +1,14 @@
 package org.folio.verticle;
 
 import static io.vertx.core.Future.failedFuture;
-import static org.folio.domain.event.DomainEventMapper.toDomainEvent;
+import static io.vertx.core.Future.succeededFuture;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
 import org.folio.domain.Event;
-import org.folio.domain.event.DomainEvent;
+import org.folio.domain.event.EventMapper;
 import org.folio.domain.event.FolioKafkaTopic;
 import org.folio.kafka.GlobalLoadSensor;
 import org.folio.kafka.KafkaConfig;
@@ -34,7 +34,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
-import jakarta.validation.ConstraintViolationException;
+import io.vertx.kafka.client.producer.KafkaHeader;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -102,7 +102,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   private <E extends Event> Future<Void> createConsumer(KafkaTopic topic, Class<E> eventType,
-    BiFunction<String, Vertx, EventHandler<E>> handlerFactory) {
+    BiFunction<List<KafkaHeader>, Vertx, EventHandler<E>> handlerFactory) {
 
     log.info("createConsumer:: creating consumer for topic {}", topic.topicName());
 
@@ -128,18 +128,23 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .build();
   }
 
-  private <E extends Event> Future<String> handleEvent(KafkaConsumerRecord<String, String> record,
-    Class<E> eventType, BiFunction<String, Vertx, EventHandler<E>> handlerFactory) {
+  private <E extends Event> Future<String> handleEvent(KafkaConsumerRecord<String, String> kafkaRecord,
+    Class<E> eventType, BiFunction<List<KafkaHeader>, Vertx, EventHandler<E>> handlerFactory) {
 
-    DomainEvent<E> event;
+    return deserializeEvent(kafkaRecord, eventType)
+      .compose(event -> handlerFactory.apply(kafkaRecord.headers(), vertx).handle(event));
+  }
+
+  private static <E extends Event> Future<E> deserializeEvent(KafkaConsumerRecord<String, String> kafkaRecord,
+    Class<E> eventType) {
+
+    E event;
     try {
-      event = toDomainEvent(record, eventType);
-    } catch (ConstraintViolationException e) {
+      event = EventMapper.toEvent(kafkaRecord, eventType);
+    } catch (Exception e) {
       return failedFuture(e);
     }
-
-    EventHandler<E> handler = handlerFactory.apply(event.getTenant(), vertx);
-    return handler.handle(event);
+    return succeededFuture(event);
   }
 
   private static KafkaConfig buildKafkaConfig() {

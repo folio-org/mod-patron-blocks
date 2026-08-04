@@ -1,14 +1,15 @@
 package org.folio.rest.handlers;
 
-import static org.folio.rest.tools.utils.TenantTool.tenantId;
+import static org.folio.kafka.KafkaHeaderUtils.kafkaHeadersToMap;
+import static org.folio.util.PostgresUtils.getPostgresClient;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.domain.Event;
 import org.folio.domain.EventType;
-import org.folio.domain.event.DomainEvent;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.PostgresClient;
@@ -18,33 +19,29 @@ import org.folio.service.UserSummaryService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.kafka.client.producer.KafkaHeader;
 
 public class EventHandler<E extends Event> {
   protected static final Logger log = LogManager.getLogger(EventHandler.class);
-
-  protected final PostgresClient postgresClient;
   protected final UserSummaryRepository userSummaryRepository;
   protected final EventService eventService;
   protected final UserSummaryService userSummaryService;
 
-  public EventHandler(Map<String, String> okapiHeaders, Vertx vertx) {
-    this(tenantId(okapiHeaders), vertx);
+  public EventHandler(List<KafkaHeader> kafkaHeaders, Vertx vertx) {
+    this(kafkaHeadersToMap(kafkaHeaders), vertx);
   }
 
-  public EventHandler(String tenantId, Vertx vertx) {
-    this(PostgresClient.getInstance(vertx, tenantId));
+  public EventHandler(Map<String, String> okapiHeaders, Vertx vertx) {
+    PostgresClient postgresClient = getPostgresClient(okapiHeaders, vertx);
+    userSummaryRepository = new UserSummaryRepository(postgresClient);
+    eventService = new EventService(postgresClient);
+    userSummaryService = new UserSummaryService(postgresClient);
   }
 
   public EventHandler(PostgresClient postgresClient) {
-    this.postgresClient = postgresClient;
-    this.userSummaryRepository = new UserSummaryRepository(postgresClient);
-    this.eventService = new EventService(postgresClient);
-    this.userSummaryService = new UserSummaryService(postgresClient);
-  }
-
-  public Future<String> handle(DomainEvent<E> event) {
-    log.info("handle:: {}", event);
-    return handle(event.getData());
+    userSummaryRepository = new UserSummaryRepository(postgresClient);
+    eventService = new EventService(postgresClient);
+    userSummaryService = new UserSummaryService(postgresClient);
   }
 
   public Future<String> handle(E event) {
@@ -77,5 +74,4 @@ public class EventHandler<E extends Event> {
         eventType, userSummaryId);
     }
   }
-
 }
