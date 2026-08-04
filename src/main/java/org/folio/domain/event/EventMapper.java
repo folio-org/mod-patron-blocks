@@ -31,10 +31,9 @@ public class EventMapper {
   private static void validateEvent(Event event) {
     try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
       Set<ConstraintViolation<Event>> violations = factory.getValidator().validate(event);
-      if (violations.isEmpty()) {
-        return;
+      if (!violations.isEmpty()) {
+        throw new ConstraintViolationException(violations);
       }
-      throw new ConstraintViolationException(violations);
     }
   }
 }
