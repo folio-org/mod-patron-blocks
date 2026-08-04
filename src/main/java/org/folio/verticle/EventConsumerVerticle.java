@@ -116,7 +116,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .processRecordErrorHandler((t, r) -> log.error("Failed to process event: {}", r, t))
       .build();
 
-    return consumer.start(record -> handleEvent(record, eventType, handlerFactory), MODULE_ID)
+    return consumer.start(rec -> handleEvent(rec, eventType, handlerFactory), MODULE_ID)
       .onSuccess(v -> consumers.add(consumer))
       .onFailure(t -> log.error("createConsumer:: failed to create consumer for topic {}", topic.topicName(), t));
   }

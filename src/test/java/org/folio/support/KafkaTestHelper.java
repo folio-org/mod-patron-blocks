@@ -1,6 +1,5 @@
 package org.folio.support;
 
-import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Predicate.not;
@@ -220,7 +219,7 @@ public class KafkaTestHelper {
   }
 
   public void publishEvent(Event event, String topic, String tenantId) {;
-    var record = new KafkaProducerRecordBuilder<String, Event>(tenantId)
+    var producerRecord = new KafkaProducerRecordBuilder<String, Event>(tenantId)
       .key(randomUUID().toString())
       .value(event)
       .topic(topic)
@@ -228,7 +227,7 @@ public class KafkaTestHelper {
       .build();
 
     var producer = createProducer(topic);
-    waitFor(producer.write(record));
+    waitFor(producer.write(producerRecord));
     waitFor(producer.close());
   }
 

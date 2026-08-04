@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class EventConsumerVerticleTest extends TestBase {
+class EventConsumerVerticleTest extends TestBase {
 
   private static final String USER_ID = randomId();
   private static final String INVALID_USER_ID = USER_ID + "xyz";
