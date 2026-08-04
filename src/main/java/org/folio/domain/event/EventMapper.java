@@ -22,14 +22,7 @@ public class EventMapper {
   public static <E extends Event> E toEvent(KafkaConsumerRecord<String, String> kafkaRecord,
     Class<E> eventType) {
 
-    E event;
-    try {
-      event = OBJECT_MAPPER.readValue(kafkaRecord.value(), eventType);
-    } catch (Exception e) {
-      String errorMessage = "Failed to deserialize event with key " + kafkaRecord.key();
-      log.error("toEvent:: {}", errorMessage, e);
-      throw new RuntimeException(errorMessage, e);
-    }
+    E event = OBJECT_MAPPER.readValue(kafkaRecord.value(), eventType);
     validateEvent(event);
 
     return event;

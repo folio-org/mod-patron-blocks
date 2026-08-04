@@ -143,7 +143,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
     E event;
     try {
       event = EventMapper.toEvent(kafkaRecord, eventType);
-    } catch (ConstraintViolationException | JacksonException e) {
+    } catch (Exception e) {
       return failedFuture(e);
     }
     return succeededFuture(event);
