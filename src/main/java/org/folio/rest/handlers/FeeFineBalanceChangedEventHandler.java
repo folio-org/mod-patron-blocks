@@ -19,6 +19,10 @@ public class FeeFineBalanceChangedEventHandler extends EventHandler<FeeFineBalan
     super(okapiHeaders, vertx);
   }
 
+  public FeeFineBalanceChangedEventHandler(String tenantId, Vertx vertx) {
+    super(tenantId, vertx);
+  }
+
   public FeeFineBalanceChangedEventHandler(PostgresClient postgresClient) {
     super(postgresClient);
   }

@@ -28,6 +28,7 @@ import org.awaitility.Awaitility;
 import org.folio.HttpStatus;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.client.TenantClient;
+import org.folio.rest.impl.EventConsumerVerticleDeployer;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.jaxrs.model.TenantJob;
@@ -37,6 +38,7 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.EventClient;
 import org.folio.rest.utils.OkapiClient;
 import org.folio.rest.utils.PomUtils;
+import org.folio.support.KafkaTestHelper;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -71,7 +73,7 @@ public class TestBase {
   protected static final String MODULE_NAME = "mod_patron_blocks";
   protected static final int OKAPI_PORT = NetworkUtils.nextFreePort();
   protected static final String OKAPI_URL = "http://localhost:" + OKAPI_PORT;
-  protected static final String OKAPI_TENANT = "test_tenant";
+  protected static final String TEST_TENANT = "test_tenant";
   protected static final String OKAPI_TOKEN = generateOkapiToken();
   private static final Header JSON_CONTENT_TYPE_HEADER =
     new Header("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
@@ -92,6 +94,7 @@ public class TestBase {
   protected static TenantClient tenantClient;
   protected static PostgresClient postgresClient;
   protected static EventClient eventClient;
+  protected static KafkaTestHelper kafkaHelper;
 
   protected static String jobId;
 
@@ -103,13 +106,17 @@ public class TestBase {
   @BeforeAll
   static void beforeAll(final VertxTestContext context) {
     vertx = Vertx.vertx();
-    okapiClient = new OkapiClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
-    tenantClient = new TenantClient(getMockedOkapiUrl(), OKAPI_TENANT, OKAPI_TOKEN);
+    okapiClient = new OkapiClient(getMockedOkapiUrl(), TEST_TENANT, OKAPI_TOKEN);
+    tenantClient = new TenantClient(getMockedOkapiUrl(), TEST_TENANT, OKAPI_TOKEN);
 
     var postgresContainer = new PostgresTesterContainer();
     postgresContainer.start("database", "username", "password");
     PostgresClient.setPostgresTester(postgresContainer);
     waitForPostgres();
+
+    kafkaHelper = KafkaTestHelper.getInstance();
+    kafkaHelper.createTopics(TEST_TENANT);
+    EventConsumerVerticleDeployer.enableNativeKafkaIntegration();
 
     eventClient = new EventClient(okapiClient);
 
@@ -136,7 +143,7 @@ public class TestBase {
 
             jobId = postResponse.bodyAsJson(TenantJob.class).getId();
 
-            postgresClient = PostgresClient.getInstance(vertx, OKAPI_TENANT);
+            postgresClient = PostgresClient.getInstance(vertx, TEST_TENANT);
 
             tenantClient.getTenantByOperationId(jobId, GET_TENANT_TIMEOUT_MS, getResult -> {
               if (getResult.failed()) {
@@ -227,7 +234,7 @@ public class TestBase {
   private static String generateOkapiToken() {
     String payload = new JsonObject()
       .put("user_id", randomId())
-      .put("tenant", OKAPI_TENANT)
+      .put("tenant", TEST_TENANT)
       .put("sub", "admin")
       .toString();
 
@@ -287,7 +294,7 @@ public class TestBase {
 
   protected RequestSpecification getRequestSpecification() {
     return (new RequestSpecBuilder())
-      .addHeader("X-Okapi-Tenant", OKAPI_TENANT)
+      .addHeader("X-Okapi-Tenant", TEST_TENANT)
       .addHeader("X-Okapi-Token", OKAPI_TOKEN)
       .addHeader("X-Okapi-Url", OKAPI_URL)
       .setBaseUri(OKAPI_URL)
