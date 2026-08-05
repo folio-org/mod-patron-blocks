@@ -35,15 +35,14 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.producer.KafkaHeader;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
-import tools.jackson.core.JacksonException;
 
 @Log4j2
 public class EventConsumerVerticle extends AbstractVerticle {
 
   public static final String MODULE_ID = String.format("%s-%s",
     PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
+
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
 
