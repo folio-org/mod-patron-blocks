@@ -37,7 +37,7 @@ public class UsersClientTest extends TestBase {
   void beforeEach() {
     Map<String, String> okapiHeaders = new HashMap<>();
     okapiHeaders.put(URL, getMockedOkapiUrl());
-    okapiHeaders.put(TENANT, OKAPI_TENANT);
+    okapiHeaders.put(TENANT, TEST_TENANT);
     okapiHeaders.put(TOKEN, OKAPI_TOKEN);
 
     usersClient = new UsersClient(vertx, okapiHeaders);

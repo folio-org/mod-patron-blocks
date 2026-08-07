@@ -1,8 +1,9 @@
 package org.folio.rest.handlers;
 
-import static org.folio.util.LogUtil.asJson;
+import static org.folio.kafka.KafkaHeaderUtils.kafkaHeadersToMap;
 import static org.folio.util.PostgresUtils.getPostgresClient;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,12 +19,17 @@ import org.folio.service.UserSummaryService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.kafka.client.producer.KafkaHeader;
 
 public class EventHandler<E extends Event> {
   protected static final Logger log = LogManager.getLogger(EventHandler.class);
   protected final UserSummaryRepository userSummaryRepository;
   protected final EventService eventService;
   protected final UserSummaryService userSummaryService;
+
+  public EventHandler(List<KafkaHeader> kafkaHeaders, Vertx vertx) {
+    this(kafkaHeadersToMap(kafkaHeaders), vertx);
+  }
 
   public EventHandler(Map<String, String> okapiHeaders, Vertx vertx) {
     PostgresClient postgresClient = getPostgresClient(okapiHeaders, vertx);
@@ -39,27 +45,22 @@ public class EventHandler<E extends Event> {
   }
 
   public Future<String> handle(E event) {
-    log.debug("handle:: parameters event: {}", () -> asJson(event));
     return eventService.save(event)
       .compose(eventId -> updateUserSummary(event))
       .onComplete(result -> logResult(result, event));
   }
 
   public Future<String> handleSkippingUserSummaryUpdate(E event) {
-    log.debug("handleSkippingUserSummaryUpdate:: parameters event: {}",
-      () -> asJson(event));
     return eventService.save(event)
       .onComplete(result -> logResult(result, event));
   }
 
   private Future<String> updateUserSummary(E event) {
-    log.debug("updateUserSummary:: parameters event: {}", () -> asJson(event));
     return getUserSummary(event)
       .compose(userSummary -> userSummaryService.updateUserSummaryWithEvent(userSummary, event));
   }
 
   protected Future<UserSummary> getUserSummary(E event) {
-    log.debug("getUserSummary:: parameters event: {}", () -> asJson(event));
     return userSummaryRepository.findByUserIdOrBuildNew(event.getUserId());
   }
 

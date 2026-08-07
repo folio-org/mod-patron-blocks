@@ -29,8 +29,7 @@
     "metadata": {
       "description": "Metadata about creation and changes, provided by the server (client should not provide)",
       "type": "object",
-      "$ref": "../raml-util/schemas/metadata.schema",
-      "readonly": true
+      "$ref": "../raml-util/schemas/metadata.schema"
     },
     "gracePeriod": {
       "description": "The time after the due date during which penalties are deferred.",
