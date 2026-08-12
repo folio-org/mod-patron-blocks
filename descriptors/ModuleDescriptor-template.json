@@ -21,6 +21,10 @@
     {
       "id": "users",
       "version": "15.1 16.0"
+    },
+    {
+      "id": "feesfines",
+      "version": "19.1"
     }
   ],
   "provides": [
