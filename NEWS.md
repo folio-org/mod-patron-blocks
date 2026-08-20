@@ -1,3 +1,6 @@
+## 1.13.1 2026-08-20
+* Add missing interface dependency (MODPATBLK-232)
+
 ## 1.13.0 2026-04-15
 * Remove sensitive data from logs (MODPATBLK-192)
 * Add patron_block views for FQM (MODFQMMGR-770)
