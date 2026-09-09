@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import org.folio.domain.Event;
 import org.folio.domain.event.EventMapper;
 import org.folio.domain.event.FolioKafkaTopic;
+import org.folio.util.ModuleInfo;
 import org.folio.kafka.GlobalLoadSensor;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaConsumerWrapper;
@@ -26,8 +27,6 @@ import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.LoanClosedEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
-import org.folio.util.ModuleId;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
@@ -40,7 +39,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class EventConsumerVerticle extends AbstractVerticle {
 
-  public static final String MODULE_ID = ModuleId.get();
+  public static final String MODULE_ID = "mod-patron-blocks-" + ModuleInfo.moduleVersion();
 
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
