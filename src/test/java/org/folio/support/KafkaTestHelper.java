@@ -46,7 +46,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KafkaTestHelper {
 
-  private static final String CONSUMER_GROUP_ID_PATTERN = "%s\\.mod-patron-blocks-\\d+\\.\\d+\\.\\d+";
+  private static final String CONSUMER_GROUP_ID_PATTERN = "%s\\.mod-patron-blocks-[\\w.\\-]+";
 
   private static KafkaTestHelper INSTANCE;
   private Vertx vertx;

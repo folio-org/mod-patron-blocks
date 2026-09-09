@@ -18,7 +18,7 @@ public class ModuleInfo {
       var properties = new Properties();
       properties.load(stream);
       String version = properties.getProperty("version");
-      if (version == null || version.isBlank() || version.contains("${")) {
+      if (version == null || version.isBlank() || version.contains("${") || version.contains("@")) {
         throw new IllegalStateException(
           "Invalid module version in " + MODULE_VERSION_RESOURCE + ": " + version);
       }
