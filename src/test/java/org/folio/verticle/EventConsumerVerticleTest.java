@@ -6,6 +6,7 @@ import static org.folio.domain.event.FolioKafkaTopic.ITEM_CHECKED_IN;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_CHECKED_OUT;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_CLAIMED_RETURNED;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_DECLARED_LOST;
+import static org.folio.domain.event.FolioKafkaTopic.LOAN_CLOSED;
 import static org.folio.domain.event.FolioKafkaTopic.LOAN_DUE_DATE_CHANGED;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
@@ -13,6 +14,7 @@ import static org.folio.rest.utils.EntityBuilder.buildItemCheckedInEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemClaimedReturnedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
+import static org.folio.rest.utils.EntityBuilder.buildLoanClosedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -150,6 +152,18 @@ class EventConsumerVerticleTest extends TestBase {
   void itemClaimedReturnedEventValidationFails() {
     kafkaHelper.publishEventAndWaitUntilConsumed(ITEM_CLAIMED_RETURNED, TEST_TENANT,
       createItemClaimedReturnedEvent().withUserId(INVALID_USER_ID));
+  }
+
+  @Test
+  void loanClosedEventProcessedSuccessfully() {
+    kafkaHelper.publishEventAndWaitUntilConsumed(LOAN_CLOSED, TEST_TENANT,
+      buildLoanClosedEvent(USER_ID, randomId()));
+  }
+
+  @Test
+  void loanClosedEventValidationFails() {
+    kafkaHelper.publishEventAndWaitUntilConsumed(LOAN_CLOSED, TEST_TENANT,
+      buildLoanClosedEvent(INVALID_USER_ID, randomId()));
   }
 
   @Test

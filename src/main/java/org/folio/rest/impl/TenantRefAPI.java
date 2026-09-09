@@ -31,23 +31,32 @@ public class TenantRefAPI extends TenantAPI {
     Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler(
       "postTenant", handler, log);
 
-    super.postTenant(tenantAttributes, headers, res -> {
-      if (res.failed()) {
-        loggingHandler.handle(res);
-        return;
-      }
-      String tenantId = TenantTool.tenantId(headers);
-      log.info("postTenant:: creating Kafka topics for tenant {}", tenantId);
-      new KafkaAdminClientService(context.owner())
-        .createKafkaTopics(FolioKafkaTopic.values(), tenantId)
-        .onSuccess(v -> {
-          log.info("postTenant:: Kafka topics created for tenant {}", tenantId);
-          loggingHandler.handle(res);
-        })
-        .onFailure(t -> {
-          log.error("postTenant:: failed to create Kafka topics for tenant {}", tenantId, t);
-          loggingHandler.handle(res);
-        });
-    }, context);
+    super.postTenant(tenantAttributes, headers,
+      res -> handleAfterParentTenant(res, loggingHandler, TenantTool.tenantId(headers), context),
+      context);
+  }
+
+  void handleAfterParentTenant(AsyncResult<Response> res,
+    Handler<AsyncResult<Response>> handler, String tenantId, Context context) {
+
+    if (res.failed()) {
+      handler.handle(res);
+      return;
+    }
+    log.info("postTenant:: creating Kafka topics for tenant {}", tenantId);
+    createKafkaAdminClientService(context)
+      .createKafkaTopics(FolioKafkaTopic.values(), tenantId)
+      .onSuccess(v -> {
+        log.info("postTenant:: Kafka topics created for tenant {}", tenantId);
+        handler.handle(res);
+      })
+      .onFailure(t -> {
+        log.error("postTenant:: failed to create Kafka topics for tenant {}", tenantId, t);
+        handler.handle(res);
+      });
+  }
+
+  KafkaAdminClientService createKafkaAdminClientService(Context context) {
+    return new KafkaAdminClientService(context.owner());
   }
 }
