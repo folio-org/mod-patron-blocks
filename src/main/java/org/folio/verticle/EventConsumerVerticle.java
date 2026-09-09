@@ -26,7 +26,7 @@ import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.LoanClosedEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
-import org.folio.util.pubsub.support.PomReader;
+import org.folio.util.ModuleId;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
@@ -40,8 +40,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class EventConsumerVerticle extends AbstractVerticle {
 
-  public static final String MODULE_ID = String.format("%s-%s",
-    PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
+  public static final String MODULE_ID = ModuleId.get();
 
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";

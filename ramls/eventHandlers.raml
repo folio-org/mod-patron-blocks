@@ -1,20 +1,18 @@
 #%RAML 1.0
 
-title: Event handlers API
-version: v1.1
+# This file exists solely to register event-payload types with the
+# domain-models-maven-plugin so it generates the corresponding Java
+# model classes (e.g. FeeFineBalanceChangedEvent).
+# The PubSub HTTP callback endpoints that previously lived here have
+# been removed – events are now consumed directly from Kafka.
+
+title: Event types
+version: v1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
-documentation:
-  - title: Event handlers API
-    content: <b>API for consuming events</b>
-
-traits:
-  validate: !include raml-util/traits/validation.raml
-
 types:
   errors: !include raml-util/schemas/errors.schema
-  userSummary: !include userSummary.json
   fee-fine-balance-changed-event: !include events/fee-fine-balance-changed.json
   item-checked-out-event: !include events/item-checked-out.json
   item-checked-in-event: !include events/item-checked-in.json
@@ -23,44 +21,3 @@ types:
   item-claimed-returned-event: !include events/item-claimed-returned.json
   loan-due-date-changed-event: !include events/loan-due-date-changed.json
   loan-closed-event: !include events/loan-closed.json
-
-resourceTypes:
-  event-handler:
-    description: "Handler for <<resourcePathName | !upperunderscorecase>> events"
-    post:
-      is: [validate]
-      body:
-        application/json:
-          type: <<resourcePathName>>-event
-      responses:
-        204:
-          description: "Event received successfully"
-        400:
-          description: "Bad request"
-          body:
-            application/json:
-              type: errors
-        500:
-          description: "Internal server error"
-          body:
-            text/plain:
-              example: "Internal server error"
-
-/automated-patron-blocks/handlers:
-  description: "Handlers for events the module is subscribed to"
-  /fee-fine-balance-changed:
-    type: event-handler
-  /item-checked-out:
-    type: event-handler
-  /item-checked-in:
-    type: event-handler
-  /item-declared-lost:
-    type: event-handler
-  /item-aged-to-lost:
-    type: event-handler
-  /item-claimed-returned:
-    type: event-handler
-  /loan-due-date-changed:
-    type: event-handler
-  /loan-closed:
-    type: event-handler

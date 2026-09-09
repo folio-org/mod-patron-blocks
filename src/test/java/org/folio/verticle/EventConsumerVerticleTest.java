@@ -1,6 +1,5 @@
 package org.folio.verticle;
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.folio.domain.event.FolioKafkaTopic.FEE_FINE_BALANCE_CHANGED;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_AGED_TO_LOST;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_CHECKED_IN;
@@ -151,11 +150,6 @@ class EventConsumerVerticleTest extends TestBase {
   void itemClaimedReturnedEventValidationFails() {
     kafkaHelper.publishEventAndWaitUntilConsumed(ITEM_CLAIMED_RETURNED, TEST_TENANT,
       createItemClaimedReturnedEvent().withUserId(INVALID_USER_ID));
-  }
-
-  @Test
-  void eventHandlingFailsWhenEventJsonIsInvalid() {
-    eventClient.sendEvent("not json", FeeFineBalanceChangedEvent.class, SC_BAD_REQUEST);
   }
 
   @Test

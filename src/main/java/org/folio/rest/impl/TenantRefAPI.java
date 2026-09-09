@@ -1,7 +1,5 @@
 package org.folio.rest.impl;
 
-import static io.vertx.core.Future.succeededFuture;
-import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.folio.util.LogUtil.asJson;
 import static org.folio.util.LogUtil.loggingResponseHandler;
 
@@ -11,9 +9,10 @@ import javax.ws.rs.core.Response;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.domain.event.FolioKafkaTopic;
+import org.folio.kafka.services.KafkaAdminClientService;
 import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.util.pubsub.PubSubClientUtils;
+import org.folio.rest.tools.utils.TenantTool;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -37,14 +36,17 @@ public class TenantRefAPI extends TenantAPI {
         loggingHandler.handle(res);
         return;
       }
-      PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, context.owner()))
-        .whenComplete((result, throwable) -> {
-          if (isTrue(result) && throwable == null) {
-            loggingHandler.handle(res);
-          } else {
-            loggingHandler.handle(succeededFuture(PostTenantResponse
-              .respond500WithTextPlain(throwable.getLocalizedMessage())));
-          }
+      String tenantId = TenantTool.tenantId(headers);
+      log.info("postTenant:: creating Kafka topics for tenant {}", tenantId);
+      new KafkaAdminClientService(context.owner())
+        .createKafkaTopics(FolioKafkaTopic.values(), tenantId)
+        .onSuccess(v -> {
+          log.info("postTenant:: Kafka topics created for tenant {}", tenantId);
+          loggingHandler.handle(res);
+        })
+        .onFailure(t -> {
+          log.error("postTenant:: failed to create Kafka topics for tenant {}", tenantId, t);
+          loggingHandler.handle(res);
         });
     }, context);
   }
