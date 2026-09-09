@@ -218,6 +218,18 @@ public class KafkaTestHelper {
     waitForValue(() -> getOffset(fullTopicName, consumerGroupId), initialOffset + 1);
   }
 
+  public void publishRawAndWaitUntilConsumed(KafkaTopic topic, String tenantId, String rawValue) {
+    String consumerGroupId = findConsumerGroupId(topic);
+    String fullTopicName = topic.fullTopicName(tenantId);
+    int initialOffset = getOffset(fullTopicName, consumerGroupId);
+    var record = io.vertx.kafka.client.producer.KafkaProducerRecord
+      .<String, String>create(fullTopicName, randomUUID().toString(), rawValue);
+    var producer = createProducer(fullTopicName);
+    waitFor(producer.write(record));
+    waitFor(producer.close());
+    waitForValue(() -> getOffset(fullTopicName, consumerGroupId), initialOffset + 1);
+  }
+
   public void publishEvent(Event event, String topic, String tenantId) {;
     var producerRecord = new KafkaProducerRecordBuilder<String, Event>(tenantId)
       .key(randomUUID().toString())

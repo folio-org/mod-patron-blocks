@@ -1,6 +1,7 @@
 package org.folio.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Properties;
 import lombok.experimental.UtilityClass;
@@ -15,7 +16,7 @@ public class ModuleInfo {
   }
 
   static String moduleVersion(String resourcePath) {
-    try (var stream = ModuleInfo.class.getResourceAsStream(resourcePath)) {
+    try (var stream = openResource(resourcePath)) {
       if (stream == null) {
         throw new IllegalStateException("Missing module version resource: " + resourcePath);
       }
@@ -30,5 +31,9 @@ public class ModuleInfo {
     } catch (IOException e) {
       throw new UncheckedIOException("Failed to read module version from " + resourcePath, e);
     }
+  }
+
+  static InputStream openResource(String resourcePath) {
+    return ModuleInfo.class.getResourceAsStream(resourcePath);
   }
 }

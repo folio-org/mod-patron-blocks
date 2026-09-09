@@ -172,6 +172,14 @@ class EventConsumerVerticleTest extends TestBase {
       createLoanDueDateChangedEvent().withUserId(INVALID_USER_ID));
   }
 
+  @Test
+  void handlesInvalidJsonGracefully() {
+    // Publishes a non-JSON string to trigger the deserializeEvent catch branch.
+    // The consumer must process (and skip) the record without crashing.
+    kafkaHelper.publishRawAndWaitUntilConsumed(FEE_FINE_BALANCE_CHANGED, TEST_TENANT,
+      "not-valid-json-at-all");
+  }
+
   private static FeeFineBalanceChangedEvent createFeeFineBalanceChangedEvent() {
     return buildFeeFineBalanceChangedEvent(
       USER_ID, randomId(), randomId(), randomId(), BigDecimal.TEN);

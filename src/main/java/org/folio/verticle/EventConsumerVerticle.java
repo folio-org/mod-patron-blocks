@@ -73,7 +73,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .onComplete(promise);
   }
 
-  private Future<Void> stopConsumers() {
+  Future<Void> stopConsumers() {
     log.info("stopConsumers:: stopping consumers");
 
     return Future.all(
@@ -85,7 +85,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .mapEmpty();
   }
 
-  private Future<Void> createConsumers() {
+  Future<Void> createConsumers() {
     log.info("createConsumers:: creating consumers");
     return Future.all(List.of(
       createConsumer(FolioKafkaTopic.ITEM_CHECKED_OUT, ItemCheckedOutEvent.class, EventHandler::new),
