@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import org.folio.domain.Event;
 import org.folio.domain.event.EventMapper;
 import org.folio.domain.event.FolioKafkaTopic;
+import org.folio.util.ModuleInfo;
 import org.folio.kafka.GlobalLoadSensor;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaConsumerWrapper;
@@ -26,8 +27,6 @@ import org.folio.rest.jaxrs.model.ItemClaimedReturnedEvent;
 import org.folio.rest.jaxrs.model.ItemDeclaredLostEvent;
 import org.folio.rest.jaxrs.model.LoanClosedEvent;
 import org.folio.rest.jaxrs.model.LoanDueDateChangedEvent;
-import org.folio.util.pubsub.support.PomReader;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
@@ -40,8 +39,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class EventConsumerVerticle extends AbstractVerticle {
 
-  public static final String MODULE_ID = String.format("%s-%s",
-    PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
+  public static final String MODULE_ID = "mod-patron-blocks-" + ModuleInfo.moduleVersion();
 
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
@@ -75,7 +73,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .onComplete(promise);
   }
 
-  private Future<Void> stopConsumers() {
+  Future<Void> stopConsumers() {
     log.info("stopConsumers:: stopping consumers");
 
     return Future.all(
@@ -87,7 +85,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .mapEmpty();
   }
 
-  private Future<Void> createConsumers() {
+  Future<Void> createConsumers() {
     log.info("createConsumers:: creating consumers");
     return Future.all(List.of(
       createConsumer(FolioKafkaTopic.ITEM_CHECKED_OUT, ItemCheckedOutEvent.class, EventHandler::new),
