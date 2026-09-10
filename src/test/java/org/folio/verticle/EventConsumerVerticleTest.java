@@ -158,12 +158,14 @@ class EventConsumerVerticleTest extends TestBase {
   void loanClosedEventProcessedSuccessfully() {
     kafkaHelper.publishEventAndWaitUntilConsumed(LOAN_CLOSED, TEST_TENANT,
       buildLoanClosedEvent(USER_ID, randomId()));
+    assertFalse(getUserSummary().isPresent());
   }
 
   @Test
   void loanClosedEventValidationFails() {
     kafkaHelper.publishEventAndWaitUntilConsumed(LOAN_CLOSED, TEST_TENANT,
       buildLoanClosedEvent(INVALID_USER_ID, randomId()));
+    assertFalse(getUserSummary().isPresent());
   }
 
   @Test
@@ -178,6 +180,7 @@ class EventConsumerVerticleTest extends TestBase {
     // The consumer must process (and skip) the record without crashing.
     kafkaHelper.publishRawAndWaitUntilConsumed(FEE_FINE_BALANCE_CHANGED, TEST_TENANT,
       "not-valid-json-at-all");
+    assertFalse(getUserSummary().isPresent());
   }
 
   private static FeeFineBalanceChangedEvent createFeeFineBalanceChangedEvent() {

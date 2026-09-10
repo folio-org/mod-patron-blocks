@@ -51,7 +51,7 @@ class EventConsumerVerticleUnitTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  void stopLogsErrorWhenConsumerStopFails(Vertx vertx, VertxTestContext context) throws Exception {
+  void stopLogsErrorWhenConsumerStopFails(Vertx vertx, VertxTestContext context) {
     // Deploy a verticle whose createConsumers() is a no-op so no Kafka is needed
     EventConsumerVerticle verticle = new EventConsumerVerticle() {
       @Override

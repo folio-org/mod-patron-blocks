@@ -222,10 +222,10 @@ public class KafkaTestHelper {
     String consumerGroupId = findConsumerGroupId(topic);
     String fullTopicName = topic.fullTopicName(tenantId);
     int initialOffset = getOffset(fullTopicName, consumerGroupId);
-    var record = io.vertx.kafka.client.producer.KafkaProducerRecord
+    var producerRecord = io.vertx.kafka.client.producer.KafkaProducerRecord
       .<String, String>create(fullTopicName, randomUUID().toString(), rawValue);
     var producer = createProducer(fullTopicName);
-    waitFor(producer.write(record));
+    waitFor(producer.write(producerRecord));
     waitFor(producer.close());
     waitForValue(() -> getOffset(fullTopicName, consumerGroupId), initialOffset + 1);
   }
