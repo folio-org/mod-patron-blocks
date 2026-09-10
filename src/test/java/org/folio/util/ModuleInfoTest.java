@@ -1,9 +1,8 @@
 package org.folio.util;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.blankOrNullString;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
@@ -23,13 +22,11 @@ import org.mockito.MockedStatic;
 class ModuleInfoTest {
 
   @Test
-  void moduleVersionReturnsFilteredVersion() {
-    // The actual /module-version.properties is Maven-filtered at build time.
-    // Using the test-scoped valid fixture to verify the happy path independently.
-    String version = ModuleInfo.moduleVersion("/test-module-version-valid.properties");
-    assertThat(version, not(blankOrNullString()));
-    assertThat(version, not(containsString("${")));
-    assertThat(version, not(containsString("@")));
+  void moduleVersionReturnsVersion() {
+    try (MockedStatic<ModuleInfo> mocked = mockStatic(ModuleInfo.class, CALLS_REAL_METHODS)) {
+      mocked.when(() -> ModuleInfo.openResource(any())).thenReturn(streamOf("version=1.2.3"));
+      assertThat(ModuleInfo.moduleVersion("/irrelevant.properties"), is("1.2.3"));
+    }
   }
 
   @Test
@@ -72,7 +69,7 @@ class ModuleInfoTest {
     try (MockedStatic<ModuleInfo> mocked = mockStatic(ModuleInfo.class, CALLS_REAL_METHODS)) {
       mocked.when(() -> ModuleInfo.openResource(any())).thenReturn(brokenStream);
       UncheckedIOException ex = assertThrows(UncheckedIOException.class,
-        () -> ModuleInfo.moduleVersion("/test-module-version-valid.properties"));
+        () -> ModuleInfo.moduleVersion("/irrelevant.properties"));
       assertThat(ex.getMessage(), containsString("Failed to read module version"));
     }
   }
