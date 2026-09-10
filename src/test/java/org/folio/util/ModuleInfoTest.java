@@ -6,13 +6,18 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mockStatic;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 
 class ModuleInfoTest {
@@ -36,30 +41,23 @@ class ModuleInfoTest {
 
   @Test
   void moduleVersionThrowsWhenVersionKeyAbsent() {
-    IllegalStateException ex = assertThrows(IllegalStateException.class,
-      () -> ModuleInfo.moduleVersion("/test-module-version-no-key.properties"));
-    assertThat(ex.getMessage(), containsString("Invalid module version"));
+    try (MockedStatic<ModuleInfo> mocked = mockStatic(ModuleInfo.class, CALLS_REAL_METHODS)) {
+      mocked.when(() -> ModuleInfo.openResource(any())).thenReturn(streamOf("# no version key"));
+      IllegalStateException ex = assertThrows(IllegalStateException.class,
+        () -> ModuleInfo.moduleVersion("/irrelevant.properties"));
+      assertThat(ex.getMessage(), containsString("Invalid module version"));
+    }
   }
 
-  @Test
-  void moduleVersionThrowsWhenVersionIsBlank() {
-    IllegalStateException ex = assertThrows(IllegalStateException.class,
-      () -> ModuleInfo.moduleVersion("/test-module-version-blank.properties"));
-    assertThat(ex.getMessage(), containsString("Invalid module version"));
-  }
-
-  @Test
-  void moduleVersionThrowsWhenVersionContainsDollarPlaceholder() {
-    IllegalStateException ex = assertThrows(IllegalStateException.class,
-      () -> ModuleInfo.moduleVersion("/test-module-version-dollar.properties"));
-    assertThat(ex.getMessage(), containsString("Invalid module version"));
-  }
-
-  @Test
-  void moduleVersionThrowsWhenVersionContainsAtPlaceholder() {
-    IllegalStateException ex = assertThrows(IllegalStateException.class,
-      () -> ModuleInfo.moduleVersion("/test-module-version-at.properties"));
-    assertThat(ex.getMessage(), containsString("Invalid module version"));
+  @ParameterizedTest(name = "version=\"{0}\"")
+  @ValueSource(strings = {"", "   ", "${project.version}", "@project.version@"})
+  void moduleVersionThrowsWhenVersionIsInvalid(String versionValue) {
+    try (MockedStatic<ModuleInfo> mocked = mockStatic(ModuleInfo.class, CALLS_REAL_METHODS)) {
+      mocked.when(() -> ModuleInfo.openResource(any())).thenReturn(streamOf("version=" + versionValue));
+      IllegalStateException ex = assertThrows(IllegalStateException.class,
+        () -> ModuleInfo.moduleVersion("/irrelevant.properties"));
+      assertThat(ex.getMessage(), containsString("Invalid module version"));
+    }
   }
 
   @Test
@@ -71,11 +69,15 @@ class ModuleInfoTest {
       }
     };
 
-    try (MockedStatic<ModuleInfo> mocked = mockStatic(ModuleInfo.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+    try (MockedStatic<ModuleInfo> mocked = mockStatic(ModuleInfo.class, CALLS_REAL_METHODS)) {
       mocked.when(() -> ModuleInfo.openResource(any())).thenReturn(brokenStream);
       UncheckedIOException ex = assertThrows(UncheckedIOException.class,
         () -> ModuleInfo.moduleVersion("/test-module-version-valid.properties"));
       assertThat(ex.getMessage(), containsString("Failed to read module version"));
     }
+  }
+
+  private static InputStream streamOf(String content) {
+    return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
   }
 }
