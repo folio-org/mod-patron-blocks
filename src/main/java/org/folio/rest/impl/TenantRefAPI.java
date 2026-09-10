@@ -1,5 +1,6 @@
 package org.folio.rest.impl;
 
+import static io.vertx.core.Future.succeededFuture;
 import static org.folio.util.LogUtil.asJson;
 import static org.folio.util.LogUtil.loggingResponseHandler;
 
@@ -52,7 +53,11 @@ public class TenantRefAPI extends TenantAPI {
       })
       .onFailure(t -> {
         log.error("postTenant:: failed to create Kafka topics for tenant {}", tenantId, t);
-        handler.handle(res);
+        handler.handle(succeededFuture(
+          Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .entity(t.getMessage())
+            .type("text/plain")
+            .build()));
       });
   }
 

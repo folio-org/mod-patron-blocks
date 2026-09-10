@@ -45,7 +45,7 @@ class TenantRefAPIUnitTest {
   // ---- onFailure of createKafkaTopics branch -------------------------------
 
   @Test
-  void handleAfterParentTenantCallsHandlerEvenWhenKafkaTopicsCreationFails() {
+  void handleAfterParentTenantReturns500WhenKafkaTopicsCreationFails() {
     KafkaAdminClientService mockService = mock(KafkaAdminClientService.class);
     when(mockService.createKafkaTopics(any(KafkaTopic[].class), anyString()))
       .thenReturn(Future.failedFuture("Kafka broker unavailable"));
@@ -64,10 +64,9 @@ class TenantRefAPIUnitTest {
     AtomicReference<AsyncResult<Response>> captured = new AtomicReference<>();
     api.handleAfterParentTenant(superSucceeded, captured::set, "test_tenant", mock(Context.class));
 
-    assertThat("handler must be invoked despite Kafka failure", captured.get(), is(notNullValue()));
-    // The original succeeded response is forwarded even on Kafka failure
+    assertThat("handler must be invoked", captured.get(), is(notNullValue()));
     assertThat(captured.get().succeeded(), is(true));
-    assertThat(captured.get().result(), is(sameInstance(mockResponse)));
+    assertThat(captured.get().result().getStatus(), is(500));
   }
 
   // ---- onSuccess of createKafkaTopics branch (unit-level) ------------------
