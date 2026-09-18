@@ -1,9 +1,18 @@
 package org.folio.rest;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.domain.event.FolioKafkaTopic.ITEM_CHECKED_OUT;
+import static org.folio.domain.event.FolioKafkaTopic.LOAN_DUE_DATE_CHANGED;
+import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
+import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 
 import org.junit.jupiter.api.Test;
 
@@ -45,36 +54,29 @@ public class ApiIT extends TestBase {
     // migrate from 0.0.0, migration should be idempotent
     postTenant(new JsonObject().put("module_to", "mod_patron_blocks-999999.0.0").put("module_from", "mod_patron_blocks-0.0.0"));
 
-    // smoke test
-    String checkoutBody = new JsonObject()
-      .put("userId", "11111111-1111-4444-8888-111111111111")
-      .put("loanId", "22222222-2222-4444-8888-222222222222")
-      .put("dueDate", "2020-12-31T23:59:59Z")
-      .encodePrettily();
-    okapiClient.post("/automated-patron-blocks/handlers/item-checked-out", checkoutBody)
-      .then()
-      .statusCode(204);
+    // smoke test: publish an item-checked-out event via Kafka and verify it is processed
+    String userId = "11111111-1111-4444-8888-111111111111";
+    String loanId = "22222222-2222-4444-8888-222222222222";
+
+    kafkaHelper.publishEventAndWaitUntilConsumed(ITEM_CHECKED_OUT, TEST_TENANT,
+      buildItemCheckedOutEvent(userId, loanId,
+        Date.from(Instant.parse("2020-12-31T23:59:59Z"))));
 
     await().untilAsserted(() ->
-      okapiClient.get("/user-summary/11111111-1111-4444-8888-111111111111")
+      okapiClient.get("/user-summary/" + userId)
         .then()
         .statusCode(200)
-        .body("openLoans[0].loanId", is("22222222-2222-4444-8888-222222222222"))
+        .body("openLoans[0].loanId", is(loanId))
     );
 
     // upsert with optimistic locking (MODPATBLK-102)
-    String dueDateChangedBody = new JsonObject()
-      .put("userId", "11111111-1111-4444-8888-111111111111")
-      .put("loanId", "22222222-2222-4444-8888-222222222222")
-      .put("dueDate", "2021-02-15T12:00:00")
-      .put("dueDateChangedByRecall", false)
-      .encodePrettily();
-    okapiClient.post("/automated-patron-blocks/handlers/loan-due-date-changed", dueDateChangedBody)
-      .then()
-      .statusCode(204);
+    kafkaHelper.publishEventAndWaitUntilConsumed(LOAN_DUE_DATE_CHANGED, TEST_TENANT,
+      buildLoanDueDateChangedEvent(userId, loanId,
+        Date.from(LocalDateTime.parse("2021-02-15T12:00:00").atZone(ZoneOffset.UTC).toInstant()),
+        false));
 
     await().untilAsserted(() ->
-      okapiClient.get("/user-summary/11111111-1111-4444-8888-111111111111")
+      okapiClient.get("/user-summary/" + userId)
         .then()
         .statusCode(200)
         .body("openLoans[0].dueDate", startsWith("2021-02-15T12:00:00")));
