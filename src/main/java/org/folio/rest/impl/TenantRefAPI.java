@@ -17,6 +17,7 @@ import org.folio.rest.tools.utils.TenantTool;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 public class TenantRefAPI extends TenantAPI {
@@ -29,36 +30,29 @@ public class TenantRefAPI extends TenantAPI {
     log.debug("postTenant:: parameters tenantAttributes: {}, headers: {}",
       () -> asJson(tenantAttributes), () -> asJson(headers));
 
-    Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler(
-      "postTenant", handler, log);
+    Handler<AsyncResult<Response>> loggingHandler = loggingResponseHandler("postTenant", handler, log);
+    String tenantId = TenantTool.tenantId(headers);
 
-    super.postTenant(tenantAttributes, headers,
-      res -> handleAfterParentTenant(res, loggingHandler, TenantTool.tenantId(headers), context),
-      context);
+    super.postTenantSync(tenantAttributes, headers, context)
+      .compose(res -> {
+        if (res.getStatus() != 204) {
+          return succeededFuture(res);
+        }
+        return createKafkaTopicsForTenant(tenantId, context).map(v -> res);
+      })
+      .recover(t -> {
+        log.error("postTenant:: unexpected error during tenant initialization for {}", tenantId, t);
+        return succeededFuture(PostTenantResponse.respond500WithTextPlain(t.getMessage()));
+      })
+      .onComplete(loggingHandler);
   }
 
-  void handleAfterParentTenant(AsyncResult<Response> res,
-    Handler<AsyncResult<Response>> handler, String tenantId, Context context) {
-
-    if (res.failed()) {
-      handler.handle(res);
-      return;
-    }
+  Future<Void> createKafkaTopicsForTenant(String tenantId, Context context) {
     log.info("postTenant:: creating Kafka topics for tenant {}", tenantId);
-    createKafkaAdminClientService(context)
+    return createKafkaAdminClientService(context)
       .createKafkaTopics(FolioKafkaTopic.values(), tenantId)
-      .onSuccess(v -> {
-        log.info("postTenant:: Kafka topics created for tenant {}", tenantId);
-        handler.handle(res);
-      })
-      .onFailure(t -> {
-        log.error("postTenant:: failed to create Kafka topics for tenant {}", tenantId, t);
-        handler.handle(succeededFuture(
-          Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-            .entity(t.getMessage())
-            .type("text/plain")
-            .build()));
-      });
+      .onSuccess(v -> log.info("postTenant:: Kafka topics created for tenant {}", tenantId))
+      .onFailure(t -> log.error("postTenant:: failed to create Kafka topics for tenant {}", tenantId, t));
   }
 
   KafkaAdminClientService createKafkaAdminClientService(Context context) {
