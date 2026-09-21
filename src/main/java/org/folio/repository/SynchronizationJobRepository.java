@@ -4,6 +4,7 @@ import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 import static org.folio.util.LogUtil.asJson;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +45,7 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
     return get(criterion);
   }
 
-  public Future<SynchronizationJob> getTheOldestSyncRequest(String tenantId) {
+  public Future<Optional<SynchronizationJob>> getTheOldestSyncRequest(String tenantId) {
     log.debug("getTheOldestSyncRequest:: parameters tenantId: {}", tenantId);
     String tableName = String.format("%s.%s", convertToPsqlStandard(tenantId),
       SYNCHRONIZATION_JOBS_TABLE);
@@ -56,14 +57,12 @@ public class SynchronizationJobRepository extends BaseRepository<Synchronization
     return select(sql)
       .map(requests -> {
         if (requests.size() == 0) {
-          throw new RuntimeException("There are no open requests");
+          return Optional.<SynchronizationJob>empty();
         }
-        return requests.iterator().next();
+        Row row = requests.iterator().next();
+        return Optional.of(JsonObject.class.cast(row.getValue(0)).mapTo(SynchronizationJob.class));
       })
-      .map(row -> row.getValue(0))
-      .map(JsonObject.class::cast)
-      .map(jsonObject -> jsonObject.mapTo(SynchronizationJob.class))
-      .onSuccess(r -> log.info("getTheOldestSyncRequest:: result: {}", () -> asJson(r)));
+      .onSuccess(r -> log.info("getTheOldestSyncRequest:: result: {}", () -> asJson(r.orElse(null))));
   }
 
   public Future<RowSet<Row>> select(String sql) {
