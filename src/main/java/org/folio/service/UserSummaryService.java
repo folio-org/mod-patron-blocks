@@ -79,7 +79,7 @@ public class UserSummaryService {
   }
 
   public Future<String> updateUserSummaryWithEvent(UserSummary userSummary, Event event) {
-    log.debug("updateUserSummaryWithEvent:: parameters userSummary: {}, event: {}",
+    log.info("updateUserSummaryWithEvent:: parameters userSummary: {}, event: {}",
       () -> asJson(userSummary), () -> asJson(event));
     return recursivelyUpdateUserSummaryWithEvent(new UpdateRetryContext(userSummary), event)
       .onSuccess(result -> log.info("updateUserSummaryWithEvent:: result: {}", result));
@@ -88,7 +88,7 @@ public class UserSummaryService {
   private Future<String> recursivelyUpdateUserSummaryWithEvent(UpdateRetryContext ctx,
       Event event) {
 
-    log.debug("recursivelyUpdateUserSummaryWithEvent:: parameters ctx: {}, event: {}",
+    log.info("recursivelyUpdateUserSummaryWithEvent:: parameters ctx: {}, event: {}",
       () -> asJson(ctx), () -> asJson(event));
     return updateAndStoreUserSummary(ctx.userSummary, event)
       .recover(throwable -> {
@@ -223,8 +223,22 @@ public class UserSummaryService {
   }
 
   private void handleEvent(RebuildContext ctx, Event event) {
-    log.debug("handleEvent:: parameters ctx: {}, event: {}", () -> asJson(ctx),
+    log.info("handleEvent:: parameters ctx: {}, event: {}", () -> asJson(ctx),
       () -> asJson(event));
+
+    if (ctx.userSummary == null) {
+      log.info("handleEvent:: user summary is empty");
+    }
+    if (event == null) {
+      log.info("handleEvent:: event is null");
+    } else {
+      log.info("handleEvent:: event class: {}", event.getClass().getSimpleName());
+      EventType eventType = getByEvent(event);
+      log.info("handleEvent:: eventType: {}", eventType);
+    }
+
+
+
     if (ctx.userSummary == null || event == null || getByEvent(event) == null ||
       event.getMetadata() == null) {
 
