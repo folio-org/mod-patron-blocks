@@ -6,6 +6,7 @@ import static org.folio.util.PostgresUtils.getPostgresClient;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.domain.Event;
@@ -13,8 +14,10 @@ import org.folio.domain.EventType;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.TenantTool;
 import org.folio.service.EventService;
 import org.folio.service.UserSummaryService;
+import org.folio.util.PostgresUtils;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -28,14 +31,11 @@ public class EventHandler<E extends Event> {
   protected final UserSummaryService userSummaryService;
 
   public EventHandler(List<KafkaHeader> kafkaHeaders, Vertx vertx) {
-    this(kafkaHeadersToMap(kafkaHeaders), vertx);
+    this(new CaseInsensitiveMap<>(kafkaHeadersToMap(kafkaHeaders)), vertx);
   }
 
   public EventHandler(Map<String, String> okapiHeaders, Vertx vertx) {
-    PostgresClient postgresClient = getPostgresClient(okapiHeaders, vertx);
-    userSummaryRepository = new UserSummaryRepository(postgresClient);
-    eventService = new EventService(postgresClient);
-    userSummaryService = new UserSummaryService(postgresClient);
+    this(getPostgresClient(okapiHeaders, vertx));
   }
 
   public EventHandler(PostgresClient postgresClient) {
