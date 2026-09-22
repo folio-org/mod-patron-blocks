@@ -1,12 +1,12 @@
 package org.folio.verticle;
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.folio.domain.event.FolioKafkaTopic.FEE_FINE_BALANCE_CHANGED;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_AGED_TO_LOST;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_CHECKED_IN;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_CHECKED_OUT;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_CLAIMED_RETURNED;
 import static org.folio.domain.event.FolioKafkaTopic.ITEM_DECLARED_LOST;
+import static org.folio.domain.event.FolioKafkaTopic.LOAN_CLOSED;
 import static org.folio.domain.event.FolioKafkaTopic.LOAN_DUE_DATE_CHANGED;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
@@ -14,6 +14,7 @@ import static org.folio.rest.utils.EntityBuilder.buildItemCheckedInEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemCheckedOutEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemClaimedReturnedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildItemDeclaredLostEvent;
+import static org.folio.rest.utils.EntityBuilder.buildLoanClosedEvent;
 import static org.folio.rest.utils.EntityBuilder.buildLoanDueDateChangedEvent;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -154,14 +155,32 @@ class EventConsumerVerticleTest extends TestBase {
   }
 
   @Test
-  void eventHandlingFailsWhenEventJsonIsInvalid() {
-    eventClient.sendEvent("not json", FeeFineBalanceChangedEvent.class, SC_BAD_REQUEST);
+  void loanClosedEventProcessedSuccessfully() {
+    kafkaHelper.publishEventAndWaitUntilConsumed(LOAN_CLOSED, TEST_TENANT,
+      buildLoanClosedEvent(USER_ID, randomId()));
+    assertFalse(getUserSummary().isPresent());
+  }
+
+  @Test
+  void loanClosedEventValidationFails() {
+    kafkaHelper.publishEventAndWaitUntilConsumed(LOAN_CLOSED, TEST_TENANT,
+      buildLoanClosedEvent(INVALID_USER_ID, randomId()));
+    assertFalse(getUserSummary().isPresent());
   }
 
   @Test
   void loanDueDateChangedEventWithMissingRequiredDueDateProperty() {
     kafkaHelper.publishEventAndWaitUntilConsumed(LOAN_DUE_DATE_CHANGED, TEST_TENANT,
       createLoanDueDateChangedEvent().withUserId(INVALID_USER_ID));
+  }
+
+  @Test
+  void handlesInvalidJsonGracefully() {
+    // Publishes a non-JSON string to trigger the deserializeEvent catch branch.
+    // The consumer must process (and skip) the record without crashing.
+    kafkaHelper.publishRawAndWaitUntilConsumed(FEE_FINE_BALANCE_CHANGED, TEST_TENANT,
+      "not-valid-json-at-all");
+    assertFalse(getUserSummary().isPresent());
   }
 
   private static FeeFineBalanceChangedEvent createFeeFineBalanceChangedEvent() {

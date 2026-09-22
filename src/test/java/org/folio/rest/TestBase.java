@@ -3,10 +3,6 @@ package org.folio.rest;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.created;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,14 +24,12 @@ import org.awaitility.Awaitility;
 import org.folio.HttpStatus;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.impl.EventConsumerVerticleDeployer;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.utils.EventClient;
 import org.folio.rest.utils.OkapiClient;
 import org.folio.rest.utils.PomUtils;
 import org.folio.support.KafkaTestHelper;
@@ -93,7 +87,6 @@ public class TestBase {
   protected static OkapiClient okapiClient;
   protected static TenantClient tenantClient;
   protected static PostgresClient postgresClient;
-  protected static EventClient eventClient;
   protected static KafkaTestHelper kafkaHelper;
 
   protected static String jobId;
@@ -116,9 +109,6 @@ public class TestBase {
 
     kafkaHelper = KafkaTestHelper.getInstance();
     kafkaHelper.createTopics(TEST_TENANT);
-    EventConsumerVerticleDeployer.enableNativeKafkaIntegration();
-
-    eventClient = new EventClient(okapiClient);
 
     mockEndpoints();
 
@@ -192,18 +182,6 @@ public class TestBase {
 
   private static void mockEndpoints() {
     wireMock.resetAll();
-
-    wireMock.stubFor(post(urlEqualTo("/pubsub/event-types"))
-      .atPriority(100)
-      .willReturn(created()));
-
-    wireMock.stubFor(post(urlEqualTo("/pubsub/event-types?"))
-      .atPriority(100)
-      .willReturn(created()));
-
-    wireMock.stubFor(post(urlMatching("/pubsub/event-types/declare/(publisher|subscriber)"))
-      .atPriority(100)
-      .willReturn(created()));
 
     // forward everything to Okapi
     wireMock.stubFor(any(anyUrl())
