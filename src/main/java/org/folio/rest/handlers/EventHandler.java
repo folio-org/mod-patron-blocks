@@ -32,6 +32,7 @@ public class EventHandler<E extends Event> {
   }
 
   public EventHandler(Map<String, String> okapiHeaders, Vertx vertx) {
+    log.info("EventHandler headers: {}", okapiHeaders);
     PostgresClient postgresClient = getPostgresClient(okapiHeaders, vertx);
     userSummaryRepository = new UserSummaryRepository(postgresClient);
     eventService = new EventService(postgresClient);
