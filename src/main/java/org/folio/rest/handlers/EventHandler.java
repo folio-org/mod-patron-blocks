@@ -14,10 +14,8 @@ import org.folio.domain.EventType;
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.TenantTool;
 import org.folio.service.EventService;
 import org.folio.service.UserSummaryService;
-import org.folio.util.PostgresUtils;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
