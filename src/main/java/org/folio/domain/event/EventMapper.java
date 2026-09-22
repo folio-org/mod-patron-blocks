@@ -1,8 +1,10 @@
 package org.folio.domain.event;
 
+import java.util.Date;
 import java.util.Set;
 
 import org.folio.domain.Event;
+import org.folio.rest.jaxrs.model.Metadata;
 
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import jakarta.validation.ConstraintViolation;
@@ -23,6 +25,9 @@ public class EventMapper {
     Class<E> eventType) {
 
     E event = OBJECT_MAPPER.readValue(kafkaRecord.value(), eventType);
+    if (event.getMetadata() == null) {
+      event.setMetadata(new Metadata().withCreatedDate(new Date(kafkaRecord.timestamp())));
+    }
     validateEvent(event);
 
     return event;

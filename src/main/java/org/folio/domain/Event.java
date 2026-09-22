@@ -6,4 +6,5 @@ public interface Event {
   String getId();
   String getUserId();
   Metadata getMetadata();
+  void setMetadata(Metadata metadata);
 }
