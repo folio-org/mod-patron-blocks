@@ -46,7 +46,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KafkaTestHelper {
 
-  private static final String CONSUMER_GROUP_ID_PATTERN = "%s\\.mod-patron-blocks-\\d+\\.\\d+\\.\\d+";
+  private static final String CONSUMER_GROUP_ID_PATTERN = "%s\\.mod-patron-blocks-[\\w.\\-]+";
 
   private static KafkaTestHelper INSTANCE;
   private Vertx vertx;
@@ -215,6 +215,18 @@ public class KafkaTestHelper {
     String fullTopicName = topic.fullTopicName(tenantId);
     int initialOffset = getOffset(fullTopicName, consumerGroupId);
     publishEvent(eventPayload, fullTopicName, tenantId);
+    waitForValue(() -> getOffset(fullTopicName, consumerGroupId), initialOffset + 1);
+  }
+
+  public void publishRawAndWaitUntilConsumed(KafkaTopic topic, String tenantId, String rawValue) {
+    String consumerGroupId = findConsumerGroupId(topic);
+    String fullTopicName = topic.fullTopicName(tenantId);
+    int initialOffset = getOffset(fullTopicName, consumerGroupId);
+    var producerRecord = io.vertx.kafka.client.producer.KafkaProducerRecord
+      .<String, String>create(fullTopicName, randomUUID().toString(), rawValue);
+    var producer = createProducer(fullTopicName);
+    waitFor(producer.write(producerRecord));
+    waitFor(producer.close());
     waitForValue(() -> getOffset(fullTopicName, consumerGroupId), initialOffset + 1);
   }
 

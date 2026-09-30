@@ -9,6 +9,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.FULL;
 import static org.folio.rest.jaxrs.model.SynchronizationJob.Scope.USER;
+import static org.folio.domain.event.FolioKafkaTopic.ITEM_AGED_TO_LOST;
 import static org.folio.rest.utils.EntityBuilder.buildItemAgedToLostEvent;
 import static org.folio.rest.utils.EntityBuilder.buildSynchronizationJob;
 import static org.folio.rest.utils.matcher.SynchronizationJobMatchers.newSynchronizationJobByUser;
@@ -163,7 +164,7 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   void agedToLostEventShouldBeDeletedBeforeSynchronizationJobByUser() {
-    eventClient.sendEvent(buildItemAgedToLostEvent(USER_ID, randomId()));
+    kafkaHelper.publishEventAndWaitUntilConsumed(ITEM_AGED_TO_LOST, TEST_TENANT, buildItemAgedToLostEvent(USER_ID, randomId()));
     awaitUntil(() -> waitFor(itemAgedToLostEventRepository.getByUserId(USER_ID)).size(), is(1));
     String syncJobId = createOpenSynchronizationJobByUser();
 
@@ -176,8 +177,8 @@ public class SynchronizationAPITests extends TestBase {
 
   @Test
   void agedToLostEventsShouldBeDeletedBeforeSynchronizationJobFull() {
-    eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()));
-    eventClient.sendEvent(buildItemAgedToLostEvent(randomId(), randomId()));
+    kafkaHelper.publishEventAndWaitUntilConsumed(ITEM_AGED_TO_LOST, TEST_TENANT, buildItemAgedToLostEvent(randomId(), randomId()));
+    kafkaHelper.publishEventAndWaitUntilConsumed(ITEM_AGED_TO_LOST, TEST_TENANT, buildItemAgedToLostEvent(randomId(), randomId()));
 
     Awaitility.await()
       .atMost(5, SECONDS)

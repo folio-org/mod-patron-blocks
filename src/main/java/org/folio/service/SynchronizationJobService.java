@@ -115,7 +115,13 @@ public class SynchronizationJobService {
     }
 
     return syncRepository.getTheOldestSyncRequest(tenantId)
-      .compose(this::doSynchronization)
+      .compose(optionalJob -> {
+        if (optionalJob.isEmpty()) {
+          log.info("doSynchronization:: No open sync requests found, nothing to do");
+          return succeededFuture();
+        }
+        return doSynchronization(optionalJob.get());
+      })
       .onSuccess(result -> log.info("doSynchronization:: result: {}", () -> asJson(result)));
   }
 

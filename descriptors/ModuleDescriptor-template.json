@@ -3,18 +3,6 @@
   "name": "Patron Blocks Module",
   "requires": [
     {
-      "id": "pubsub-event-types",
-      "version": "0.1"
-    },
-    {
-      "id": "pubsub-publishers",
-      "version": "0.1"
-    },
-    {
-      "id": "pubsub-subscribers",
-      "version": "0.1"
-    },
-    {
       "id": "loan-storage",
       "version": "7.0"
     },
@@ -41,9 +29,6 @@
             "patron-blocks.automated-patron-blocks.collection.get"
           ],
           "modulePermissions": [
-            "pubsub.event-types.post",
-            "pubsub.publishers.post",
-            "pubsub.subscribers.post",
             "users.item.get"
           ]
         }
@@ -65,81 +50,9 @@
       ]
     },
     {
-      "id":"patron-blocks-event-handlers",
-      "version":"1.1",
+      "id":"patron-blocks-synchronization",
+      "version":"1.0",
       "handlers":[
-        {
-          "methods":[
-            "POST"
-          ],
-          "pathPattern":"/automated-patron-blocks/handlers/fee-fine-balance-changed",
-          "permissionsRequired": [
-            "patron-blocks.handlers.fee-fine-balance-changed.post"
-          ]
-        },
-        {
-          "methods":[
-            "POST"
-          ],
-          "pathPattern":"/automated-patron-blocks/handlers/item-checked-out",
-          "permissionsRequired": [
-            "patron-blocks.handlers.item-checked-out.post"
-          ]
-        },
-        {
-          "methods":[
-            "POST"
-          ],
-          "pathPattern":"/automated-patron-blocks/handlers/item-checked-in",
-          "permissionsRequired": [
-            "patron-blocks.handlers.item-checked-in.post"
-          ]
-        },
-        {
-          "methods":[
-            "POST"
-          ],
-          "pathPattern":"/automated-patron-blocks/handlers/item-declared-lost",
-          "permissionsRequired": [
-            "patron-blocks.handlers.item-declared-lost.post"
-          ]
-        },
-        {
-          "methods":[
-            "POST"
-          ],
-          "pathPattern":"/automated-patron-blocks/handlers/item-aged-to-lost",
-          "permissionsRequired": [
-            "patron-blocks.handlers.item-aged-to-lost.post"
-          ]
-        },
-        {
-          "methods":[
-            "POST"
-          ],
-          "pathPattern":"/automated-patron-blocks/handlers/item-claimed-returned",
-          "permissionsRequired": [
-            "patron-blocks.handlers.item-claimed-returned.post"
-          ]
-        },
-        {
-          "methods":[
-            "POST"
-          ],
-          "pathPattern":"/automated-patron-blocks/handlers/loan-due-date-changed",
-          "permissionsRequired": [
-            "patron-blocks.handlers.loan-due-date-changed.post"
-          ]
-        },
-        {
-          "methods":[
-            "POST"
-          ],
-          "pathPattern":"/automated-patron-blocks/handlers/loan-closed",
-          "permissionsRequired": [
-            "patron-blocks.handlers.loan-closed.post"
-          ]
-        },
         {
           "methods":[
             "POST"
@@ -169,12 +82,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/_/tenant",
-          "modulePermissions": [
-            "pubsub.event-types.post",
-            "pubsub.publishers.post",
-            "pubsub.subscribers.post"
-          ]
+          "pathPattern": "/_/tenant"
         },
         {
           "methods": [

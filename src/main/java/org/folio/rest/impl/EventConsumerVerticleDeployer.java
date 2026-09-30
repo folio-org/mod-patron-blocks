@@ -23,24 +23,9 @@ public class EventConsumerVerticleDeployer implements PostDeployVerticle {
 
   private static final Logger log = LogManager.getLogger(EventConsumerVerticleDeployer.class);
 
-  // For testing purposes, remove once mod-pubsub deprecation in complete
-  private static boolean ENABLE_NATIVE_KAFKA_INTEGRATION = false;
-  public static void enableNativeKafkaIntegration() {
-    ENABLE_NATIVE_KAFKA_INTEGRATION = true;
-  }
-  public static void disableNativeKafkaIntegration() {
-    ENABLE_NATIVE_KAFKA_INTEGRATION = false;
-  }
-
   @Override
   public void init(Vertx vertx, Context context, Handler<AsyncResult<Boolean>> handler) {
     String verticleClassName = EventConsumerVerticle.class.getSimpleName();
-
-    if (!ENABLE_NATIVE_KAFKA_INTEGRATION) {
-      log.info("init:: {} deployment skipped because native Kafka integration is disabled", verticleClassName);
-      handler.handle(succeededFuture(true));
-      return;
-    }
     log.info("init:: deploying {}", verticleClassName);
 
     vertx.deployVerticle(new EventConsumerVerticle(), new DeploymentOptions())
