@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.exception.EntityNotFoundException;
 import org.folio.exception.UserIdNotFoundException;
+import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchRequest;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.folio.rest.jaxrs.resource.AutomatedPatronBlocks;
 import org.folio.service.PatronBlocksService;
@@ -53,6 +54,21 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
       .onFailure(failure -> loggingResponseHandler.handle(succeededFuture(
         GetAutomatedPatronBlocksByUserIdResponse.respond500WithTextPlain(
           failure.getLocalizedMessage()))));
+  }
+
+  @Override
+  public void postAutomatedPatronBlocksBatch(AutomatedPatronBlocksBatchRequest entity,
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
+
+    log.debug("postAutomatedPatronBlocksBatch:: parameters entity: {}, okapiHeaders: {}",
+      () -> asJson(entity), () -> headersAsString(okapiHeaders));
+
+    Handler<AsyncResult<Response>> loggingResponseHandler =
+      loggingResponseHandler("postAutomatedPatronBlocksBatch", asyncResultHandler, log);
+
+    loggingResponseHandler.handle(succeededFuture(
+      PostAutomatedPatronBlocksBatchResponse.respond501WithTextPlain("Not implemented")));
   }
 
   @Override
