@@ -13,6 +13,8 @@ types:
   account: !include accountdata.json
   errors: !include raml-util/schemas/errors.schema
   automatedPatronBlocks: !include automated-patron-blocks.json
+  automatedPatronBlocksBatchRequest: !include automated-patron-blocks-batch-request.json
+  automatedPatronBlocksBatchResponse: !include automated-patron-blocks-batch-response.json
   synchronizationJob: !include synchronization-job.json
   fee-fine-balance-changed-event: !include events/fee-fine-balance-changed.json
   item-checked-out-event: !include events/item-checked-out.json
@@ -45,6 +47,31 @@ traits:
           body:
             text/plain:
               example: "Internal server error, contact administrator"
+  /batch:
+    post:
+      is: [validate]
+      description: "Batch query for automated patron blocks for multiple user IDs"
+      body:
+        application/json:
+          type: automatedPatronBlocksBatchRequest
+          example: !include examples/automated-patron-blocks-batch-request.sample
+      responses:
+        200:
+          description: "Batch automated patron blocks query results"
+          body:
+            application/json:
+              type: automatedPatronBlocksBatchResponse
+              example: !include examples/automated-patron-blocks-batch-response.sample
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error, please contact administrator"
+        501:
+          description: "Not implemented"
+          body:
+            text/plain:
+              example: "Not implemented"
   /synchronization:
     /job:
       post:
