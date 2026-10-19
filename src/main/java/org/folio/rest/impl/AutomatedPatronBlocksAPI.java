@@ -73,6 +73,7 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
     Handler<AsyncResult<Response>> loggingResponseHandler =
       loggingResponseHandler("postAutomatedPatronBlocksBatch", asyncResultHandler, log);
 
+    // RMB does not validate UUID format for collection elements, so validate manually
     if (entity.getUserIds() != null) {
       Set<String> invalidUserIds = entity.getUserIds()
         .stream()
