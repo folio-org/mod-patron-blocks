@@ -16,14 +16,18 @@ import org.apache.logging.log4j.Logger;
 import org.folio.exception.EntityNotFoundException;
 import org.folio.exception.UserIdNotFoundException;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchRequest;
+import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.folio.rest.jaxrs.resource.AutomatedPatronBlocks;
+import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.service.PatronBlocksService;
 import org.folio.service.SynchronizationJobService;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
+import jakarta.validation.ValidationException;
+import org.folio.util.UuidHelper;
 
 public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
 
@@ -66,6 +70,21 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
 
     Handler<AsyncResult<Response>> loggingResponseHandler =
       loggingResponseHandler("postAutomatedPatronBlocksBatch", asyncResultHandler, log);
+
+    if (entity != null && entity.getUserIds() != null) {
+      for (int i = 0; i < entity.getUserIds().size(); i++) {
+        String userId = entity.getUserIds().get(i);
+        try {
+          UuidHelper.validateUUID(userId, true);
+        } catch (ValidationException e) {
+          Errors errors = ValidationHelper.createValidationErrorMessage(
+            format("userIds[%d]", i), userId, "must match UUID format");
+          loggingResponseHandler.handle(succeededFuture(
+            PostAutomatedPatronBlocksBatchResponse.respond422WithApplicationJson(errors)));
+          return;
+        }
+      }
+    }
 
     loggingResponseHandler.handle(succeededFuture(
       PostAutomatedPatronBlocksBatchResponse.respond501WithTextPlain("Not implemented")));
