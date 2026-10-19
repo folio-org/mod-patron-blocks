@@ -145,14 +145,13 @@ public class AutomatedPatronBlocksBatchAPITest extends TestBase {
   void shouldValidateSampleResponseAndModels() throws Exception {
     String samplePath = "/ramls/examples/automated-patron-blocks-batch-response.sample";
     try (InputStream is = getClass().getResourceAsStream(samplePath)) {
-      if (is != null) {
-        String sampleJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        JsonObject json = new JsonObject(sampleJson);
-        assertTrue(json.containsKey("results"));
-        assertTrue(json.containsKey("totalRecords"));
-        JsonArray results = json.getJsonArray("results");
-        assertFalse(results.isEmpty());
-      }
+      assertNotNull(is, "Sample file not found: " + samplePath);
+      String sampleJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+      JsonObject json = new JsonObject(sampleJson);
+      assertTrue(json.containsKey("results"));
+      assertTrue(json.containsKey("totalRecords"));
+      JsonArray results = json.getJsonArray("results");
+      assertFalse(results.isEmpty());
     }
 
     AutomatedPatronBlocksBatchResult successResultWithBlocks = new AutomatedPatronBlocksBatchResult()
