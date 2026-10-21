@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Automated Patron Blocks Batch Request",
+  "description": "Request payload containing patron IDs for batch block evaluation",
+  "type": "object",
+  "properties": {
+    "userIds": {
+      "type": "array",
+      "description": "List of user IDs to check automated patron blocks for",
+      "items": {
+        "type": "string",
+        "$ref": "raml-util/schemas/uuid.schema"
+      },
+      "minItems": 1,
+      "maxItems": 1000
+    }
+  },
+  "required": [
+    "userIds"
+  ],
+  "additionalProperties": false
+}

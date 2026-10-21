@@ -2,12 +2,16 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
+import static java.util.function.Predicate.not;
+import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
 import static org.folio.util.LogUtil.asJson;
 import static org.folio.util.LogUtil.headersAsString;
 import static org.folio.util.LogUtil.loggingResponseHandler;
 import static org.folio.util.UuidUtil.isUuid;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
@@ -15,10 +19,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.exception.EntityNotFoundException;
 import org.folio.exception.UserIdNotFoundException;
+import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchRequest;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.folio.rest.jaxrs.resource.AutomatedPatronBlocks;
 import org.folio.service.PatronBlocksService;
 import org.folio.service.SynchronizationJobService;
+import org.folio.util.UuidUtil;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -27,6 +33,7 @@ import io.vertx.core.Handler;
 public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
 
   private static final Logger log = LogManager.getLogger(AutomatedPatronBlocksAPI.class);
+  private static final String INVALID_USER_IDS_ERROR_MESSAGE = "User IDs must match UUID format";
 
   @Override
   public void getAutomatedPatronBlocksByUserId(String userId,
@@ -53,6 +60,37 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
       .onFailure(failure -> loggingResponseHandler.handle(succeededFuture(
         GetAutomatedPatronBlocksByUserIdResponse.respond500WithTextPlain(
           failure.getLocalizedMessage()))));
+  }
+
+  @Override
+  public void postAutomatedPatronBlocksBatch(AutomatedPatronBlocksBatchRequest entity,
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
+
+    log.debug("postAutomatedPatronBlocksBatch:: parameters entity: {}, okapiHeaders: {}",
+      () -> asJson(entity), () -> headersAsString(okapiHeaders));
+
+    Handler<AsyncResult<Response>> loggingResponseHandler =
+      loggingResponseHandler("postAutomatedPatronBlocksBatch", asyncResultHandler, log);
+
+    // RMB does not validate UUID format for collection elements, so validate manually
+    if (entity.getUserIds() != null) {
+      Set<String> invalidUserIds = entity.getUserIds()
+        .stream()
+        .filter(not(UuidUtil::isUuid))
+        .collect(Collectors.toSet());
+
+      if (!invalidUserIds.isEmpty()) {
+        log.warn("postAutomatedPatronBlocksBatch:: {}: {}", INVALID_USER_IDS_ERROR_MESSAGE, invalidUserIds);
+        loggingResponseHandler.handle(succeededFuture(
+          PostAutomatedPatronBlocksBatchResponse.respond422WithApplicationJson(
+            createValidationErrorMessage("userIds", invalidUserIds.toString(), INVALID_USER_IDS_ERROR_MESSAGE))));
+        return;
+      }
+    }
+
+    loggingResponseHandler.handle(succeededFuture(
+      PostAutomatedPatronBlocksBatchResponse.respond501WithTextPlain("Not implemented")));
   }
 
   @Override

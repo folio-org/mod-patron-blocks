@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "javaType": "org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchResult",
+  "title": "Automated Patron Blocks Batch Result",
+  "description": "Evaluation result for a single patron in a batch query",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema",
+      "description": "Unique ID of the patron"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["SUCCESS", "ERROR"],
+      "description": "Result status discriminator"
+    },
+    "automatedPatronBlocks": {
+      "type": "array",
+      "description": "Automated patron blocks when status is SUCCESS",
+      "items": {
+        "type": "object",
+        "$ref": "automated-patron-block.json"
+      }
+    },
+    "error": {
+      "type": "object",
+      "description": "Structured error details when status is ERROR",
+      "$ref": "raml-util/schemas/error.schema"
+    }
+  },
+  "required": [
+    "userId",
+    "status"
+  ],
+  "additionalProperties": false
+}

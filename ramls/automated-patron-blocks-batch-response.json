@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Automated Patron Blocks Batch Response",
+  "description": "Batch query response containing evaluation results and total distinct record count",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "array",
+      "description": "Array of automated patron blocks results per distinct user ID",
+      "items": {
+        "type": "object",
+        "$ref": "automated-patron-blocks-batch-result.json"
+      }
+    },
+    "totalRecords": {
+      "type": "integer",
+      "description": "Total number of distinct patrons represented in results"
+    }
+  },
+  "required": [
+    "results",
+    "totalRecords"
+  ],
+  "additionalProperties": false
+}

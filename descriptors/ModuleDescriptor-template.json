@@ -18,7 +18,7 @@
   "provides": [
     {
       "id":"automated-patron-blocks",
-      "version":"0.1",
+      "version":"0.2",
       "handlers":[
         {
           "methods":[
@@ -30,6 +30,15 @@
           ],
           "modulePermissions": [
             "users.item.get"
+          ]
+        },
+        {
+          "methods":[
+            "POST"
+          ],
+          "pathPattern":"/automated-patron-blocks/batch",
+          "permissionsRequired": [
+            "patron-blocks.automated-patron-blocks.batch.post"
           ]
         }
       ]
@@ -222,6 +231,11 @@
       "displayName": "Patron blocks - get blocks for patron",
       "description": "Get automated patron blocks by user ID",
       "replaces": ["automated-patron-blocks.collection.get"]
+    },
+    {
+      "permissionName": "patron-blocks.automated-patron-blocks.batch.post",
+      "displayName": "Patron blocks - check blocks for batch of patrons",
+      "description": "Check automated patron blocks for a batch of user IDs"
     },
     {
       "permissionName": "patron-blocks.user-summary.item.get",
