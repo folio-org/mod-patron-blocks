@@ -32,7 +32,7 @@ public class UsersClient extends BulkDownloadClient<User> {
 
   public Future<Map<String, String>> findPatronGroupIdsForUsers(Collection<String> userIds) {
     if (userIds == null || userIds.isEmpty()) {
-      log.info("findPatronGroupIdsForUsers:: no users to search");
+      log.info("findPatronGroupIdsForUsers:: list of user IDs is null or empty");
       return succeededFuture(new HashMap<>());
     }
 

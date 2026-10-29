@@ -81,52 +81,44 @@ public class PatronBlocksService {
   public Future<List<AutomatedPatronBlocksBatchResult>> getBlocksForUsers(List<String> userIds) {
     log.debug("getBlocksForUsers:: userIds count: {}", userIds != null ? userIds.size() : 0);
     if (userIds == null || userIds.isEmpty()) {
+      log.info("getBlocksForUsers:: userIds is null or empty");
       return succeededFuture(emptyList());
     }
 
     Set<String> uniqueUserIds = new LinkedHashSet<>(userIds);
-    log.debug("getBlocksForUsers:: requested user IDs: {}, unique userIds: {}", userIds, uniqueUserIds);
-    BatchBlocksContext batchContext = new BatchBlocksContext(uniqueUserIds);
+    if (userIds.size() != uniqueUserIds.size()) {
+      log.info("getBlocksForUsers:: requested user IDs: {}, unique userIds: {}", userIds, uniqueUserIds);
+    }
+
+    BatchBlocksContext batchContext =  new BatchBlocksContext(uniqueUserIds);
 
     return Future.all(
         userSummaryService.findSummariesForUsers(uniqueUserIds),
         conditionsRepository.getAllWithDefaultLimit()
       )
       .map(cf -> batchContext.withSummariesByUserId(cf.resultAt(0)).withConditions(cf.resultAt(1)))
-      .compose(this::getBlocksForUsers1);
+      .compose(this::findPatronGroupsForUsers)
+      .compose(this::findLimitsForPatronGroups)
+      .map(this::buildBlocksForUsers);
   }
 
-  private Future<List<AutomatedPatronBlocksBatchResult>> getBlocksForUsers1(
-    BatchBlocksContext batchContext) {
-
+  private Future<BatchBlocksContext> findPatronGroupsForUsers(BatchBlocksContext batchContext) {
     Map<String, UserSummary> summariesByUserId = batchContext.getSummariesByUserId();
-    Collection<String> userIds = batchContext.getUserIds();
-
-    Set<String> userIdsWithSummary = userIds
+    Set<String> userIdsWithSummary = batchContext.getUserIds()
       .stream()
       .filter(summariesByUserId::containsKey)
       .collect(Collectors.toCollection(LinkedHashSet::new));
 
-    if (userIdsWithSummary.isEmpty()) {
-      return succeededFuture(userIds.stream()
-        .map(PatronBlocksService::buildEmptyBatchResult)
-        .toList());
-    }
-
     return usersClient.findPatronGroupIdsForUsers(userIdsWithSummary)
-      .map(batchContext::withUserGroupIdsByUserId)
-      .compose(this::getBlocksForUsers2);
+      .map(batchContext::withUserGroupIdsByUserId);
   }
 
-  private Future<List<AutomatedPatronBlocksBatchResult>> getBlocksForUsers2(BatchBlocksContext batchContext) {
-    Map<String, String> userIdToGroupId = batchContext.getUserGroupIdsByUserId();
-
-    return limitsRepository.findLimitsForPatronGroups(userIdToGroupId.values())
-      .map(batchContext::withLimitsByGroupId)
-      .map(this::getBlocksForUsers3);
+  private Future<BatchBlocksContext> findLimitsForPatronGroups(BatchBlocksContext batchContext) {
+    return limitsRepository.findLimitsForPatronGroups(batchContext.getUserGroupIdsByUserId().values())
+      .map(batchContext::withLimitsByGroupId);
   }
 
-  private List<AutomatedPatronBlocksBatchResult> getBlocksForUsers3(BatchBlocksContext batchContext) {
+  private List<AutomatedPatronBlocksBatchResult> buildBlocksForUsers(BatchBlocksContext batchContext) {
     return batchContext.getUserIds()
       .stream()
       .map(userId -> buildBlocksForUser(userId, batchContext))
