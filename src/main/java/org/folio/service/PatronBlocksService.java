@@ -87,7 +87,7 @@ public class PatronBlocksService {
 
     Set<String> uniqueUserIds = new LinkedHashSet<>(userIds);
     if (userIds.size() != uniqueUserIds.size()) {
-      log.info("getBlocksForUsers:: requested user IDs: {}, unique userIds: {}", userIds, uniqueUserIds);
+      log.warn("getBlocksForUsers:: discarding {} user IDs as duplicates", userIds.size() -  uniqueUserIds.size());
     }
 
     BatchBlocksContext batchContext =  new BatchBlocksContext(uniqueUserIds);
