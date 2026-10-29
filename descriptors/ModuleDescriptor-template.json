@@ -39,6 +39,9 @@
           "pathPattern":"/automated-patron-blocks/batch",
           "permissionsRequired": [
             "patron-blocks.automated-patron-blocks.batch.post"
+          ],
+          "modulePermissions": [
+            "users.collection.get"
           ]
         }
       ]

@@ -3,6 +3,7 @@ package org.folio.service;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.utils.EntityBuilder.buildFeeFineBalanceChangedEvent;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,8 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 import org.folio.repository.UserSummaryRepository;
 import org.folio.rest.TestBase;
@@ -56,6 +59,23 @@ public class UserSummaryServiceUnitTest extends TestBase {
     waitFor(userSummaryService.updateUserSummaryWithEvent(userSummary, feeFineBalanceChangedEvent1));
 
     verify(userSummaryRepository, times(11)).upsert(userSummary);
+  }
+
+  @Test
+  void shouldDelegateFindSummariesForUsersToRepository() {
+    String userId1 = randomId();
+    String userId2 = randomId();
+    List<String> userIds = List.of(userId1, userId2);
+    UserSummary summary1 = buildUserSummary(randomId(), userId1);
+    Map<String, UserSummary> expectedSummaries = Map.of(userId1, summary1);
+    setInternalState(userSummaryService, "userSummaryRepository", userSummaryRepository);
+    when(userSummaryRepository.findSummariesForUsers(userIds))
+      .thenReturn(succeededFuture(expectedSummaries));
+
+    Map<String, UserSummary> actualSummaries = waitFor(userSummaryService.findSummariesForUsers(userIds));
+
+    assertEquals(expectedSummaries, actualSummaries);
+    verify(userSummaryRepository).findSummariesForUsers(userIds);
   }
 
   private UserSummary buildUserSummary(String id, String userId) {
