@@ -105,7 +105,7 @@ public class PatronBlockLimitsRepositoryTest extends TestBase {
     List<String> retrievedLimitIds = limits.values().stream()
       .flatMap(List::stream)
       .map(PatronBlockLimit::getId)
-      .collect(Collectors.toList());
+      .toList();
 
     assertTrue(retrievedLimitIds.contains(id1));
     assertTrue(retrievedLimitIds.contains(id2));
