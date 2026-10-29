@@ -3,13 +3,17 @@ package org.folio.service;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.util.LogUtil.asJson;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -21,12 +25,15 @@ import org.folio.repository.PatronBlockLimitsRepository;
 import org.folio.rest.client.UsersClient;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlock;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlocks;
+import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchResult;
+import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
+import org.folio.support.ErrorCode;
 import org.folio.util.AsyncProcessingContext;
 
 import io.vertx.core.Future;
@@ -34,6 +41,7 @@ import io.vertx.core.Vertx;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.With;
 
 public class PatronBlocksService {
@@ -57,6 +65,108 @@ public class PatronBlocksService {
     conditionsRepository = new PatronBlockConditionsRepository(postgresClient);
     limitsRepository = new PatronBlockLimitsRepository(postgresClient);
     usersClient = new UsersClient(vertx, okapiHeaders);
+  }
+
+  PatronBlocksService(UserSummaryService userSummaryService,
+    PatronBlockConditionsRepository conditionsRepository,
+    PatronBlockLimitsRepository limitsRepository,
+    UsersClient usersClient) {
+
+    this.userSummaryService = userSummaryService;
+    this.conditionsRepository = conditionsRepository;
+    this.limitsRepository = limitsRepository;
+    this.usersClient = usersClient;
+  }
+
+  public Future<List<AutomatedPatronBlocksBatchResult>> getBlocksForUsers(List<String> userIds) {
+    log.debug("getBlocksForUsers:: userIds count: {}", userIds != null ? userIds.size() : 0);
+    if (userIds == null || userIds.isEmpty()) {
+      log.info("getBlocksForUsers:: userIds is null or empty");
+      return succeededFuture(emptyList());
+    }
+
+    Set<String> uniqueUserIds = new LinkedHashSet<>(userIds);
+    if (userIds.size() != uniqueUserIds.size()) {
+      log.warn("getBlocksForUsers:: discarding {} user IDs as duplicates", userIds.size() -  uniqueUserIds.size());
+    }
+
+    return succeededFuture(new BatchBlocksContext(uniqueUserIds))
+      .compose(this::fetchSummariesAndConditions)
+      .compose(this::fetchUsers)
+      .compose(this::fetchLimits)
+      .map(this::buildBlocksForUsers);
+  }
+
+  private Future<BatchBlocksContext> fetchSummariesAndConditions(BatchBlocksContext batchContext) {
+    return Future.all(
+        userSummaryService.findSummariesForUsers(batchContext.getUserIds()),
+        conditionsRepository.getAllWithDefaultLimit()
+      )
+      .map(cf -> batchContext.withSummariesByUserId(cf.resultAt(0)).withConditions(cf.resultAt(1)));
+  }
+
+  private Future<BatchBlocksContext> fetchUsers(BatchBlocksContext batchContext) {
+    Map<String, UserSummary> summariesByUserId = batchContext.getSummariesByUserId();
+    Set<String> userIdsWithSummary = batchContext.getUserIds()
+      .stream()
+      .filter(summariesByUserId::containsKey)
+      .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    return usersClient.findPatronGroupIdsForUsers(userIdsWithSummary)
+      .map(batchContext::withUserGroupIdsByUserId);
+  }
+
+  private Future<BatchBlocksContext> fetchLimits(BatchBlocksContext batchContext) {
+    return limitsRepository.findLimitsForPatronGroups(batchContext.getUserGroupIdsByUserId().values())
+      .map(batchContext::withLimitsByGroupId);
+  }
+
+  private List<AutomatedPatronBlocksBatchResult> buildBlocksForUsers(BatchBlocksContext batchContext) {
+    return batchContext.getUserIds()
+      .stream()
+      .map(userId -> buildBlocksForUser(userId, batchContext))
+      .toList();
+  }
+
+  private AutomatedPatronBlocksBatchResult buildBlocksForUser(String userId, BatchBlocksContext batchContext) {
+    log.info("buildBlocksForUser:: building blocks for user {}", userId);
+    Map<String, UserSummary> summariesByUserId = batchContext.getSummariesByUserId();
+    Map<String, String> userGroupIdsByUserId = batchContext.getUserGroupIdsByUserId();
+    Map<String, List<PatronBlockLimit>> limitsByGroupId = batchContext.getLimitsByGroupId();
+    List<PatronBlockCondition> conditions = batchContext.getConditions();
+
+    if (!summariesByUserId.containsKey(userId)) {
+      log.info("buildBlocksForUser:: summary for user {} was not found", userId);
+      return buildEmptyBatchResult(userId);
+    }
+
+    if (!userGroupIdsByUserId.containsKey(userId)) {
+      log.warn("buildBlocksForUser:: patron group ID for user {} was not found", userId);
+      return new AutomatedPatronBlocksBatchResult()
+        .withUserId(userId)
+        .withStatus(AutomatedPatronBlocksBatchResult.Status.ERROR)
+        .withError(new Error()
+          .withMessage("Failed to find patron group for user " + userId)
+          .withCode(ErrorCode.PATRON_GROUP_NOT_FOUND.getValue()));
+    }
+
+    String groupId = userGroupIdsByUserId.get(userId);
+    List<PatronBlockLimit> userLimits = limitsByGroupId.getOrDefault(groupId, emptyList());
+    UserSummary userSummary = summariesByUserId.get(userId);
+
+    BlocksCalculationContext ctx = new BlocksCalculationContext()
+      .withUserSummary(userSummary)
+      .withUserGroupId(groupId)
+      .withPatronBlockLimits(userLimits)
+      .withPatronBlockConditions(conditions);
+
+    ctx = addOverdueMinutesToContext(ctx);
+    AutomatedPatronBlocks calculatedBlocks = calculateBlocks(ctx);
+
+    return new AutomatedPatronBlocksBatchResult()
+      .withUserId(userId)
+      .withStatus(AutomatedPatronBlocksBatchResult.Status.SUCCESS)
+      .withAutomatedPatronBlocks(calculatedBlocks.getAutomatedPatronBlocks());
   }
 
   public Future<AutomatedPatronBlocks> getBlocksForUser(String userId) {
@@ -255,6 +365,13 @@ public class PatronBlocksService {
     return result;
   }
 
+  private static AutomatedPatronBlocksBatchResult buildEmptyBatchResult(String userId) {
+    return new AutomatedPatronBlocksBatchResult()
+      .withUserId(userId)
+      .withStatus(AutomatedPatronBlocksBatchResult.Status.SUCCESS)
+      .withAutomatedPatronBlocks(emptyList());
+  }
+
   @With
   @AllArgsConstructor
   @NoArgsConstructor(force = true)
@@ -277,6 +394,18 @@ public class PatronBlocksService {
     protected boolean shouldCalculationBeSkipped() {
       return this.patronBlockLimits == null || this.patronBlockLimits.isEmpty();
     }
+  }
+
+  @With
+  @AllArgsConstructor
+  @RequiredArgsConstructor
+  @Getter
+  private static class BatchBlocksContext {
+    private final Collection<String> userIds;
+    private Map<String, UserSummary> summariesByUserId;
+    private List<PatronBlockCondition> conditions;
+    private Map<String, String> userGroupIdsByUserId;
+    private Map<String, List<PatronBlockLimit>> limitsByGroupId;
   }
 
 }
