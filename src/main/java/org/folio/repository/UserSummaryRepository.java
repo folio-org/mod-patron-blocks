@@ -8,13 +8,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.support.CqlQuery;
 
 import io.vertx.core.Future;
 
@@ -84,12 +84,9 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
       return succeededFuture(new HashMap<>());
     }
 
-    String cqlQuery = userIds.stream()
-      .distinct()
-      .map(id -> "userId==\"" + id + "\"")
-      .collect(Collectors.joining(" or "));
+    CqlQuery query = CqlQuery.exactMatchAny("userId", userIds);
 
-    return get(cqlQuery, 0, userIds.size())
+    return get(query.query(), 0, userIds.size())
       .map(summaries -> summaries.stream()
         .collect(toMap(UserSummary::getUserId, s -> s, (s1, s2) -> s1)));
   }

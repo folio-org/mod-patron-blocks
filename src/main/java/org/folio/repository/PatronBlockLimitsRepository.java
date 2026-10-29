@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.groupingBy;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +48,7 @@ public class PatronBlockLimitsRepository extends BaseRepository<PatronBlockLimit
       return succeededFuture(new HashMap<>());
     }
 
-    CqlQuery query = CqlQuery.exactMatchAny("patronGroupId", new HashSet<>(patronGroupIds));
+    CqlQuery query = CqlQuery.exactMatchAny(PATRON_GROUP_ID_FIELD, patronGroupIds);
 
     return get(query.query(), 0, DEFAULT_LIMITS_PER_GROUP * patronGroupIds.size())
       .map(limits -> limits.stream().collect(groupingBy(PatronBlockLimit::getPatronGroupId)));

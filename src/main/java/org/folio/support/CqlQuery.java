@@ -20,6 +20,7 @@ public record CqlQuery(String query) {
     }
 
     String joinedValues = values.stream()
+      .distinct()
       .map(value -> "\"" + value + "\"")
       .collect(joining(MULTIPLE_VALUES_DELIMITER));
 
