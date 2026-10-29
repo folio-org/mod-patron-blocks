@@ -90,19 +90,22 @@ public class PatronBlocksService {
       log.warn("getBlocksForUsers:: discarding {} user IDs as duplicates", userIds.size() -  uniqueUserIds.size());
     }
 
-    BatchBlocksContext batchContext =  new BatchBlocksContext(uniqueUserIds);
-
-    return Future.all(
-        userSummaryService.findSummariesForUsers(uniqueUserIds),
-        conditionsRepository.getAllWithDefaultLimit()
-      )
-      .map(cf -> batchContext.withSummariesByUserId(cf.resultAt(0)).withConditions(cf.resultAt(1)))
-      .compose(this::findPatronGroupsForUsers)
-      .compose(this::findLimitsForPatronGroups)
+    return succeededFuture(new BatchBlocksContext(uniqueUserIds))
+      .compose(this::fetchSummariesAndConditions)
+      .compose(this::fetchUsers)
+      .compose(this::fetchLimits)
       .map(this::buildBlocksForUsers);
   }
 
-  private Future<BatchBlocksContext> findPatronGroupsForUsers(BatchBlocksContext batchContext) {
+  private Future<BatchBlocksContext> fetchSummariesAndConditions(BatchBlocksContext batchContext) {
+    return Future.all(
+        userSummaryService.findSummariesForUsers(batchContext.getUserIds()),
+        conditionsRepository.getAllWithDefaultLimit()
+      )
+      .map(cf -> batchContext.withSummariesByUserId(cf.resultAt(0)).withConditions(cf.resultAt(1)));
+  }
+
+  private Future<BatchBlocksContext> fetchUsers(BatchBlocksContext batchContext) {
     Map<String, UserSummary> summariesByUserId = batchContext.getSummariesByUserId();
     Set<String> userIdsWithSummary = batchContext.getUserIds()
       .stream()
@@ -113,7 +116,7 @@ public class PatronBlocksService {
       .map(batchContext::withUserGroupIdsByUserId);
   }
 
-  private Future<BatchBlocksContext> findLimitsForPatronGroups(BatchBlocksContext batchContext) {
+  private Future<BatchBlocksContext> fetchLimits(BatchBlocksContext batchContext) {
     return limitsRepository.findLimitsForPatronGroups(batchContext.getUserGroupIdsByUserId().values())
       .map(batchContext::withLimitsByGroupId);
   }
