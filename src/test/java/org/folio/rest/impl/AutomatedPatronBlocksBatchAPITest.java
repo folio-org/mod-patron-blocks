@@ -31,12 +31,14 @@ import org.folio.rest.jaxrs.model.AutomatedPatronBlocks;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchRequest;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchResponse;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchResult;
+import org.folio.rest.jaxrs.model.GracePeriod;
 import org.folio.rest.jaxrs.model.OpenFeeFine;
 import org.folio.rest.jaxrs.model.OpenLoan;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
 import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.utils.EntityBuilder;
+import org.folio.support.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -276,6 +278,42 @@ public class AutomatedPatronBlocksBatchAPITest extends TestBase {
       .body("results[1].status", equalTo("ERROR"))
       .body("results[1].error.code", equalTo("PATRON_GROUP_NOT_FOUND"))
       .body("results[1].error.message", equalTo("Failed to find patron group for user " + userId2));
+  }
+
+  @Test
+  void shouldHandleIsolatedPatronFailureWhenCalculationFails() {
+    String userId1 = randomId();
+    String userId2 = randomId();
+    String patronGroupId = randomId();
+
+    Condition condition = Condition.MAX_NUMBER_OF_OVERDUE_ITEMS;
+    updateCondition(condition, true, true, true, "Overdue items limit reached");
+    createLimit(condition, patronGroupId, 1.0);
+
+    createSummary(userId1, Collections.emptyList(), Collections.emptyList());
+
+    OpenLoan invalidLoan = EntityBuilder.buildLoan(false, false, now().minusDays(1).toDate())
+      .withGracePeriod(new GracePeriod().withDuration(5));
+    createSummary(userId2, Collections.emptyList(), List.of(invalidLoan));
+
+    mockBatchUsersResponse(Map.of(userId1, patronGroupId, userId2, patronGroupId));
+
+    AutomatedPatronBlocksBatchRequest request = new AutomatedPatronBlocksBatchRequest()
+      .withUserIds(List.of(userId1, userId2));
+
+    getBatchPatronBlocks(request)
+      .then()
+      .statusCode(200)
+      .contentType(ContentType.JSON)
+      .body("totalRecords", equalTo(2))
+      .body("results", hasSize(2))
+      .body("results[0].userId", equalTo(userId1))
+      .body("results[0].status", equalTo("SUCCESS"))
+      .body("results[0].automatedPatronBlocks", empty())
+      .body("results[1].userId", equalTo(userId2))
+      .body("results[1].status", equalTo("ERROR"))
+      .body("results[1].error.code", equalTo(ErrorCode.BATCH_PATRON_BLOCKS_FAILURE.getValue()))
+      .body("results[1].error.type", equalTo("NullPointerException"));
   }
 
   @Test

@@ -4,6 +4,7 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.util.LogUtil.asJson;
@@ -112,11 +113,19 @@ public class PatronBlocksService {
       .filter(summariesByUserId::containsKey)
       .collect(Collectors.toCollection(LinkedHashSet::new));
 
+    if (userIdsWithSummary.isEmpty()) {
+      return succeededFuture(batchContext.withUserGroupIdsByUserId(emptyMap()));
+    }
+
     return usersClient.findPatronGroupIdsForUsers(userIdsWithSummary)
       .map(batchContext::withUserGroupIdsByUserId);
   }
 
   private Future<BatchBlocksContext> fetchLimits(BatchBlocksContext batchContext) {
+    if (batchContext.getUserGroupIdsByUserId() == null || batchContext.getUserGroupIdsByUserId().isEmpty()) {
+      return succeededFuture(batchContext.withLimitsByGroupId(emptyMap()));
+    }
+
     return limitsRepository.findLimitsForPatronGroups(batchContext.getUserGroupIdsByUserId().values())
       .map(batchContext::withLimitsByGroupId);
   }
@@ -129,44 +138,55 @@ public class PatronBlocksService {
   }
 
   private AutomatedPatronBlocksBatchResult buildBlocksForUser(String userId, BatchBlocksContext batchContext) {
-    log.info("buildBlocksForUser:: building blocks for user {}", userId);
-    Map<String, UserSummary> summariesByUserId = batchContext.getSummariesByUserId();
-    Map<String, String> userGroupIdsByUserId = batchContext.getUserGroupIdsByUserId();
-    Map<String, List<PatronBlockLimit>> limitsByGroupId = batchContext.getLimitsByGroupId();
-    List<PatronBlockCondition> conditions = batchContext.getConditions();
+    try {
+      log.info("buildBlocksForUser:: building blocks for user {}", userId);
+      Map<String, UserSummary> summariesByUserId = batchContext.getSummariesByUserId();
+      Map<String, String> userGroupIdsByUserId = batchContext.getUserGroupIdsByUserId();
+      Map<String, List<PatronBlockLimit>> limitsByGroupId = batchContext.getLimitsByGroupId();
+      List<PatronBlockCondition> conditions = batchContext.getConditions();
 
-    if (!summariesByUserId.containsKey(userId)) {
-      log.info("buildBlocksForUser:: summary for user {} was not found", userId);
-      return buildEmptyBatchResult(userId);
-    }
+      if (!summariesByUserId.containsKey(userId)) {
+        log.info("buildBlocksForUser:: summary for user {} was not found", userId);
+        return buildEmptyBatchResult(userId);
+      }
 
-    if (!userGroupIdsByUserId.containsKey(userId)) {
-      log.warn("buildBlocksForUser:: patron group ID for user {} was not found", userId);
+      if (!userGroupIdsByUserId.containsKey(userId)) {
+        log.warn("buildBlocksForUser:: patron group ID for user {} was not found", userId);
+        return new AutomatedPatronBlocksBatchResult()
+          .withUserId(userId)
+          .withStatus(AutomatedPatronBlocksBatchResult.Status.ERROR)
+          .withError(new Error()
+            .withMessage("Failed to find patron group for user " + userId)
+            .withCode(ErrorCode.PATRON_GROUP_NOT_FOUND.getValue()));
+      }
+
+      String groupId = userGroupIdsByUserId.get(userId);
+      List<PatronBlockLimit> userLimits = limitsByGroupId.getOrDefault(groupId, emptyList());
+      UserSummary userSummary = summariesByUserId.get(userId);
+
+      BlocksCalculationContext ctx = new BlocksCalculationContext()
+        .withUserSummary(userSummary)
+        .withUserGroupId(groupId)
+        .withPatronBlockLimits(userLimits)
+        .withPatronBlockConditions(conditions);
+
+      ctx = addOverdueMinutesToContext(ctx);
+      AutomatedPatronBlocks calculatedBlocks = calculateBlocks(ctx);
+
+      return new AutomatedPatronBlocksBatchResult()
+        .withUserId(userId)
+        .withStatus(AutomatedPatronBlocksBatchResult.Status.SUCCESS)
+        .withAutomatedPatronBlocks(calculatedBlocks.getAutomatedPatronBlocks());
+    } catch (Exception e) {
+      log.error("buildBlocksForUser:: failed to build blocks for user {}", userId, e);
       return new AutomatedPatronBlocksBatchResult()
         .withUserId(userId)
         .withStatus(AutomatedPatronBlocksBatchResult.Status.ERROR)
         .withError(new Error()
-          .withMessage("Failed to find patron group for user " + userId)
-          .withCode(ErrorCode.PATRON_GROUP_NOT_FOUND.getValue()));
+          .withMessage(e.getLocalizedMessage())
+          .withCode(ErrorCode.BATCH_PATRON_BLOCKS_FAILURE.getValue())
+          .withType(e.getClass().getSimpleName()));
     }
-
-    String groupId = userGroupIdsByUserId.get(userId);
-    List<PatronBlockLimit> userLimits = limitsByGroupId.getOrDefault(groupId, emptyList());
-    UserSummary userSummary = summariesByUserId.get(userId);
-
-    BlocksCalculationContext ctx = new BlocksCalculationContext()
-      .withUserSummary(userSummary)
-      .withUserGroupId(groupId)
-      .withPatronBlockLimits(userLimits)
-      .withPatronBlockConditions(conditions);
-
-    ctx = addOverdueMinutesToContext(ctx);
-    AutomatedPatronBlocks calculatedBlocks = calculateBlocks(ctx);
-
-    return new AutomatedPatronBlocksBatchResult()
-      .withUserId(userId)
-      .withStatus(AutomatedPatronBlocksBatchResult.Status.SUCCESS)
-      .withAutomatedPatronBlocks(calculatedBlocks.getAutomatedPatronBlocks());
   }
 
   public Future<AutomatedPatronBlocks> getBlocksForUser(String userId) {
