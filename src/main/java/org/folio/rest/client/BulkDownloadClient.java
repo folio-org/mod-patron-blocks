@@ -3,18 +3,23 @@ package org.folio.rest.client;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
-import static org.folio.util.LogUtil.bodyAsString;
+import static org.folio.support.CqlQuery.exactMatchAny;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.exception.HttpFailureException;
+import org.folio.support.CqlQuery;
 import org.folio.util.StringUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.type.CollectionType;
+import com.google.common.collect.Lists;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -25,6 +30,7 @@ public class BulkDownloadClient<T> extends OkapiClient {
   private static final String PATH_TEMPLATE = "%s?limit=%d&query=%s";
   private static final String SORT_BY_ID = " sortBy id";
   private static final String DEFAULT_QUERY = "cql.allRecords=1";
+  private static final int IDS_PER_QUERY = 80;
 
   private final String path;
   private final String arrayName;
@@ -37,6 +43,28 @@ public class BulkDownloadClient<T> extends OkapiClient {
     this.path = path;
     this.arrayName = arrayName;
     this.valueType = valueType;
+  }
+
+  public Future<List<T>> getByIds(Collection<String> ids) {
+    return getByIndexValues("id", ids, IDS_PER_QUERY);
+  }
+
+  public Future<List<T>> getByIndexValues(String index, Collection<String> values, int valuesPerQuery) {
+    Future<List<T>> future = succeededFuture(new ArrayList<>(values.size()));
+
+    for (List<String> partition : partitionValues(values, valuesPerQuery)) {
+      future = future.compose(results -> fetchPage(exactMatchAny(index, partition), partition.size())
+        .map(page -> {
+          results.addAll(page);
+          return results;
+        })
+      );
+    }
+    return future;
+  }
+
+  public Future<List<T>> fetchPage(CqlQuery query, int pageSize) {
+    return fetchPage(query.query(), pageSize);
   }
 
   public Future<List<T>> fetchPage(String query, int pageSize) {
@@ -70,6 +98,18 @@ public class BulkDownloadClient<T> extends OkapiClient {
           }
         }
       });
+  }
+
+  private static List<List<String>> partitionValues(Collection<String> values, int partitionSize) {
+    List<String> uniqueValues = values.stream()
+      .filter(StringUtils::isNotBlank)
+      .distinct()
+      .toList();
+
+    List<List<String>> partitions = Lists.partition(uniqueValues, partitionSize);
+    log.debug("partitionValues:: created {} partitions for {} values", partitions::size, uniqueValues::size);
+
+    return partitions;
   }
 
 }

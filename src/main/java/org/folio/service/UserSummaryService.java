@@ -11,9 +11,11 @@ import static org.folio.util.LogUtil.asJson;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,12 +72,22 @@ public class UserSummaryService {
     eventService = new EventService(postgresClient);
   }
 
+  UserSummaryService(UserSummaryRepository userSummaryRepository, EventService eventService) {
+    this.userSummaryRepository = userSummaryRepository;
+    this.eventService = eventService;
+  }
+
   public Future<UserSummary> getByUserId(String userId) {
     log.debug("getByUserId:: parameters userId: {}", userId);
     return userSummaryRepository.getByUserId(userId)
       .map(optionalUserSummary -> optionalUserSummary.orElseThrow(() ->
         new EntityNotFoundInDbException(format("User summary for user ID %s not found", userId))))
       .onSuccess(result -> log.info("getByUserId:: result found"));
+  }
+
+  public Future<Map<String, UserSummary>> findSummariesForUsers(Collection<String> userIds) {
+    log.debug("findSummariesForUsers:: userIds count: {}", userIds != null ? userIds.size() : 0);
+    return userSummaryRepository.findSummariesForUsers(userIds);
   }
 
   public Future<String> updateUserSummaryWithEvent(UserSummary userSummary, Event event) {

@@ -46,14 +46,14 @@ public class BaseRepository<T> {
     CQLWrapper cql = new CQLWrapper(cql2pgJson, query, limit, offset);
     return pgClient.get(tableName, entityType, cql, true)
       .map(Results::getResults)
-      .onSuccess(result -> log.info("get:: success"));
+      .onSuccess(result -> log.debug("get:: success"));
   }
 
   public Future<List<T>> get(Criterion criterion) {
     log.debug("get:: parameters criterion: {}", criterion);
     return pgClient.get(tableName, entityType, criterion, true)
       .map(Results::getResults)
-      .onSuccess(result -> log.info("get:: success"));
+      .onSuccess(result -> log.debug("get:: success"));
   }
 
   public Future<Optional<T>> get(String id) {

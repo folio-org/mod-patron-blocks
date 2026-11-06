@@ -1,9 +1,12 @@
 package org.folio.repository;
 
 import static io.vertx.core.Future.succeededFuture;
-import static org.folio.util.LogUtil.asJson;
+import static java.util.stream.Collectors.toMap;
 import static org.folio.util.UuidHelper.randomId;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.UserSummary;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.support.CqlQuery;
 
 import io.vertx.core.Future;
 
@@ -72,6 +76,19 @@ public class UserSummaryRepository extends BaseRepository<UserSummary> {
         log.info("getByUserId:: result found");
         return succeededFuture(Optional.ofNullable(result));
       });
+  }
+
+  public Future<Map<String, UserSummary>> findSummariesForUsers(Collection<String> userIds) {
+    log.debug("findSummariesForUsers:: userIds count: {}", userIds != null ? userIds.size() : 0);
+    if (userIds == null || userIds.isEmpty()) {
+      return succeededFuture(new HashMap<>());
+    }
+
+    CqlQuery query = CqlQuery.exactMatchAny("userId", userIds);
+
+    return get(query.query(), 0, userIds.size())
+      .map(summaries -> summaries.stream()
+        .collect(toMap(UserSummary::getUserId, s -> s, (s1, s2) -> s1)));
   }
 
   public Future<Boolean> deleteByUserId(String userId) {

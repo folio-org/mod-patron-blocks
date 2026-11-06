@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.exception.EntityNotFoundException;
 import org.folio.exception.UserIdNotFoundException;
 import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchRequest;
+import org.folio.rest.jaxrs.model.AutomatedPatronBlocksBatchResponse;
 import org.folio.rest.jaxrs.model.SynchronizationJob;
 import org.folio.rest.jaxrs.resource.AutomatedPatronBlocks;
 import org.folio.service.PatronBlocksService;
@@ -89,8 +90,18 @@ public class AutomatedPatronBlocksAPI implements AutomatedPatronBlocks {
       }
     }
 
-    loggingResponseHandler.handle(succeededFuture(
-      PostAutomatedPatronBlocksBatchResponse.respond501WithTextPlain("Not implemented")));
+    new PatronBlocksService(okapiHeaders, vertxContext.owner())
+      .getBlocksForUsers(entity.getUserIds())
+      .map(results -> new AutomatedPatronBlocksBatchResponse()
+        .withResults(results)
+        .withTotalRecords(results.size()))
+      .onSuccess(batchResponse -> loggingResponseHandler.handle(succeededFuture(
+        PostAutomatedPatronBlocksBatchResponse.respond200WithApplicationJson(batchResponse))))
+      .onFailure(failure -> {
+        log.error("postAutomatedPatronBlocksBatch:: Failed to calculate batch patron blocks", failure);
+        loggingResponseHandler.handle(succeededFuture(
+          PostAutomatedPatronBlocksBatchResponse.respond500WithTextPlain(failure.getLocalizedMessage())));
+      });
   }
 
   @Override

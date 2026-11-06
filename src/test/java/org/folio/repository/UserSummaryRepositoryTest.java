@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.folio.rest.TestBase;
@@ -210,6 +212,37 @@ public class UserSummaryRepositoryTest extends TestBase {
     context.completeNow();
   }
 
+  @Test
+  void shouldFindSummariesForUsers(VertxTestContext context) {
+    String userId1 = randomId();
+    String userId2 = randomId();
+    String userId3 = randomId();
+
+    UserSummary summary1 = createUserSummary(randomId(), userId1);
+    UserSummary summary2 = createUserSummary(randomId(), userId2);
+
+    waitFor(Future.all(List.of(
+      repository.save(summary1),
+      repository.save(summary2))));
+
+    Map<String, UserSummary> summaries = waitFor(repository.findSummariesForUsers(List.of(userId1, userId2, userId3)));
+    assertEquals(2, summaries.size());
+    assertTrue(summaries.containsKey(userId1));
+    assertTrue(summaries.containsKey(userId2));
+    context.completeNow();
+  }
+
+  @Test
+  void shouldReturnEmptyListWhenUserIdsNullOrEmpty(VertxTestContext context) {
+    Map<String, UserSummary> emptyForNull = waitFor(repository.findSummariesForUsers(null));
+    assertTrue(emptyForNull.isEmpty());
+
+    Map<String, UserSummary> emptyForEmpty = waitFor(repository.findSummariesForUsers(Collections.emptyList()));
+    assertTrue(emptyForEmpty.isEmpty());
+
+    context.completeNow();
+  }
+
   private UserSummary createUserSummary(String id, String userId) {
 
     OpenLoan openLoan = new OpenLoan()
@@ -230,14 +263,14 @@ public class UserSummaryRepositoryTest extends TestBase {
       .withOpenFeesFines(asList(openFeeFine, openFeeFine));
   }
 
-  private void assertSummariesAreEqual(UserSummary expected, UserSummary actual, 
+  private void assertSummariesAreEqual(UserSummary expected, UserSummary actual,
     VertxTestContext ctx) {
-    
+
     assertEquals(expected.getId(), actual.getId());
     assertEquals(expected.getUserId(), actual.getUserId());
     assertEquals(expected.getOpenFeesFines().size(), actual.getOpenFeesFines().size());
     assertEquals(expected.getOpenLoans().size(), actual.getOpenLoans().size());
-    
+
     ctx.completeNow();
   }
 
