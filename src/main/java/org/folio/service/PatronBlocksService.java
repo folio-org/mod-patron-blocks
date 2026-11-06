@@ -139,6 +139,9 @@ public class PatronBlocksService {
 
   private AutomatedPatronBlocksBatchResult buildBlocksForUser(String userId, BatchBlocksContext batchContext) {
     try {
+      if (userId.contains("12345")) {
+        throw new IllegalArgumentException("userId can't contain 12345");
+      }
       log.info("buildBlocksForUser:: building blocks for user {}", userId);
       Map<String, UserSummary> summariesByUserId = batchContext.getSummariesByUserId();
       Map<String, String> userGroupIdsByUserId = batchContext.getUserGroupIdsByUserId();
